@@ -51,7 +51,10 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
     const newBookingEndHour = slotHour + duration;
 
     for (const booking of bookings) {
-      if (booking.status === 'cancelled') continue;
+      // A slot is only considered unavailable if it's confirmed or blocked by an admin.
+      if (booking.status !== 'confirmed' && booking.status !== 'blocked') {
+        continue;
+      }
 
       const bookingDate = new Date(booking.date);
       if (bookingDate.toDateString() === selectedDate.toDateString()) {
