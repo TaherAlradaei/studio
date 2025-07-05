@@ -61,12 +61,15 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const blockSlot = async (date: Date, time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const bookingDate = new Date(date);
+    bookingDate.setHours(hours, minutes, 0, 0);
     try {
       await addDoc(collection(db, "bookings"), {
         userId: 'admin_blocked',
         name: 'Blocked Slot',
         phone: null,
-        date,
+        date: bookingDate,
         time,
         duration: 1, // Default block duration to 1 hour
         status: 'blocked',
