@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,14 +19,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { useBookings } from "@/context/booking-context";
 import { useToast } from "@/hooks/use-toast";
 import { Shirt } from "lucide-react";
-
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  phone: z.string().regex(/^\d{3}-\d{4}$/, "Phone number must be in XXX-XXXX format."),
-  terms: z.boolean().refine((val) => val === true, {
-    message: "You must accept the terms and conditions.",
-  }),
-});
+import { useLanguage } from "@/context/language-context";
 
 interface BookingFormProps {
   selectedDate: Date;
@@ -42,6 +36,15 @@ export function BookingForm({
 }: BookingFormProps) {
   const { addBooking } = useBookings();
   const { toast } = useToast();
+  const { t, lang } = useLanguage();
+
+  const formSchema = React.useMemo(() => z.object({
+    name: z.string().min(2, t.bookingForm.validation.nameMin),
+    phone: z.string().regex(/^\d{3}-\d{4}$/, t.bookingForm.validation.phoneFormat),
+    terms: z.boolean().refine((val) => val === true, {
+      message: t.bookingForm.validation.termsRequired,
+    }),
+  }), [t]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,8 +69,10 @@ export function BookingForm({
     });
     
     toast({
-      title: "Booking Confirmed!",
-      description: `Your booking for ${selectedDate.toLocaleDateString()} at ${selectedTime} is confirmed.`,
+      title: t.toasts.bookingConfirmedTitle,
+      description: t.toasts.bookingConfirmedDesc
+        .replace('{date}', selectedDate.toLocaleDateString(lang))
+        .replace('{time}', selectedTime),
       variant: "default",
       className: "bg-primary text-primary-foreground"
     });
@@ -75,15 +80,20 @@ export function BookingForm({
     onBookingComplete();
   }
 
+  const bookingForDesc = t.bookingForm.bookingFor
+    .replace('{date}', selectedDate.toLocaleDateString(lang))
+    .replace('{time}', selectedTime)
+    .replace('{duration}', duration.toString());
+
   return (
     <Card className="w-full bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <div className="flex items-center gap-2">
             <Shirt className="w-6 h-6 text-primary" />
-            <CardTitle className="font-headline text-2xl">Enter Your Details</CardTitle>
+            <CardTitle className="font-headline text-2xl">{t.bookingForm.title}</CardTitle>
         </div>
         <CardDescription>
-          Booking for {selectedDate.toLocaleDateString()} at {selectedTime} for {duration} hour(s).
+          {bookingForDesc}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -94,9 +104,9 @@ export function BookingForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>{t.bookingForm.nameLabel}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. John Doe" {...field} />
+                    <Input placeholder={t.bookingForm.namePlaceholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -107,9 +117,9 @@ export function BookingForm({
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>{t.bookingForm.phoneLabel}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. 555-1234" {...field} />
+                    <Input placeholder={t.bookingForm.phonePlaceholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -128,7 +138,7 @@ export function BookingForm({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      Accept terms and conditions
+                      {t.bookingForm.termsLabel}
                     </FormLabel>
                     <FormMessage />
                   </div>
@@ -136,7 +146,7 @@ export function BookingForm({
               )}
             />
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-              Confirm Booking
+              {t.bookingForm.confirmButton}
             </Button>
           </form>
         </Form>

@@ -8,8 +8,10 @@ import { useBookings } from "@/context/booking-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CalendarDays } from "lucide-react";
 import { FieldIcon } from "@/components/icons";
+import { useLanguage } from "@/context/language-context";
 
 export default function BookingPage() {
+  const { t } = useLanguage();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
@@ -35,11 +37,11 @@ export default function BookingPage() {
         <div className="flex justify-center items-center gap-4 mb-2">
             <FieldIcon className="w-12 h-12 text-primary"/>
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
-            Book Your Field
+              {t.bookingPage.title}
             </h1>
         </div>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Follow the simple steps below to reserve your football field at Al Maidan Arena.
+          {t.bookingPage.description}
         </p>
       </div>
       
@@ -49,9 +51,9 @@ export default function BookingPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CalendarDays className="w-6 h-6 text-primary" />
-                <CardTitle className="font-headline text-2xl">Select a Date</CardTitle>
+                <CardTitle className="font-headline text-2xl">{t.bookingPage.selectDate}</CardTitle>
               </div>
-              <CardDescription>Click on a date to see available time slots.</CardDescription>
+              <CardDescription>{t.bookingPage.selectDateDesc}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex justify-center">

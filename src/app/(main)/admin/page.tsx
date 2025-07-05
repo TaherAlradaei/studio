@@ -7,8 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
 import { getSchedulingRecommendations } from "./actions";
 import { useBookings } from "@/context/booking-context";
+import { useLanguage } from "@/context/language-context";
 
 export default function AdminPage() {
+  const { t } = useLanguage();
   const { bookings } = useBookings();
   const [bookingData, setBookingData] = useState(JSON.stringify(bookings, null, 2));
   const [recommendations, setRecommendations] = useState("");
@@ -24,10 +26,10 @@ export default function AdminPage() {
       if (result?.recommendations) {
         setRecommendations(result.recommendations);
       } else {
-        setError("Could not get recommendations. The result was empty.");
+        setError(t.adminPage.errorEmpty);
       }
     } catch (err) {
-      setError("An error occurred while analyzing booking data.");
+      setError(t.adminPage.errorAnalyzing);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -45,20 +47,20 @@ export default function AdminPage() {
         <div className="flex justify-center items-center gap-4 mb-2">
           <Wand2 className="w-12 h-12 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
-            Smart Scheduling Assistant
+            {t.adminPage.title}
           </h1>
         </div>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Use our AI-powered tool to analyze booking patterns and receive recommendations for optimal scheduling to maximize facility usage.
+          {t.adminPage.description}
         </p>
       </div>
 
       <div className="max-w-4xl mx-auto grid gap-8">
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Booking Data</CardTitle>
+            <CardTitle>{t.adminPage.dataCardTitle}</CardTitle>
             <CardDescription>
-              Enter historical booking data in JSON format. You can use the current app's booking data as an example.
+             {t.adminPage.dataCardDescription}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -66,7 +68,7 @@ export default function AdminPage() {
               value={bookingData}
               onChange={(e) => setBookingData(e.target.value)}
               rows={15}
-              placeholder="Paste your booking data here..."
+              placeholder={t.adminPage.dataPlaceholder}
               className="font-code"
             />
              <div className="flex flex-wrap gap-2">
@@ -74,17 +76,17 @@ export default function AdminPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
+                    {t.adminPage.analyzingButton}
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Analyze Patterns
+                    {t.adminPage.analyzeButton}
                   </>
                 )}
               </Button>
                <Button onClick={handleUseMockData} variant="outline">
-                Use App's Booking Data
+                {t.adminPage.useMockButton}
               </Button>
             </div>
           </CardContent>
@@ -93,7 +95,7 @@ export default function AdminPage() {
         {error && (
           <Card className="border-destructive">
             <CardHeader>
-              <CardTitle className="text-destructive">Error</CardTitle>
+              <CardTitle className="text-destructive">{t.adminPage.errorTitle}</CardTitle>
             </CardHeader>
             <CardContent>
               <p>{error}</p>
@@ -106,7 +108,7 @@ export default function AdminPage() {
             <CardHeader>
               <CardTitle className="text-primary flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-accent" />
-                Scheduling Recommendations
+                {t.adminPage.recommendationsTitle}
               </CardTitle>
             </CardHeader>
             <CardContent>

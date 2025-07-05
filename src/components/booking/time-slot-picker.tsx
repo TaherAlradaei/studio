@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Booking } from "@/lib/types";
+import { useLanguage } from "@/context/language-context";
 
 const availableTimes = [
   "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00",
@@ -27,6 +28,7 @@ interface TimeSlotPickerProps {
 }
 
 export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedTime }: TimeSlotPickerProps) {
+  const { t, lang } = useLanguage();
   const [duration, setDuration] = useState(1);
   const [isClient, setIsClient] = useState(false);
 
@@ -65,34 +67,35 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
 
     return false;
   };
+  
+  const dateOptions: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
   return (
     <Card className="w-full bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <div className="flex items-center gap-2">
           <Clock className="w-6 h-6 text-primary" />
-          <CardTitle className="font-headline text-2xl">Select a Time Slot</CardTitle>
+          <CardTitle className="font-headline text-2xl">{t.timeSlotPicker.title}</CardTitle>
         </div>
         <CardDescription>
-          Select a duration and an available time for your booking on{" "}
-          {selectedDate.toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
+          {t.timeSlotPicker.description.replace('{date}', selectedDate.toLocaleDateString(lang, dateOptions))}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="mb-4">
           <label htmlFor="duration" className="block text-sm font-medium mb-2">
-            Booking Duration
+            {t.timeSlotPicker.durationLabel}
           </label>
           <Select
             value={duration.toString()}
             onValueChange={(value) => setDuration(parseInt(value))}
           >
             <SelectTrigger id="duration" className="w-[180px]">
-              <SelectValue placeholder="Select duration" />
+              <SelectValue placeholder={t.timeSlotPicker.durationPlaceholder} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">1 Hour</SelectItem>
-              <SelectItem value="2">2 Hours</SelectItem>
+              <SelectItem value="1">{t.timeSlotPicker.oneHour}</SelectItem>
+              <SelectItem value="2">{t.timeSlotPicker.twoHours}</SelectItem>
             </SelectContent>
           </Select>
         </div>

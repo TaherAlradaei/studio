@@ -1,18 +1,23 @@
+"use client";
+
 import { BookingHistoryTable } from "@/components/booking/booking-history-table";
+import { useLanguage } from "@/context/language-context";
 import { Ticket } from "lucide-react";
 
 export default function BookingsPage() {
+  const { t } = useLanguage();
+
   return (
     <div className="container py-8">
       <div className="text-center mb-12">
         <div className="flex justify-center items-center gap-4 mb-2">
             <Ticket className="w-12 h-12 text-primary"/>
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
-                My Bookings
+                {t.bookingsPage.title}
             </h1>
         </div>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Here is a list of all your upcoming reservations at Al Maidan Arena.
+          {t.bookingsPage.description}
         </p>
       </div>
 
