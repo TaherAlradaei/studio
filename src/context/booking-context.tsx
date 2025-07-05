@@ -1,63 +1,61 @@
 "use client";
 
-import React, { createContext, useContext, useState, type ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { Booking } from "@/lib/types";
-import { addDays, setHours, setMinutes } from "date-fns";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, addDoc, updateDoc, doc, Timestamp, orderBy, query } from "firebase/firestore";
 
 interface BookingContextType {
   bookings: Booking[];
-  addBooking: (booking: Omit<Booking, "id" | "status" | "price">) => void;
-  updateBooking: (id: string, updates: Partial<Omit<Booking, 'id'>>) => void;
+  addBooking: (booking: Omit<Booking, "id" | "status" | "price">) => Promise<void>;
+  updateBooking: (id: string, updates: Partial<Omit<Booking, 'id'>>) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
-const initialBookings: Booking[] = [
-    {
-        id: "1",
-        name: "Ahmed Khan",
-        phone: "555-1234",
-        date: setMinutes(setHours(new Date(), 18), 0),
-        time: "18:00",
-        duration: 1,
-        status: 'confirmed',
-        price: 50,
-    },
-    {
-        id: "2",
-        name: "Fatima Al-Ali",
-        phone: "555-5678",
-        date: setMinutes(setHours(addDays(new Date(), 2), 20), 0),
-        time: "20:00",
-        duration: 2,
-        status: 'pending',
-    },
-    {
-        id: "3",
-        name: "Yusuf Ahmed",
-        phone: "555-9012",
-        date: setMinutes(setHours(addDays(new Date(), 1), 15), 0),
-        time: "15:00",
-        duration: 1.5,
-        status: 'pending',
-    }
-];
-
-
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings.sort((a,b) => a.date.getTime() - b.date.getTime()));
+  const [bookings, setBookings] = useState<Booking[]>([]);
 
-  const addBooking = (newBookingData: Omit<Booking, "id" | "status" | "price">) => {
-    const newBooking: Booking = {
-      ...newBookingData,
-      id: (bookings.length + 1).toString(),
-      status: 'pending',
-    };
-    setBookings((prevBookings) => [...prevBookings, newBooking].sort((a,b) => a.date.getTime() - b.date.getTime()));
+  useEffect(() => {
+    // Note: You will need to create a "bookings" collection in your Firestore database.
+    const q = query(collection(db, "bookings"), orderBy("date", "asc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const bookingsData: Booking[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        // Convert Firestore Timestamp to JS Date
+        const date = (data.date as Timestamp)?.toDate();
+        if (date) {
+            bookingsData.push({ ...data, id: doc.id, date } as Booking);
+        }
+      });
+      setBookings(bookingsData);
+    }, (error) => {
+        console.error("Error fetching bookings: ", error);
+        // You might want to handle this error in your UI
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price">) => {
+    try {
+      await addDoc(collection(db, "bookings"), {
+        ...newBookingData,
+        status: 'pending',
+      });
+    } catch (error) {
+      console.error("Error adding booking: ", error);
+    }
   };
   
-  const updateBooking = (id: string, updates: Partial<Omit<Booking, 'id'>>) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b).sort((a,b) => a.date.getTime() - b.date.getTime()));
+  const updateBooking = async (id: string, updates: Partial<Omit<Booking, 'id'>>) => {
+    const bookingDoc = doc(db, "bookings", id);
+    try {
+      await updateDoc(bookingDoc, updates);
+    } catch (error) {
+      console.error("Error updating booking: ", error);
+    }
   };
 
   return (

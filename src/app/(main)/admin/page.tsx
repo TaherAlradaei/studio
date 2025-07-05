@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function AdminPage() {
   const { t, lang } = useLanguage();
   const { bookings, updateBooking } = useBookings();
-  const [bookingData, setBookingData] = useState(JSON.stringify(bookings, null, 2));
+  const [bookingData, setBookingData] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -57,8 +57,8 @@ export default function AdminPage() {
     setPrice(booking.price?.toString() || "");
   };
 
-  const handleCancelBooking = (booking: Booking) => {
-    updateBooking(booking.id, { status: 'cancelled' });
+  const handleCancelBooking = async (booking: Booking) => {
+    await updateBooking(booking.id, { status: 'cancelled' });
     toast({
       title: t.toasts.bookingUpdateTitle,
       description: t.toasts.bookingUpdateDesc.replace('{name}', booking.name),
@@ -66,7 +66,7 @@ export default function AdminPage() {
     });
   };
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     if (!editingBooking) return;
     const newPrice = parseFloat(price);
     if (isNaN(newPrice) || newPrice < 0) {
@@ -77,7 +77,7 @@ export default function AdminPage() {
       });
       return;
     }
-    updateBooking(editingBooking.id, { status: 'confirmed', price: newPrice });
+    await updateBooking(editingBooking.id, { status: 'confirmed', price: newPrice });
     toast({
       title: t.toasts.bookingUpdateTitle,
       description: t.toasts.bookingUpdateDesc.replace('{name}', editingBooking.name),

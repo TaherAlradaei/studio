@@ -7,6 +7,8 @@ export const enStrings = {
   },
   footer: {
     copyright: "© {year} Al Maidan Football Academy. All rights reserved.",
+    address: "Zero street, Hadda Madina, Sanaa, Yemen",
+    phone: "Phone: +967 736 333 328",
   },
   bookingPage: {
     title: "Book Your Field",
@@ -29,12 +31,12 @@ export const enStrings = {
     nameLabel: "Full Name",
     namePlaceholder: "e.g. John Doe",
     phoneLabel: "Phone Number",
-    phonePlaceholder: "e.g. 555-1234",
+    phonePlaceholder: "e.g. 736 333 328",
     termsLabel: "Accept terms and conditions",
     requestButton: "Request Booking",
     validation: {
       nameMin: "Name must be at least 2 characters.",
-      phoneFormat: "Phone number must be in XXX-XXXX format.",
+      phoneFormat: "Phone number must be in XXX XXX XXX format.",
       termsRequired: "You must accept the terms and conditions.",
     },
   },

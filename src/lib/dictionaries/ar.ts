@@ -9,6 +9,8 @@ export const arStrings: Dictionary = {
   },
   footer: {
     copyright: "© {year} أكاديمية الميدان لكرة القدم. جميع الحقوق محفوظة.",
+    address: "شارع صفر، حدة مدينة، صنعاء، اليمن",
+    phone: "الهاتف: 736 333 328 967+",
   },
   bookingPage: {
     title: "احجز ملعبك",
@@ -31,12 +33,12 @@ export const arStrings: Dictionary = {
     nameLabel: "الاسم الكامل",
     namePlaceholder: "مثال: جون دو",
     phoneLabel: "رقم الهاتف",
-    phonePlaceholder: "مثال: 555-1234",
+    phonePlaceholder: "مثال: 736 333 328",
     termsLabel: "أوافق على الشروط والأحكام",
     requestButton: "طلب حجز",
     validation: {
       nameMin: "يجب أن يتكون الاسم من حرفين على الأقل.",
-      phoneFormat: "يجب أن يكون رقم الهاتف بالتنسيق XXX-XXXX.",
+      phoneFormat: "يجب أن يكون رقم الهاتف بالتنسيق XXX XXX XXX.",
       termsRequired: "يجب عليك قبول الشروط والأحكام.",
     },
   },
