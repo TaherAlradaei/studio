@@ -15,12 +15,14 @@ import type { Booking } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export function BookingHistoryTable() {
-  const { bookings, updateBooking } = useBookings();
+  const { bookings, updateBooking, acceptBooking } = useBookings();
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   const { toast } = useToast();
+  const router = useRouter();
 
   const userBookings = bookings.filter(b => b.userId === user?.uid && new Date(b.date) >= new Date() && b.status !== 'cancelled');
 
@@ -31,11 +33,21 @@ export function BookingHistoryTable() {
   };
 
   const handleAccept = async (booking: Booking) => {
-    await updateBooking(booking.id, { status: 'confirmed' });
-    toast({
-        title: t.toasts.bookingConfirmedTitle,
-        description: t.toasts.bookingConfirmedDesc.replace('{date}', new Date(booking.date).toLocaleDateString(lang)).replace('{time}', booking.time),
-    });
+    const result = await acceptBooking(booking);
+
+    if (result === 'accepted') {
+        toast({
+            title: t.toasts.bookingConfirmedTitle,
+            description: t.toasts.bookingConfirmedDesc.replace('{date}', new Date(booking.date).toLocaleDateString(lang)).replace('{time}', booking.time),
+        });
+    } else if (result === 'slot-taken') {
+        toast({
+            title: t.toasts.slotUnavailableTitle,
+            description: t.toasts.slotUnavailableDesc,
+            variant: "destructive",
+        });
+        router.push('/');
+    }
   };
 
   const handleDecline = async (booking: Booking) => {

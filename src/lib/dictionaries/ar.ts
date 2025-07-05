@@ -109,6 +109,8 @@ export const arStrings: Dictionary = {
     bookingUpdateDesc: "تم تحديث الحجز لـ {name}.",
     priceQuoteSent: "تم إرسال عرض السعر إلى {name}.",
     bookingCancelled: "تم إلغاء الحجز.",
+    slotUnavailableTitle: "الفترة الزمنية لم تعد متاحة",
+    slotUnavailableDesc: "تم تأكيد هذه الفترة الزمنية للتو من قبل مستخدم آخر. يرجى اختيار وقت مختلف.",
   },
   auth: {
       errorTitle: "خطأ في المصادقة",
@@ -120,5 +122,3 @@ export const arStrings: Dictionary = {
       decline: "رفض",
   }
 };
-
-    

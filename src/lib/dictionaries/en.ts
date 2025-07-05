@@ -107,6 +107,8 @@ export const enStrings = {
     bookingUpdateDesc: "The booking for {name} has been updated.",
     priceQuoteSent: "Price quote sent to {name}.",
     bookingCancelled: "The booking has been cancelled.",
+    slotUnavailableTitle: "Slot No Longer Available",
+    slotUnavailableDesc: "This time slot has just been confirmed by another user. Please select a different time.",
   },
   auth: {
       errorTitle: "Authentication Error",
@@ -120,5 +122,3 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
-
-    

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { Booking } from "@/lib/types";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, addDoc, updateDoc, doc, Timestamp, orderBy, query, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, doc, Timestamp, orderBy, query, deleteDoc, runTransaction, where } from "firebase/firestore";
 
 interface BookingContextType {
   bookings: Booking[];
@@ -11,6 +11,7 @@ interface BookingContextType {
   updateBooking: (id: string, updates: Partial<Omit<Booking, 'id'>>) => Promise<void>;
   blockSlot: (date: Date, time: string) => Promise<void>;
   unblockSlot: (id: string) => Promise<void>;
+  acceptBooking: (booking: Booking) => Promise<'accepted' | 'slot-taken'>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -87,8 +88,87 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const acceptBooking = async (bookingToAccept: Booking): Promise<'accepted' | 'slot-taken'> => {
+    const bookingDocRef = doc(db, "bookings", bookingToAccept.id);
+
+    try {
+      const result = await runTransaction(db, async (transaction) => {
+        const bookingDoc = await transaction.get(bookingDocRef);
+        if (!bookingDoc.exists() || bookingDoc.data().status !== 'awaiting-confirmation') {
+          return 'slot-taken';
+        }
+
+        const newBookingStartTime = (bookingToAccept.date as Date);
+        const newBookingEndTime = new Date(newBookingStartTime.getTime() + bookingToAccept.duration * 3600 * 1000);
+        
+        const dayStart = new Date(newBookingStartTime);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(newBookingStartTime);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const bookingsCol = collection(db, "bookings");
+        // NOTE: This query may require a composite index in Firestore for production environments.
+        const q = query(bookingsCol, 
+          where("status", "==", "confirmed"),
+          where("date", ">=", dayStart),
+          where("date", "<=", dayEnd)
+        );
+        
+        const confirmedBookingsSnapshot = await transaction.get(q);
+
+        let isSlotTaken = false;
+        for (const doc of confirmedBookingsSnapshot.docs) {
+          const b_data = doc.data()
+          const b = { ...b_data, date: (b_data.date as Timestamp).toDate()} as Booking
+          
+          const existingBookingStartTime = b.date;
+          const existingBookingEndTime = new Date(existingBookingStartTime.getTime() + b.duration * 3600 * 1000);
+          
+          if (Math.max(newBookingStartTime.getTime(), existingBookingStartTime.getTime()) < Math.min(newBookingEndTime.getTime(), existingBookingEndTime.getTime())) {
+            isSlotTaken = true;
+            break;
+          }
+        }
+        
+        if (isSlotTaken) {
+          transaction.update(bookingDocRef, { status: 'cancelled' });
+          return 'slot-taken';
+        } else {
+          transaction.update(bookingDocRef, { status: 'confirmed' });
+          
+          // Also cancel other pending/awaiting requests for the same slot
+          const pendingQuery = query(bookingsCol,
+            where("status", "in", ["pending", "awaiting-confirmation"]),
+            where("date", ">=", dayStart),
+            where("date", "<=", dayEnd)
+          );
+          const pendingBookingsSnapshot = await transaction.get(pendingQuery);
+
+          for (const doc of pendingBookingsSnapshot.docs) {
+              if (doc.id === bookingToAccept.id) continue;
+              const b_data = doc.data();
+              const b = { ...b_data, date: (b_data.date as Timestamp).toDate()} as Booking;
+              
+              const pendingBookingStartTime = b.date;
+              const pendingBookingEndTime = new Date(pendingBookingStartTime.getTime() + b.duration * 3600 * 1000);
+              
+              if (Math.max(newBookingStartTime.getTime(), pendingBookingStartTime.getTime()) < Math.min(newBookingEndTime.getTime(), pendingBookingEndTime.getTime())) {
+                  transaction.update(doc.ref, { status: 'cancelled' });
+              }
+          }
+          return 'accepted';
+        }
+      });
+
+      return result;
+    } catch (e) {
+      console.error("Booking acceptance transaction failed: ", e);
+      throw e;
+    }
+};
+
   return (
-    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot }}>
+    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot, acceptBooking }}>
       {children}
     </BookingContext.Provider>
   );
