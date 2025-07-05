@@ -91,6 +91,12 @@ export const enStrings = {
     confirmDialogDescription: "Set the final price for this booking. The customer will need to confirm the quote.",
     priceLabel: "Price (YR)",
     confirmSubmitButton: "Send Quote",
+    manageAvailabilityCardTitle: "Manage Field Availability",
+    manageAvailabilityCardDescription: "Block or unblock time slots directly on the calendar.",
+    block: "Block",
+    unblock: "Unblock",
+    booked: "Booked",
+    blocked: "Blocked",
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",
@@ -104,20 +110,13 @@ export const enStrings = {
   },
   auth: {
       welcomeTitle: "Welcome",
-      welcomeDesc: "Sign in or create an account to continue",
-      login: "Login",
-      signUp: "Sign Up",
-      emailLabel: "Email",
-      passwordLabel: "Password",
+      welcomeDesc: "Click the button below to continue as a guest.",
+      continueAsGuest: "Continue as Guest",
       errorTitle: "Authentication Error",
       notLoggedInTitle: "Not Logged In",
       notLoggedInDesc: "You must be logged in to perform this action.",
       firebaseErrors: {
-        "auth/invalid-email": "Please enter a valid email address.",
-        "auth/user-not-found": "No account found with this email. Please sign up.",
-        "auth/wrong-password": "Incorrect password. Please try again.",
-        "auth/email-already-in-use": "This email is already registered. Please login.",
-        "auth/weak-password": "Password should be at least 6 characters.",
+        "auth/operation-not-allowed": "Anonymous sign-in is disabled. Please enable it in the Firebase console.",
       }
   },
   actions: {

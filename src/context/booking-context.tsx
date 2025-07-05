@@ -3,12 +3,14 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { Booking } from "@/lib/types";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, addDoc, updateDoc, doc, Timestamp, orderBy, query } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, doc, Timestamp, orderBy, query, deleteDoc } from "firebase/firestore";
 
 interface BookingContextType {
   bookings: Booking[];
   addBooking: (booking: Omit<Booking, "id" | "status" | "price">) => Promise<void>;
   updateBooking: (id: string, updates: Partial<Omit<Booking, 'id'>>) => Promise<void>;
+  blockSlot: (date: Date, time: string) => Promise<void>;
+  unblockSlot: (id: string) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -58,8 +60,32 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const blockSlot = async (date: Date, time: string) => {
+    try {
+      await addDoc(collection(db, "bookings"), {
+        userId: 'admin_blocked',
+        name: 'Blocked Slot',
+        phone: null,
+        date,
+        time,
+        duration: 1, // Default block duration to 1 hour
+        status: 'blocked',
+      });
+    } catch (error) {
+      console.error("Error blocking slot:", error);
+    }
+  };
+
+  const unblockSlot = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "bookings", id));
+    } catch (error) {
+      console.error("Error unblocking slot:", error);
+    }
+  };
+
   return (
-    <BookingContext.Provider value={{ bookings, addBooking, updateBooking }}>
+    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot }}>
       {children}
     </BookingContext.Provider>
   );

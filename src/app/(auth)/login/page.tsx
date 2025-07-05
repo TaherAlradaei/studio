@@ -5,16 +5,18 @@ import { LanguageProvider, LanguageContext } from "@/context/language-context";
 import { Suspense } from "react";
 import { arStrings } from "@/lib/dictionaries/ar";
 import { enStrings } from "@/lib/dictionaries/en";
+import { useLanguage } from "@/context/language-context";
 
 function AuthPageContent() {
+    const { t } = useLanguage();
     return (
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <Logo />
             </div>
-            <CardTitle>{enStrings.auth.welcomeTitle}</CardTitle>
-            <CardDescription>{enStrings.auth.welcomeDesc}</CardDescription>
+            <CardTitle>{t.auth.welcomeTitle}</CardTitle>
+            <CardDescription>{t.auth.welcomeDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             <AuthForm />

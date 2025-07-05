@@ -93,6 +93,12 @@ export const arStrings: Dictionary = {
     confirmDialogDescription: "حدد السعر النهائي لهذا الحجز. سيحتاج العميل إلى تأكيد عرض السعر.",
     priceLabel: "السعر (ريال يمني)",
     confirmSubmitButton: "إرسال عرض السعر",
+    manageAvailabilityCardTitle: "إدارة توفر الملعب",
+    manageAvailabilityCardDescription: "قم بحظر أو إلغاء حظر فترات زمنية مباشرة في التقويم.",
+    block: "حظر",
+    unblock: "إلغاء الحظر",
+    booked: "محجوز",
+    blocked: "محظور",
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",
@@ -106,20 +112,13 @@ export const arStrings: Dictionary = {
   },
   auth: {
       welcomeTitle: "أهلاً بك",
-      welcomeDesc: "سجل الدخول أو أنشئ حسابًا للمتابعة",
-      login: "تسجيل الدخول",
-      signUp: "إنشاء حساب",
-      emailLabel: "البريد الإلكتروني",
-      passwordLabel: "كلمة المرور",
+      welcomeDesc: "انقر على الزر أدناه للمتابعة كضيف.",
+      continueAsGuest: "المتابعة كضيف",
       errorTitle: "خطأ في المصادقة",
       notLoggedInTitle: "غير مسجل الدخول",
       notLoggedInDesc: "يجب عليك تسجيل الدخول لتنفيذ هذا الإجراء.",
       firebaseErrors: {
-        "auth/invalid-email": "الرجاء إدخال عنوان بريد إلكتروني صالح.",
-        "auth/user-not-found": "لم يتم العثور على حساب بهذا البريد الإلكتروني. الرجاء إنشاء حساب.",
-        "auth/wrong-password": "كلمة المرور غير صحيحة. حاول مرة أخرى.",
-        "auth/email-already-in-use": "هذا البريد الإلكتروني مسجل بالفعل. الرجاء تسجيل الدخول.",
-        "auth/weak-password": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.",
+        "auth/operation-not-allowed": "تم تعطيل تسجيل الدخول المجهول. يرجى تمكينه في وحدة تحكم Firebase."
       }
   },
   actions: {

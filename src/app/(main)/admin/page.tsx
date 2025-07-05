@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock } from "lucide-react";
 import { getSchedulingRecommendations } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useLanguage } from "@/context/language-context";
@@ -16,10 +16,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+
+const availableTimes = [
+  "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00",
+  "17:00", "18:00", "19:00", "20:00", "21:00", "22:00",
+];
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
-  const { bookings, updateBooking } = useBookings();
+  const { bookings, updateBooking, blockSlot, unblockSlot } = useBookings();
   const [bookingData, setBookingData] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +35,8 @@ export default function AdminPage() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [price, setPrice] = useState("");
   const { toast } = useToast();
+
+  const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -58,16 +67,17 @@ export default function AdminPage() {
   };
 
   const handleCancelBooking = async (booking: Booking) => {
+    if (!booking.id) return;
     await updateBooking(booking.id, { status: 'cancelled' });
     toast({
       title: t.toasts.bookingUpdateTitle,
-      description: t.toasts.bookingUpdateDesc.replace('{name}', booking.name),
+      description: t.toasts.bookingUpdateDesc.replace('{name}', booking.name || 'N/A'),
       variant: "destructive"
     });
   };
 
   const handleConfirmSubmit = async () => {
-    if (!editingBooking) return;
+    if (!editingBooking || !editingBooking.id) return;
     const newPrice = parseFloat(price);
     if (isNaN(newPrice) || newPrice < 0) {
       toast({
@@ -80,7 +90,7 @@ export default function AdminPage() {
     await updateBooking(editingBooking.id, { status: 'awaiting-confirmation', price: newPrice });
     toast({
       title: t.toasts.bookingUpdateTitle,
-      description: t.toasts.priceQuoteSent.replace('{name}', editingBooking.name),
+      description: t.toasts.priceQuoteSent.replace('{name}', editingBooking.name || 'N/A'),
     });
     setEditingBooking(null);
     setPrice("");
@@ -96,6 +106,8 @@ export default function AdminPage() {
         return <Badge variant="default">{t.bookingHistoryTable.statusConfirmed}</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">{t.bookingHistoryTable.statusCancelled}</Badge>;
+      case 'blocked':
+        return <Badge variant="outline">{t.adminPage.blocked}</Badge>;
       default:
         return null;
     }
@@ -165,6 +177,83 @@ export default function AdminPage() {
               </Table>
             </div>
           </CardContent>
+        </Card>
+
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <CardTitle>{t.adminPage.manageAvailabilityCardTitle}</CardTitle>
+                <CardDescription>{t.adminPage.manageAvailabilityCardDescription}</CardDescription>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-2 gap-8 items-start">
+                <div>
+                     <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <CalendarDays className="w-6 h-6 text-primary" />
+                            <CardTitle className="font-headline text-xl">{t.bookingPage.selectDate}</CardTitle>
+                        </div>
+                    </CardHeader>
+                    <div className="flex justify-center">
+                        <Calendar
+                            mode="single"
+                            selected={availabilityDate}
+                            onSelect={setAvailabilityDate}
+                            className="rounded-md"
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        />
+                    </div>
+                </div>
+                <div>
+                    {availabilityDate && (
+                    <>
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-6 h-6 text-primary" />
+                                <CardTitle className="font-headline text-xl">{t.timeSlotPicker.title}</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            {availableTimes.map((time) => {
+                                const slotDateTime = new Date(availabilityDate);
+                                const [hours, minutes] = time.split(':').map(Number);
+                                slotDateTime.setHours(hours, minutes, 0, 0);
+
+                                const booking = bookings.find(b => {
+                                    const bookingDate = new Date(b.date);
+                                    return bookingDate.toDateString() === slotDateTime.toDateString() && b.time === time && b.status !== 'cancelled';
+                                });
+
+                                const isBooked = !!booking && booking.status !== 'blocked';
+                                const isBlocked = !!booking && booking.status === 'blocked';
+                                const isPast = slotDateTime < new Date();
+                                
+                                return (
+                                <div key={time} className="relative">
+                                    <Button
+                                    variant={isBooked ? "secondary" : isBlocked ? "destructive" : "outline"}
+                                    className="w-full"
+                                    disabled={isBooked || isPast}
+                                    onClick={() => {
+                                        if (isBlocked) {
+                                            unblockSlot(booking.id);
+                                        } else {
+                                            blockSlot(availabilityDate, time);
+                                        }
+                                    }}
+                                    >
+                                    {time}
+                                    </Button>
+                                    <div className="absolute -bottom-5 left-0 right-0 text-center text-xs">
+                                        {isBooked && <Badge variant="secondary">{t.adminPage.booked}</Badge>}
+                                        {isBlocked && <Badge variant="destructive">{t.adminPage.blocked}</Badge>}
+                                    </div>
+                                </div>
+                                );
+                            })}
+                        </div>
+                    </>
+                    )}
+                </div>
+            </CardContent>
         </Card>
 
 
