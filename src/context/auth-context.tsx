@@ -1,8 +1,24 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import type { User } from "firebase/auth";
 import { Loader2 } from "lucide-react";
+
+// Local User type definition
+export interface User {
+    uid: string;
+    email: string | null;
+    emailVerified: boolean;
+    displayName: string | null;
+    isAnonymous: boolean;
+    photoURL: string | null;
+    providerData: any[]; // Using any for simplicity as it's a mock
+    getIdToken: () => Promise<string>;
+    getIdTokenResult: () => Promise<any>;
+    reload: () => Promise<void>;
+    delete: () => Promise<void>;
+    toJSON: () => object;
+    providerId: string;
+}
 
 interface AuthContextType {
   user: User | null;
