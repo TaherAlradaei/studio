@@ -25,16 +25,16 @@ const availableTimes = [
 ];
 
 export default function AdminPage() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const { bookings, updateBooking, blockSlot, unblockSlot } = useBookings();
   const [bookingData, setBookingData] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { toast } = useToast();
 
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [hourlyPrice, setHourlyPrice] = useState("");
-  const { toast } = useToast();
 
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
 
@@ -43,11 +43,19 @@ export default function AdminPage() {
 
   useEffect(() => {
     async function fetchInstructions() {
+      try {
         const instructions = await getPaymentInstructions();
         setPaymentInstructions(instructions);
+      } catch (err) {
+        toast({
+            title: t.adminPage.errorTitle,
+            description: err instanceof Error ? err.message : "Failed to load payment instructions.",
+            variant: "destructive",
+        });
+      }
     }
     fetchInstructions();
-  }, []);
+  }, [toast, t]);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -61,7 +69,8 @@ export default function AdminPage() {
         setError(t.adminPage.errorEmpty);
       }
     } catch (err) {
-      setError(t.adminPage.errorAnalyzing);
+      const message = err instanceof Error ? err.message : t.adminPage.errorAnalyzing;
+      setError(message);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -121,9 +130,10 @@ export default function AdminPage() {
             description: t.adminPage.instructionsSavedToastDesc,
         });
     } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to save instructions.";
         toast({
             title: t.adminPage.errorTitle,
-            description: "Failed to save instructions.",
+            description: message,
             variant: "destructive",
         });
     } finally {
