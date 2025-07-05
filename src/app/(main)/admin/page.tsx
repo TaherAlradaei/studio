@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock } from "lucide-react";
-import { getSchedulingRecommendations } from "./actions";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info } from "lucide-react";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useLanguage } from "@/context/language-context";
 import type { Booking } from "@/lib/types";
@@ -37,6 +37,17 @@ export default function AdminPage() {
   const { toast } = useToast();
 
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
+
+  const [paymentInstructions, setPaymentInstructions] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function fetchInstructions() {
+        const instructions = await getPaymentInstructions();
+        setPaymentInstructions(instructions);
+    }
+    fetchInstructions();
+  }, []);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -100,6 +111,26 @@ export default function AdminPage() {
     setEditingBooking(null);
     setHourlyPrice("");
   };
+
+  const handleSaveInstructions = async () => {
+    setIsSaving(true);
+    try {
+        await updatePaymentInstructions(paymentInstructions);
+        toast({
+            title: t.adminPage.instructionsSavedToastTitle,
+            description: t.adminPage.instructionsSavedToastDesc,
+        });
+    } catch (err) {
+        toast({
+            title: t.adminPage.errorTitle,
+            description: "Failed to save instructions.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
 
   const getStatusBadge = (status: Booking['status']) => {
     switch (status) {
@@ -185,7 +216,7 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
-
+        
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle>{t.adminPage.manageAvailabilityCardTitle}</CardTitle>
@@ -291,6 +322,34 @@ export default function AdminPage() {
             </CardContent>
         </Card>
 
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <Info className="w-6 h-6 text-primary" />
+                    <CardTitle>{t.adminPage.paymentInstructionsCardTitle}</CardTitle>
+                </div>
+                <CardDescription>{t.adminPage.paymentInstructionsCardDescription}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Label htmlFor="payment-instructions">{t.adminPage.paymentInstructionsLabel}</Label>
+                <Textarea
+                    id="payment-instructions"
+                    value={paymentInstructions}
+                    onChange={(e) => setPaymentInstructions(e.target.value)}
+                    rows={5}
+                />
+                <Button onClick={handleSaveInstructions} disabled={isSaving}>
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t.adminPage.savingButton}
+                        </>
+                    ) : (
+                        t.adminPage.saveButton
+                    )}
+                </Button>
+            </CardContent>
+        </Card>
 
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader>

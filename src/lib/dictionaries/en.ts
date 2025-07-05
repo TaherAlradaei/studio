@@ -60,6 +60,8 @@ export const enStrings = {
     priceEstimated: "Est. {price} YR",
     noBookings: "You have no upcoming bookings.",
     durationValue: "{duration} hr(s)",
+    paymentDialogTitle: "Booking Confirmed & Awaiting Payment",
+    paymentDialogDescription: "Your booking for {date} at {time} is confirmed. Please follow the instructions below to complete your payment and secure your spot.",
   },
   adminPage: {
     title: "Smart Scheduling Assistant",
@@ -97,6 +99,13 @@ export const enStrings = {
     blocked: "Blocked",
     invalidPriceToastTitle: "Invalid Price",
     invalidPriceToastDesc: "Please enter a valid positive number for the hourly rate.",
+    paymentInstructionsCardTitle: "Payment Instructions",
+    paymentInstructionsCardDescription: "This message will be shown to customers after they confirm a booking. Instruct them on how to complete payment.",
+    paymentInstructionsLabel: "Payment Instructions Message",
+    saveButton: "Save Instructions",
+    savingButton: "Saving...",
+    instructionsSavedToastTitle: "Instructions Saved",
+    instructionsSavedToastDesc: "The payment instructions have been updated successfully.",
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",
@@ -118,6 +127,7 @@ export const enStrings = {
   actions: {
       accept: "Accept",
       decline: "Decline",
+      ok: "OK",
   }
 };
 

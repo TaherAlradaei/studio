@@ -62,6 +62,8 @@ export const arStrings: Dictionary = {
     priceEstimated: "تقريبا. {price} ريال يمني",
     noBookings: "ليس لديك حجوزات قادمة.",
     durationValue: "{duration} ساعة (ساعات)",
+    paymentDialogTitle: "تم تأكيد الحجز وبانتظار الدفع",
+    paymentDialogDescription: "تم تأكيد حجزك بتاريخ {date} في الساعة {time}. يرجى اتباع التعليمات أدناه لإتمام عملية الدفع وتأمين حجزك.",
   },
   adminPage: {
     title: "مساعد الجدولة الذكي",
@@ -99,6 +101,13 @@ export const arStrings: Dictionary = {
     blocked: "محظور",
     invalidPriceToastTitle: "سعر غير صالح",
     invalidPriceToastDesc: "الرجاء إدخال رقم موجب صالح للسعر بالساعة.",
+    paymentInstructionsCardTitle: "تعليمات الدفع",
+    paymentInstructionsCardDescription: "سيتم عرض هذه الرسالة للعملاء بعد تأكيد الحجز. قم بإرشادهم حول كيفية إتمام عملية الدفع.",
+    paymentInstructionsLabel: "رسالة تعليمات الدفع",
+    saveButton: "حفظ التعليمات",
+    savingButton: "جارٍ الحفظ...",
+    instructionsSavedToastTitle: "تم حفظ التعليمات",
+    instructionsSavedToastDesc: "تم تحديث تعليمات الدفع بنجاح.",
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",
@@ -120,5 +129,6 @@ export const arStrings: Dictionary = {
   actions: {
       accept: "قبول",
       decline: "رفض",
+      ok: "موافق",
   }
 };
