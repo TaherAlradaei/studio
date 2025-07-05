@@ -161,15 +161,17 @@ export default function AdminPage() {
                         <TableCell>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</TableCell>
                         <TableCell>{getStatusBadge(booking.status)}</TableCell>
                         <TableCell className="text-right">
-                          {booking.status === 'pending' && (
-                            <div className="flex gap-2 justify-end">
+                          <div className="flex gap-2 justify-end">
+                            {booking.status === 'pending' && (
                               <Button size="sm" onClick={() => handleConfirmClick(booking)}>{t.adminPage.confirm}</Button>
-                              <Button size="sm" variant="outline" onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
-                            </div>
-                          )}
-                           {(booking.status === 'confirmed' || booking.status === 'awaiting-confirmation') && (
-                            <Button size="sm" variant="outline" onClick={() => handleConfirmClick(booking)}>{t.adminPage.edit}</Button>
-                          )}
+                            )}
+                            {(booking.status === 'awaiting-confirmation' || booking.status === 'confirmed') && (
+                              <Button size="sm" variant="outline" onClick={() => handleConfirmClick(booking)}>{t.adminPage.edit}</Button>
+                            )}
+                            {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
+                                <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -227,29 +229,57 @@ export default function AdminPage() {
                                     return bookingDate.toDateString() === slotDateTime.toDateString() && b.time === time && b.status !== 'cancelled';
                                 });
 
-                                const isBooked = !!booking && booking.status !== 'blocked';
-                                const isBlocked = !!booking && booking.status === 'blocked';
-                                const isPast = slotDateTime < new Date();
+                                const isPast = new Date() > slotDateTime;
+                                
+                                let buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" = "outline";
+                                let buttonClassName = "w-full";
+                                let badgeContent = null;
+                                let isDisabled = isPast;
+
+                                if (booking) {
+                                    if (booking.status !== 'blocked') {
+                                        isDisabled = true;
+                                    }
+                                    
+                                    switch (booking.status) {
+                                        case 'blocked':
+                                            buttonVariant = 'destructive';
+                                            badgeContent = <Badge variant="destructive">{t.adminPage.blocked}</Badge>;
+                                            break;
+                                        case 'confirmed':
+                                            buttonVariant = 'secondary';
+                                            badgeContent = <Badge variant="default">{t.bookingHistoryTable.statusConfirmed}</Badge>;
+                                            break;
+                                        case 'awaiting-confirmation':
+                                            buttonVariant = 'default';
+                                            buttonClassName = "w-full bg-yellow-500 hover:bg-yellow-500/80 text-primary-foreground";
+                                            badgeContent = <Badge className="bg-yellow-500 hover:bg-yellow-500/80">{t.bookingHistoryTable.statusAwaitingConfirmation}</Badge>;
+                                            break;
+                                        case 'pending':
+                                            buttonVariant = 'ghost';
+                                            badgeContent = <Badge variant="secondary">{t.bookingHistoryTable.statusPending}</Badge>;
+                                            break;
+                                    }
+                                }
                                 
                                 return (
                                 <div key={time} className="relative">
                                     <Button
-                                    variant={isBooked ? "secondary" : isBlocked ? "destructive" : "outline"}
-                                    className="w-full"
-                                    disabled={isBooked || isPast}
-                                    onClick={() => {
-                                        if (isBlocked) {
-                                            unblockSlot(booking.id);
-                                        } else {
-                                            blockSlot(availabilityDate, time);
-                                        }
-                                    }}
+                                        variant={buttonVariant}
+                                        className={buttonClassName}
+                                        disabled={isDisabled}
+                                        onClick={() => {
+                                            if (booking?.status === 'blocked') {
+                                                unblockSlot(booking.id!);
+                                            } else if (!booking) {
+                                                blockSlot(availabilityDate, time);
+                                            }
+                                        }}
                                     >
                                     {time}
                                     </Button>
                                     <div className="absolute -bottom-5 left-0 right-0 text-center text-xs">
-                                        {isBooked && <Badge variant="secondary">{t.adminPage.booked}</Badge>}
-                                        {isBlocked && <Badge variant="destructive">{t.adminPage.blocked}</Badge>}
+                                        {badgeContent}
                                     </div>
                                 </div>
                                 );
@@ -348,5 +378,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
