@@ -16,8 +16,6 @@ interface BookingContextType {
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
-const firebaseNotConfiguredError = new Error("Firebase is not configured. Please check your environment variables.");
-
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
@@ -48,7 +46,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price">) => {
-    if (!db) throw firebaseNotConfiguredError;
+    if (!db) {
+        throw new Error("Firebase is not configured. Please check your environment variables.");
+    }
     try {
       await addDoc(collection(db, "bookings"), {
         ...newBookingData,
@@ -61,7 +61,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const updateBooking = async (id: string, updates: Partial<Omit<Booking, 'id'>>) => {
-    if (!db) throw firebaseNotConfiguredError;
+    if (!db) {
+        throw new Error("Firebase is not configured. Please check your environment variables.");
+    }
     const bookingDoc = doc(db, "bookings", id);
     try {
       await updateDoc(bookingDoc, updates);
@@ -72,7 +74,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const blockSlot = async (date: Date, time: string) => {
-    if (!db) throw firebaseNotConfiguredError;
+    if (!db) {
+        throw new Error("Firebase is not configured. Please check your environment variables.");
+    }
     const [hours, minutes] = time.split(':').map(Number);
     const bookingDate = new Date(date);
     bookingDate.setHours(hours, minutes, 0, 0);
@@ -93,7 +97,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const unblockSlot = async (id: string) => {
-    if (!db) throw firebaseNotConfiguredError;
+    if (!db) {
+        throw new Error("Firebase is not configured. Please check your environment variables.");
+    }
     try {
       await deleteDoc(doc(db, "bookings", id));
     } catch (error) {
@@ -104,7 +110,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
   const acceptBooking = async (bookingToAccept: Booking): Promise<'accepted' | 'slot-taken'> => {
     if (!db) {
-        throw firebaseNotConfiguredError;
+        throw new Error("Firebase is not configured. Please check your environment variables.");
     }
     const bookingDocRef = doc(db, "bookings", bookingToAccept.id);
 

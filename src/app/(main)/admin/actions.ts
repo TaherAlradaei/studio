@@ -5,15 +5,13 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export async function getSchedulingRecommendations(input: AnalyzeBookingPatternsInput) {
-    if (!process.env.GOOGLE_API_KEY) {
-        throw new Error("The GOOGLE_API_KEY is not configured in your environment. Please add it to your .env file to use AI features.");
-    }
     return await analyzeBookingPatterns(input);
 }
 
 export async function getPaymentInstructions(): Promise<string> {
   if (!db) {
-    throw new Error("Firebase is not configured. Please check your environment variables.");
+    console.error("Firebase is not configured. Please check your environment variables.");
+    return "Please contact us at +967 736 333 328 to finalize payment.";
   }
   const instructionsDocRef = doc(db, "settings", "paymentInfo");
   try {
@@ -34,6 +32,7 @@ export async function getPaymentInstructions(): Promise<string> {
 
 export async function updatePaymentInstructions(instructions: string): Promise<void> {
     if (!db) {
+        console.error("Firebase is not configured. Cannot update instructions.");
         throw new Error("Firebase is not configured. Cannot update instructions.");
     }
     try {
