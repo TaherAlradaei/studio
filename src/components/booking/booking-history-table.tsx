@@ -11,17 +11,41 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/context/language-context";
+import type { Booking } from "@/lib/types";
 
 export function BookingHistoryTable() {
   const { bookings } = useBookings();
   const { t, lang } = useLanguage();
-  const upcomingBookings = bookings.filter(b => new Date(b.date) >= new Date());
+  const upcomingBookings = bookings.filter(b => new Date(b.date) >= new Date() && b.status !== 'cancelled');
 
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   };
+
+  const getStatusBadge = (status: Booking['status']) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="secondary">{t.bookingHistoryTable.statusPending}</Badge>;
+      case 'confirmed':
+        return <Badge variant="default">{t.bookingHistoryTable.statusConfirmed}</Badge>;
+      case 'cancelled':
+        return <Badge variant="destructive">{t.bookingHistoryTable.statusCancelled}</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  const formatPrice = (booking: Booking) => {
+    if (booking.status === 'pending') {
+      return <span className="text-muted-foreground">{t.bookingHistoryTable.priceTBD}</span>
+    }
+    if(typeof booking.price === 'number') {
+      return `$${booking.price.toFixed(2)}`;
+    }
+    return <span className="text-muted-foreground">--</span>
+  }
 
   return (
     <div className="border rounded-lg overflow-hidden bg-card">
@@ -32,6 +56,7 @@ export function BookingHistoryTable() {
             <TableHead>{t.bookingHistoryTable.time}</TableHead>
             <TableHead>{t.bookingHistoryTable.duration}</TableHead>
             <TableHead>{t.bookingHistoryTable.name}</TableHead>
+            <TableHead>{t.bookingHistoryTable.price}</TableHead>
             <TableHead className="text-right">{t.bookingHistoryTable.status}</TableHead>
           </TableRow>
         </TableHeader>
@@ -45,14 +70,15 @@ export function BookingHistoryTable() {
                 <TableCell>{booking.time}</TableCell>
                 <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
                 <TableCell>{booking.name}</TableCell>
+                <TableCell>{formatPrice(booking)}</TableCell>
                 <TableCell className="text-right">
-                  <Badge className="bg-primary/20 text-primary hover:bg-primary/30">{t.bookingHistoryTable.upcoming}</Badge>
+                  {getStatusBadge(booking.status)}
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={5} className="text-center h-24">
+              <TableCell colSpan={6} className="text-center h-24">
                 {t.bookingHistoryTable.noBookings}
               </TableCell>
             </TableRow>

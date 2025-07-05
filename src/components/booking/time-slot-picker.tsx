@@ -51,6 +51,8 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
     const newBookingEndHour = slotHour + duration;
 
     for (const booking of bookings) {
+      if (booking.status !== 'confirmed') continue;
+
       const bookingDate = new Date(booking.date);
       if (bookingDate.toDateString() === selectedDate.toDateString()) {
         const existingBookingStartHour = bookingDate.getHours();
@@ -88,13 +90,14 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
           </label>
           <Select
             value={duration.toString()}
-            onValueChange={(value) => setDuration(parseInt(value))}
+            onValueChange={(value) => setDuration(parseFloat(value))}
           >
             <SelectTrigger id="duration" className="w-[180px]">
               <SelectValue placeholder={t.timeSlotPicker.durationPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="1">{t.timeSlotPicker.oneHour}</SelectItem>
+              <SelectItem value="1.5">{t.timeSlotPicker.oneAndHalfHour}</SelectItem>
               <SelectItem value="2">{t.timeSlotPicker.twoHours}</SelectItem>
             </SelectContent>
           </Select>

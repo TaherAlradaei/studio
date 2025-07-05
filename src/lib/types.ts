@@ -5,4 +5,6 @@ export interface Booking {
   date: Date;
   time: string;
   duration: number; // in hours
+  status: 'pending' | 'confirmed' | 'cancelled';
+  price?: number;
 }

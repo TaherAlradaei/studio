@@ -69,15 +69,14 @@ export function BookingForm({
     });
     
     toast({
-      title: t.toasts.bookingConfirmedTitle,
-      description: t.toasts.bookingConfirmedDesc
+      title: t.toasts.bookingPendingTitle,
+      description: t.toasts.bookingPendingDesc
         .replace('{date}', selectedDate.toLocaleDateString(lang))
         .replace('{time}', selectedTime),
-      variant: "default",
-      className: "bg-primary text-primary-foreground"
     });
 
     onBookingComplete();
+    form.reset();
   }
 
   const bookingForDesc = t.bookingForm.bookingFor
@@ -146,7 +145,7 @@ export function BookingForm({
               )}
             />
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-              {t.bookingForm.confirmButton}
+              {t.bookingForm.requestButton}
             </Button>
           </form>
         </Form>
