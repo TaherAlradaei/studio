@@ -1,10 +1,9 @@
+"use client";
+
 import { AuthForm } from "@/components/auth/auth-form";
 import { Logo } from "@/components/logo";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LanguageProvider, LanguageContext } from "@/context/language-context";
 import { Suspense } from "react";
-import { arStrings } from "@/lib/dictionaries/ar";
-import { enStrings } from "@/lib/dictionaries/en";
 import { useLanguage } from "@/context/language-context";
 
 function AuthPageContent() {
