@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { Logo } from "./logo";
 import { useAuth } from "@/context/auth-context";
 import { useBookings } from "@/context/booking-context";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 
 const LanguageSwitcher = () => {
@@ -40,12 +38,6 @@ export function Header() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { bookings } = useBookings();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
-  };
 
   const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
 
@@ -89,15 +81,6 @@ export function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitcher />
-          {user ? (
-            <Button onClick={handleLogout} variant="ghost" size="sm">{t.header.logout}</Button>
-          ) : (
-            pathname !== '/login' && (
-                <Button asChild variant="secondary" size="sm">
-                    <Link href="/login">{t.header.login}</Link>
-                </Button>
-            )
-          )}
         </div>
       </div>
     </header>

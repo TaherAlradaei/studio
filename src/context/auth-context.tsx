@@ -1,14 +1,30 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import type { User } from "firebase/auth";
 import { Loader2 } from "lucide-react";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
 }
+
+// Create a mock user object to represent a guest session.
+const guestUser: User = {
+    uid: 'guest-user-001',
+    email: null,
+    emailVerified: false,
+    displayName: 'Guest',
+    isAnonymous: true,
+    photoURL: null,
+    providerData: [],
+    getIdToken: async () => 'mock-guest-token',
+    getIdTokenResult: async () => ({ token: 'mock-guest-token', claims: {}, authTime: '', issuedAtTime: '', signInProvider: null, signInSecondFactor: null, expirationTime: '' }),
+    reload: async () => {},
+    delete: async () => {},
+    toJSON: () => ({}),
+    providerId: 'guest'
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -17,11 +33,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
+    // Automatically set the guest user.
+    setUser(guestUser);
+    setIsLoading(false);
   }, []);
 
   if (isLoading) {

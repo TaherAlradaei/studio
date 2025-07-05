@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { TimeSlotPicker } from "@/components/booking/time-slot-picker";
 import { BookingForm } from "@/components/booking/booking-form";
@@ -15,18 +14,11 @@ import { useAuth } from "@/context/auth-context";
 export default function BookingPage() {
   const { t } = useLanguage();
   const { user, isLoading } = useAuth();
-  const router = useRouter();
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
   const { bookings } = useBookings();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isLoading, router]);
 
   if (isLoading || !user) {
     return null; // Or a loading spinner

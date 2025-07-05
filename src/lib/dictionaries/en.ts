@@ -4,8 +4,6 @@ export const enStrings = {
     bookField: "Book a Field",
     myBookings: "My Bookings",
     admin: "Admin",
-    login: "Login",
-    logout: "Logout",
   },
   footer: {
     copyright: "© {year} Al Maidan Football Academy. All rights reserved.",
@@ -109,16 +107,9 @@ export const enStrings = {
     bookingCancelled: "The booking has been cancelled.",
   },
   auth: {
-      welcomeTitle: "Welcome",
-      welcomeDesc: "Click the button below to continue as a guest.",
-      continueAsGuest: "Continue as Guest",
       errorTitle: "Authentication Error",
       notLoggedInTitle: "Not Logged In",
       notLoggedInDesc: "You must be logged in to perform this action.",
-      firebaseErrors: {
-        "auth/operation-not-allowed": "Anonymous sign-in is disabled. Please enable it in the Firebase console.",
-        "auth/api-key-not-valid": "Invalid Firebase API Key. Please check your configuration and make sure it is correct."
-      }
   },
   actions: {
       accept: "Accept",

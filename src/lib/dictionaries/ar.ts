@@ -6,8 +6,6 @@ export const arStrings: Dictionary = {
     bookField: "احجز ملعب",
     myBookings: "حجوزاتي",
     admin: "الإدارة",
-    login: "تسجيل الدخول",
-    logout: "تسجيل الخروج",
   },
   footer: {
     copyright: "© {year} أكاديمية الميدان لكرة القدم. جميع الحقوق محفوظة.",
@@ -111,16 +109,9 @@ export const arStrings: Dictionary = {
     bookingCancelled: "تم إلغاء الحجز.",
   },
   auth: {
-      welcomeTitle: "أهلاً بك",
-      welcomeDesc: "انقر على الزر أدناه للمتابعة كضيف.",
-      continueAsGuest: "المتابعة كضيف",
       errorTitle: "خطأ في المصادقة",
       notLoggedInTitle: "غير مسجل الدخول",
       notLoggedInDesc: "يجب عليك تسجيل الدخول لتنفيذ هذا الإجراء.",
-      firebaseErrors: {
-        "auth/operation-not-allowed": "تم تعطيل تسجيل الدخول المجهول. يرجى تمكينه في وحدة تحكم Firebase.",
-        "auth/api-key-not-valid": "مفتاح API الخاص بـ Firebase غير صالح. يرجى التحقق من الإعدادات والتأكد من صحتها."
-      }
   },
   actions: {
       accept: "قبول",
