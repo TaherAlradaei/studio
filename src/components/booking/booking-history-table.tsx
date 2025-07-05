@@ -38,13 +38,15 @@ export function BookingHistoryTable() {
   };
 
   const formatPrice = (booking: Booking) => {
+    if (booking.status === 'confirmed' && typeof booking.price === 'number') {
+      return `${booking.price.toLocaleString()} YR`;
+    }
     if (booking.status === 'pending') {
-      return <span className="text-muted-foreground">{t.bookingHistoryTable.priceTBD}</span>
+      const estimatedPrice = 8000 * booking.duration;
+      const formattedPrice = t.bookingHistoryTable.priceEstimated.replace('{price}', estimatedPrice.toLocaleString());
+      return <span className="text-muted-foreground" title={t.bookingHistoryTable.priceTBD}>{formattedPrice}</span>;
     }
-    if(typeof booking.price === 'number') {
-      return `$${booking.price.toFixed(2)}`;
-    }
-    return <span className="text-muted-foreground">--</span>
+    return <span className="text-muted-foreground">--</span>;
   }
 
   return (

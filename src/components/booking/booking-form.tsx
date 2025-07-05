@@ -40,7 +40,7 @@ export function BookingForm({
 
   const formSchema = React.useMemo(() => z.object({
     name: z.string().min(2, t.bookingForm.validation.nameMin),
-    phone: z.string().regex(/^\d{3}\s\d{3}\s\d{3}$/, t.bookingForm.validation.phoneFormat),
+    phone: z.string().regex(/^[\d\s]{7,15}$/, t.bookingForm.validation.phoneFormat),
     terms: z.boolean().refine((val) => val === true, {
       message: t.bookingForm.validation.termsRequired,
     }),

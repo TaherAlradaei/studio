@@ -139,7 +139,7 @@ export default function AdminPage() {
                         <TableCell>{booking.time}</TableCell>
                         <TableCell>{booking.name}<br/><span className="text-sm text-muted-foreground">{booking.phone}</span></TableCell>
                         <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
-                        <TableCell>{booking.price ? `$${booking.price.toFixed(2)}` : '-'}</TableCell>
+                        <TableCell>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</TableCell>
                         <TableCell>{getStatusBadge(booking.status)}</TableCell>
                         <TableCell className="text-right">
                           {booking.status === 'pending' && (
@@ -241,7 +241,7 @@ export default function AdminPage() {
           </AlertDialogHeader>
           <div className="grid gap-2">
             <Label htmlFor="price">{t.adminPage.priceLabel}</Label>
-            <Input id="price" type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 50" />
+            <Input id="price" type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 8000" />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>{t.adminPage.cancel}</AlertDialogCancel>
