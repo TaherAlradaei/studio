@@ -21,9 +21,15 @@ export function AuthForm() {
       await signInAnonymously(auth);
       router.push("/");
     } catch (error: any) {
+      let errorMessage = error.message;
+      const firebaseErrorKey = error.code as keyof typeof t.auth.firebaseErrors;
+      if (error.code && t.auth.firebaseErrors[firebaseErrorKey]) {
+        errorMessage = t.auth.firebaseErrors[firebaseErrorKey];
+      }
+      
       toast({
         title: t.auth.errorTitle,
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

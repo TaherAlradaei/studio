@@ -118,7 +118,8 @@ export const arStrings: Dictionary = {
       notLoggedInTitle: "غير مسجل الدخول",
       notLoggedInDesc: "يجب عليك تسجيل الدخول لتنفيذ هذا الإجراء.",
       firebaseErrors: {
-        "auth/operation-not-allowed": "تم تعطيل تسجيل الدخول المجهول. يرجى تمكينه في وحدة تحكم Firebase."
+        "auth/operation-not-allowed": "تم تعطيل تسجيل الدخول المجهول. يرجى تمكينه في وحدة تحكم Firebase.",
+        "auth/api-key-not-valid": "مفتاح API الخاص بـ Firebase غير صالح. يرجى التحقق من الإعدادات والتأكد من صحتها."
       }
   },
   actions: {

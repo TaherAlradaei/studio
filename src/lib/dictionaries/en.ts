@@ -117,6 +117,7 @@ export const enStrings = {
       notLoggedInDesc: "You must be logged in to perform this action.",
       firebaseErrors: {
         "auth/operation-not-allowed": "Anonymous sign-in is disabled. Please enable it in the Firebase console.",
+        "auth/api-key-not-valid": "Invalid Firebase API Key. Please check your configuration and make sure it is correct."
       }
   },
   actions: {
