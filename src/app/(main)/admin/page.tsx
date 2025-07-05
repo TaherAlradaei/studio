@@ -77,10 +77,10 @@ export default function AdminPage() {
       });
       return;
     }
-    await updateBooking(editingBooking.id, { status: 'confirmed', price: newPrice });
+    await updateBooking(editingBooking.id, { status: 'awaiting-confirmation', price: newPrice });
     toast({
       title: t.toasts.bookingUpdateTitle,
-      description: t.toasts.bookingUpdateDesc.replace('{name}', editingBooking.name),
+      description: t.toasts.priceQuoteSent.replace('{name}', editingBooking.name),
     });
     setEditingBooking(null);
     setPrice("");
@@ -90,6 +90,8 @@ export default function AdminPage() {
     switch (status) {
       case 'pending':
         return <Badge variant="secondary">{t.bookingHistoryTable.statusPending}</Badge>;
+      case 'awaiting-confirmation':
+        return <Badge className="bg-yellow-500 hover:bg-yellow-500/80">{t.bookingHistoryTable.statusAwaitingConfirmation}</Badge>;
       case 'confirmed':
         return <Badge variant="default">{t.bookingHistoryTable.statusConfirmed}</Badge>;
       case 'cancelled':
@@ -148,7 +150,7 @@ export default function AdminPage() {
                               <Button size="sm" variant="outline" onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
                             </div>
                           )}
-                           {booking.status === 'confirmed' && (
+                           {(booking.status === 'confirmed' || booking.status === 'awaiting-confirmation') && (
                             <Button size="sm" variant="outline" onClick={() => handleConfirmClick(booking)}>{t.adminPage.edit}</Button>
                           )}
                         </TableCell>

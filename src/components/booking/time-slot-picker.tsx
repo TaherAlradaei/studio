@@ -51,7 +51,7 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
     const newBookingEndHour = slotHour + duration;
 
     for (const booking of bookings) {
-      if (booking.status !== 'confirmed') continue;
+      if (booking.status === 'cancelled') continue;
 
       const bookingDate = new Date(booking.date);
       if (bookingDate.toDateString() === selectedDate.toDateString()) {

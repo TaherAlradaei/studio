@@ -20,6 +20,7 @@ import { useBookings } from "@/context/booking-context";
 import { useToast } from "@/hooks/use-toast";
 import { Shirt } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { useAuth } from "@/context/auth-context";
 
 interface BookingFormProps {
   selectedDate: Date;
@@ -37,6 +38,7 @@ export function BookingForm({
   const { addBooking } = useBookings();
   const { toast } = useToast();
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
 
   const formSchema = React.useMemo(() => z.object({
     name: z.string().min(2, t.bookingForm.validation.nameMin),
@@ -56,11 +58,21 @@ export function BookingForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+        toast({
+            title: t.auth.notLoggedInTitle,
+            description: t.auth.notLoggedInDesc,
+            variant: "destructive",
+        });
+        return;
+    }
+
     const [hours, minutes] = selectedTime.split(":").map(Number);
     const bookingDate = new Date(selectedDate);
     bookingDate.setHours(hours, minutes);
 
     await addBooking({
+      userId: user.uid,
       name: values.name,
       phone: values.phone,
       date: bookingDate,

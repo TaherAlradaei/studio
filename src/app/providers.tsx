@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthProvider } from "@/context/auth-context";
 import { BookingProvider } from "@/context/booking-context";
 import { LanguageProvider, useLanguage } from "@/context/language-context";
 import React, { useEffect } from "react";
@@ -24,11 +25,13 @@ function AppDirectionManager({ children }: { children: React.ReactNode }) {
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <LanguageProvider>
-      <BookingProvider>
-        <AppDirectionManager>
-            {children}
-        </AppDirectionManager>
-      </BookingProvider>
+      <AuthProvider>
+        <BookingProvider>
+          <AppDirectionManager>
+              {children}
+          </AppDirectionManager>
+        </BookingProvider>
+      </AuthProvider>
     </LanguageProvider>
   );
 }

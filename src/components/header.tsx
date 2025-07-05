@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { Logo } from "./logo";
+import { useAuth } from "@/context/auth-context";
+import { useBookings } from "@/context/booking-context";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { Badge } from "@/components/ui/badge";
 
 const LanguageSwitcher = () => {
   const { lang, setLang } = useLanguage();
@@ -33,12 +38,24 @@ const LanguageSwitcher = () => {
 export function Header() {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const { bookings } = useBookings();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
+
+  const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
 
   const navLinks = [
     { href: "/", label: t.header.bookField },
     { href: "/bookings", label: t.header.myBookings },
-    { href: "/admin", label: t.header.admin },
+    { href: "/admin", label: t.header.admin, notificationCount: pendingBookingsCount },
   ];
+
+  const visibleNavLinks = user ? navLinks : [];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -50,7 +67,7 @@ export function Header() {
           </span>
         </Link>
         <nav className="flex items-center gap-4 text-sm lg:gap-6">
-          {navLinks.map((link) => (
+          {visibleNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -59,12 +76,28 @@ export function Header() {
                 pathname === link.href ? "text-foreground" : "text-foreground/60"
               )}
             >
-              {link.label}
+              <div className="relative flex items-center">
+                {link.label}
+                {link.notificationCount > 0 && link.href === '/admin' && (
+                  <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center rounded-full p-0">
+                    {link.notificationCount}
+                  </Badge>
+                )}
+              </div>
             </Link>
           ))}
         </nav>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <LanguageSwitcher />
+          {user ? (
+            <Button onClick={handleLogout} variant="ghost" size="sm">{t.header.logout}</Button>
+          ) : (
+            pathname !== '/login' && (
+                <Button asChild variant="secondary" size="sm">
+                    <Link href="/login">{t.header.login}</Link>
+                </Button>
+            )
+          )}
         </div>
       </div>
     </header>

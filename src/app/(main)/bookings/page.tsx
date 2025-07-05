@@ -1,11 +1,26 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
 import { BookingHistoryTable } from "@/components/booking/booking-history-table";
 import { useLanguage } from "@/context/language-context";
 import { Ticket } from "lucide-react";
 
 export default function BookingsPage() {
   const { t } = useLanguage();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user) {
+    return null; // or a loading spinner
+  }
 
   return (
     <div className="container py-8">

@@ -12,11 +12,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/context/language-context";
 import type { Booking } from "@/lib/types";
+import { useAuth } from "@/context/auth-context";
+import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function BookingHistoryTable() {
-  const { bookings } = useBookings();
+  const { bookings, updateBooking } = useBookings();
+  const { user } = useAuth();
   const { t, lang } = useLanguage();
-  const upcomingBookings = bookings.filter(b => new Date(b.date) >= new Date() && b.status !== 'cancelled');
+  const { toast } = useToast();
+
+  const userBookings = bookings.filter(b => b.userId === user?.uid && new Date(b.date) >= new Date() && b.status !== 'cancelled');
 
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
@@ -24,10 +30,29 @@ export function BookingHistoryTable() {
     day: 'numeric'
   };
 
+  const handleAccept = async (booking: Booking) => {
+    await updateBooking(booking.id, { status: 'confirmed' });
+    toast({
+        title: t.toasts.bookingConfirmedTitle,
+        description: t.toasts.bookingConfirmedDesc.replace('{date}', new Date(booking.date).toLocaleDateString(lang)).replace('{time}', booking.time),
+    });
+  };
+
+  const handleDecline = async (booking: Booking) => {
+      await updateBooking(booking.id, { status: 'cancelled' });
+      toast({
+          title: t.toasts.bookingUpdateTitle,
+          description: t.toasts.bookingCancelled,
+          variant: "destructive"
+      });
+  };
+
   const getStatusBadge = (status: Booking['status']) => {
     switch (status) {
       case 'pending':
         return <Badge variant="secondary">{t.bookingHistoryTable.statusPending}</Badge>;
+      case 'awaiting-confirmation':
+        return <Badge className="bg-yellow-500 hover:bg-yellow-500/80">{t.bookingHistoryTable.statusAwaitingConfirmation}</Badge>;
       case 'confirmed':
         return <Badge variant="default">{t.bookingHistoryTable.statusConfirmed}</Badge>;
       case 'cancelled':
@@ -38,7 +63,7 @@ export function BookingHistoryTable() {
   };
 
   const formatPrice = (booking: Booking) => {
-    if (booking.status === 'confirmed' && typeof booking.price === 'number') {
+    if ((booking.status === 'confirmed' || booking.status === 'awaiting-confirmation') && typeof booking.price === 'number') {
       return `${booking.price.toLocaleString()} YR`;
     }
     if (booking.status === 'pending') {
@@ -57,24 +82,31 @@ export function BookingHistoryTable() {
             <TableHead>{t.bookingHistoryTable.date}</TableHead>
             <TableHead>{t.bookingHistoryTable.time}</TableHead>
             <TableHead>{t.bookingHistoryTable.duration}</TableHead>
-            <TableHead>{t.bookingHistoryTable.name}</TableHead>
             <TableHead>{t.bookingHistoryTable.price}</TableHead>
-            <TableHead className="text-right">{t.bookingHistoryTable.status}</TableHead>
+            <TableHead>{t.bookingHistoryTable.status}</TableHead>
+            <TableHead className="text-right">{t.bookingHistoryTable.actions}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {upcomingBookings.length > 0 ? (
-            upcomingBookings.map((booking) => (
+          {userBookings.length > 0 ? (
+            userBookings.map((booking) => (
               <TableRow key={booking.id}>
                 <TableCell className="font-medium">
                   {new Date(booking.date).toLocaleDateString(lang, dateOptions)}
                 </TableCell>
                 <TableCell>{booking.time}</TableCell>
                 <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
-                <TableCell>{booking.name}</TableCell>
                 <TableCell>{formatPrice(booking)}</TableCell>
-                <TableCell className="text-right">
+                <TableCell>
                   {getStatusBadge(booking.status)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {booking.status === 'awaiting-confirmation' && (
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" onClick={() => handleAccept(booking)}>{t.actions.accept}</Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDecline(booking)}>{t.actions.decline}</Button>
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
             ))
