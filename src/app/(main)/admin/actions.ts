@@ -8,9 +8,11 @@ export async function getSchedulingRecommendations(input: AnalyzeBookingPatterns
   return await analyzeBookingPatterns(input);
 }
 
-const instructionsDocRef = doc(db, "settings", "paymentInfo");
-
 export async function getPaymentInstructions(): Promise<string> {
+  if (!db) {
+    return "Firebase is not configured. Please check your environment variables.";
+  }
+  const instructionsDocRef = doc(db, "settings", "paymentInfo");
   try {
     const docSnap = await getDoc(instructionsDocRef);
     if (docSnap.exists()) {
@@ -25,7 +27,12 @@ export async function getPaymentInstructions(): Promise<string> {
 }
 
 export async function updatePaymentInstructions(instructions: string): Promise<void> {
+    if (!db) {
+        console.error("Firebase is not configured. Cannot update instructions.");
+        throw new Error("Firebase is not configured. Cannot update instructions.");
+    }
     try {
+        const instructionsDocRef = doc(db, "settings", "paymentInfo");
         await setDoc(instructionsDocRef, { instructions });
     } catch (error) {
         console.error("Error updating payment instructions:", error);

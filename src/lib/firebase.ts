@@ -10,7 +10,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+// We will only initialize firebase if all credentials are provided.
+const canInitializeFirebase = firebaseConfig.apiKey && firebaseConfig.projectId;
+
+if (!canInitializeFirebase) {
+    console.warn("Firebase credentials are not provided or are incomplete in your .env file. Firebase-dependent features will not work.");
+}
+
+const app = canInitializeFirebase && !getApps().length ? initializeApp(firebaseConfig) : (getApps().length > 0 ? getApp() : null);
+const db = app ? getFirestore(app) : null;
+
 
 export {db};

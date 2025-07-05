@@ -20,6 +20,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
   useEffect(() => {
+    if (!db) {
+        console.warn("Firestore not initialized. Real-time booking updates are disabled.");
+        return;
+    }
     // Note: You will need to create a "bookings" collection in your Firestore database.
     const q = query(collection(db, "bookings"), orderBy("date", "asc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -42,6 +46,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price">) => {
+    if (!db) return console.error("Firestore not initialized. Cannot add booking.");
     try {
       await addDoc(collection(db, "bookings"), {
         ...newBookingData,
@@ -53,6 +58,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const updateBooking = async (id: string, updates: Partial<Omit<Booking, 'id'>>) => {
+    if (!db) return console.error("Firestore not initialized. Cannot update booking.");
     const bookingDoc = doc(db, "bookings", id);
     try {
       await updateDoc(bookingDoc, updates);
@@ -62,6 +68,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const blockSlot = async (date: Date, time: string) => {
+    if (!db) return console.error("Firestore not initialized. Cannot block slot.");
     const [hours, minutes] = time.split(':').map(Number);
     const bookingDate = new Date(date);
     bookingDate.setHours(hours, minutes, 0, 0);
@@ -81,6 +88,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const unblockSlot = async (id: string) => {
+    if (!db) return console.error("Firestore not initialized. Cannot unblock slot.");
     try {
       await deleteDoc(doc(db, "bookings", id));
     } catch (error) {
@@ -89,6 +97,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const acceptBooking = async (bookingToAccept: Booking): Promise<'accepted' | 'slot-taken'> => {
+    if (!db) {
+        console.error("Firestore not initialized. Cannot accept booking.");
+        throw new Error("Firestore not initialized.");
+    }
     const bookingDocRef = doc(db, "bookings", bookingToAccept.id);
 
     try {
