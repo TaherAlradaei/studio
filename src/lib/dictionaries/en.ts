@@ -86,8 +86,8 @@ export const enStrings = {
     edit: "Edit",
     noBookings: "No bookings to display.",
     confirmDialogTitle: "Set Price & Send Quote",
-    confirmDialogDescription: "Set the final price for this booking. The customer will need to confirm the quote.",
-    priceLabel: "Price (YR)",
+    confirmDialogDescription: "Set the hourly rate for this booking. The total price will be calculated and sent to the customer for confirmation.",
+    priceLabel: "Price per Hour (YR)",
     confirmSubmitButton: "Send Quote",
     manageAvailabilityCardTitle: "Manage Field Availability",
     manageAvailabilityCardDescription: "Block or unblock time slots directly on the calendar.",
@@ -95,6 +95,8 @@ export const enStrings = {
     unblock: "Unblock",
     booked: "Booked",
     blocked: "Blocked",
+    invalidPriceToastTitle: "Invalid Price",
+    invalidPriceToastDesc: "Please enter a valid positive number for the hourly rate.",
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",
@@ -118,3 +120,5 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
+
+    

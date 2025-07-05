@@ -33,7 +33,7 @@ export default function AdminPage() {
   const [error, setError] = useState("");
 
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [price, setPrice] = useState("");
+  const [hourlyPrice, setHourlyPrice] = useState("");
   const { toast } = useToast();
 
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
@@ -63,7 +63,11 @@ export default function AdminPage() {
 
   const handleConfirmClick = (booking: Booking) => {
     setEditingBooking(booking);
-    setPrice(booking.price?.toString() || "");
+    if (booking.price && booking.duration > 0) {
+      setHourlyPrice((booking.price / booking.duration).toString());
+    } else {
+      setHourlyPrice("8000"); // Default hourly rate
+    }
   };
 
   const handleCancelBooking = async (booking: Booking) => {
@@ -78,22 +82,23 @@ export default function AdminPage() {
 
   const handleConfirmSubmit = async () => {
     if (!editingBooking || !editingBooking.id) return;
-    const newPrice = parseFloat(price);
-    if (isNaN(newPrice) || newPrice < 0) {
+    const newHourlyPrice = parseFloat(hourlyPrice);
+    if (isNaN(newHourlyPrice) || newHourlyPrice < 0) {
       toast({
-        title: "Invalid Price",
-        description: "Please enter a valid positive number for the price.",
+        title: t.adminPage.invalidPriceToastTitle,
+        description: t.adminPage.invalidPriceToastDesc,
         variant: "destructive",
       });
       return;
     }
-    await updateBooking(editingBooking.id, { status: 'awaiting-confirmation', price: newPrice });
+    const totalPrice = newHourlyPrice * editingBooking.duration;
+    await updateBooking(editingBooking.id, { status: 'awaiting-confirmation', price: totalPrice });
     toast({
       title: t.toasts.bookingUpdateTitle,
       description: t.toasts.priceQuoteSent.replace('{name}', editingBooking.name || 'N/A'),
     });
     setEditingBooking(null);
-    setPrice("");
+    setHourlyPrice("");
   };
 
   const getStatusBadge = (status: Booking['status']) => {
@@ -325,14 +330,14 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t.adminPage.confirmDialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              {editingBooking && `${editingBooking.name} - ${format(editingBooking.date, 'PPP')} @ ${editingBooking.time}`}
+              {editingBooking && `${editingBooking.name} - ${format(editingBooking.date, 'PPP')} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
               <br />
               {t.adminPage.confirmDialogDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="grid gap-2">
-            <Label htmlFor="price">{t.adminPage.priceLabel}</Label>
-            <Input id="price" type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 8000" />
+            <Label htmlFor="hourly-price">{t.adminPage.priceLabel}</Label>
+            <Input id="hourly-price" type="number" value={hourlyPrice} onChange={e => setHourlyPrice(e.target.value)} placeholder="e.g. 8000" />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>{t.adminPage.cancel}</AlertDialogCancel>
@@ -343,3 +348,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

@@ -88,8 +88,8 @@ export const arStrings: Dictionary = {
     edit: "تعديل",
     noBookings: "لا توجد حجوزات لعرضها.",
     confirmDialogTitle: "تحديد السعر وإرسال عرض",
-    confirmDialogDescription: "حدد السعر النهائي لهذا الحجز. سيحتاج العميل إلى تأكيد عرض السعر.",
-    priceLabel: "السعر (ريال يمني)",
+    confirmDialogDescription: "حدد السعر للساعة لهذا الحجز. سيتم حساب السعر الإجمالي وإرساله للعميل للتأكيد.",
+    priceLabel: "السعر للساعة (ريال يمني)",
     confirmSubmitButton: "إرسال عرض السعر",
     manageAvailabilityCardTitle: "إدارة توفر الملعب",
     manageAvailabilityCardDescription: "قم بحظر أو إلغاء حظر فترات زمنية مباشرة في التقويم.",
@@ -97,6 +97,8 @@ export const arStrings: Dictionary = {
     unblock: "إلغاء الحظر",
     booked: "محجوز",
     blocked: "محظور",
+    invalidPriceToastTitle: "سعر غير صالح",
+    invalidPriceToastDesc: "الرجاء إدخال رقم موجب صالح للسعر بالساعة.",
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",
@@ -118,3 +120,5 @@ export const arStrings: Dictionary = {
       decline: "رفض",
   }
 };
+
+    
