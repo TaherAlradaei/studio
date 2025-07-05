@@ -33,8 +33,12 @@ export function BookingHistoryTable() {
 
   useEffect(() => {
       async function fetchInstructions() {
-          const instructions = await getPaymentInstructions();
-          setPaymentInstructions(instructions);
+          try {
+            const instructions = await getPaymentInstructions();
+            setPaymentInstructions(instructions);
+          } catch (err) {
+            // Error is handled by the action itself now
+          }
       }
       fetchInstructions();
   }, []);
@@ -48,28 +52,44 @@ export function BookingHistoryTable() {
   };
 
   const handleAccept = async (booking: Booking) => {
-    const result = await acceptBooking(booking);
+    try {
+      const result = await acceptBooking(booking);
 
-    if (result === 'accepted') {
-        setCurrentBooking(booking);
-        setShowPaymentDialog(true);
-    } else if (result === 'slot-taken') {
-        toast({
-            title: t.toasts.slotUnavailableTitle,
-            description: t.toasts.slotUnavailableDesc,
-            variant: "destructive",
-        });
-        router.push('/');
+      if (result === 'accepted') {
+          setCurrentBooking(booking);
+          setShowPaymentDialog(true);
+      } else if (result === 'slot-taken') {
+          toast({
+              title: t.toasts.slotUnavailableTitle,
+              description: t.toasts.slotUnavailableDesc,
+              variant: "destructive",
+          });
+          router.push('/');
+      }
+    } catch(err) {
+      toast({
+        title: t.adminPage.errorTitle,
+        description: err instanceof Error ? err.message : "Failed to accept booking.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDecline = async (booking: Booking) => {
+    try {
       await updateBooking(booking.id, { status: 'cancelled' });
       toast({
           title: t.toasts.bookingUpdateTitle,
           description: t.toasts.bookingCancelled,
           variant: "destructive"
       });
+    } catch(err) {
+      toast({
+        title: t.adminPage.errorTitle,
+        description: err instanceof Error ? err.message : "Failed to decline booking.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusBadge = (status: Booking['status']) => {

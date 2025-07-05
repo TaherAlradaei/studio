@@ -71,24 +71,32 @@ export function BookingForm({
     const bookingDate = new Date(selectedDate);
     bookingDate.setHours(hours, minutes);
 
-    await addBooking({
-      userId: user.uid,
-      name: values.name,
-      phone: values.phone,
-      date: bookingDate,
-      time: selectedTime,
-      duration,
-    });
-    
-    toast({
-      title: t.toasts.bookingPendingTitle,
-      description: t.toasts.bookingPendingDesc
-        .replace('{date}', selectedDate.toLocaleDateString(lang))
-        .replace('{time}', selectedTime),
-    });
+    try {
+      await addBooking({
+        userId: user.uid,
+        name: values.name,
+        phone: values.phone,
+        date: bookingDate,
+        time: selectedTime,
+        duration,
+      });
+      
+      toast({
+        title: t.toasts.bookingPendingTitle,
+        description: t.toasts.bookingPendingDesc
+          .replace('{date}', selectedDate.toLocaleDateString(lang))
+          .replace('{time}', selectedTime),
+      });
 
-    onBookingComplete();
-    form.reset();
+      onBookingComplete();
+      form.reset();
+    } catch (err) {
+      toast({
+        title: t.adminPage.errorTitle,
+        description: err instanceof Error ? err.message : "Failed to create booking.",
+        variant: "destructive",
+      });
+    }
   }
 
   const bookingForDesc = t.bookingForm.bookingFor

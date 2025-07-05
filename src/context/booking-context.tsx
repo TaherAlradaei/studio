@@ -16,6 +16,8 @@ interface BookingContextType {
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
+const firebaseNotConfiguredError = new Error("Firebase is not configured. Please check your environment variables.");
+
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
@@ -46,7 +48,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price">) => {
-    if (!db) return console.error("Firestore not initialized. Cannot add booking.");
+    if (!db) throw firebaseNotConfiguredError;
     try {
       await addDoc(collection(db, "bookings"), {
         ...newBookingData,
@@ -54,21 +56,23 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       });
     } catch (error) {
       console.error("Error adding booking: ", error);
+      throw error;
     }
   };
   
   const updateBooking = async (id: string, updates: Partial<Omit<Booking, 'id'>>) => {
-    if (!db) return console.error("Firestore not initialized. Cannot update booking.");
+    if (!db) throw firebaseNotConfiguredError;
     const bookingDoc = doc(db, "bookings", id);
     try {
       await updateDoc(bookingDoc, updates);
     } catch (error) {
       console.error("Error updating booking: ", error);
+      throw error;
     }
   };
 
   const blockSlot = async (date: Date, time: string) => {
-    if (!db) return console.error("Firestore not initialized. Cannot block slot.");
+    if (!db) throw firebaseNotConfiguredError;
     const [hours, minutes] = time.split(':').map(Number);
     const bookingDate = new Date(date);
     bookingDate.setHours(hours, minutes, 0, 0);
@@ -84,22 +88,23 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       });
     } catch (error) {
       console.error("Error blocking slot:", error);
+      throw error;
     }
   };
 
   const unblockSlot = async (id: string) => {
-    if (!db) return console.error("Firestore not initialized. Cannot unblock slot.");
+    if (!db) throw firebaseNotConfiguredError;
     try {
       await deleteDoc(doc(db, "bookings", id));
     } catch (error) {
       console.error("Error unblocking slot:", error);
+      throw error;
     }
   };
 
   const acceptBooking = async (bookingToAccept: Booking): Promise<'accepted' | 'slot-taken'> => {
     if (!db) {
-        console.error("Firestore not initialized. Cannot accept booking.");
-        throw new Error("Firestore not initialized.");
+        throw firebaseNotConfiguredError;
     }
     const bookingDocRef = doc(db, "bookings", bookingToAccept.id);
 

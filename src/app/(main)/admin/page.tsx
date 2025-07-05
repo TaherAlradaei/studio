@@ -92,12 +92,20 @@ export default function AdminPage() {
 
   const handleCancelBooking = async (booking: Booking) => {
     if (!booking.id) return;
-    await updateBooking(booking.id, { status: 'cancelled' });
-    toast({
-      title: t.toasts.bookingUpdateTitle,
-      description: t.toasts.bookingUpdateDesc.replace('{name}', booking.name || 'N/A'),
-      variant: "destructive"
-    });
+    try {
+      await updateBooking(booking.id, { status: 'cancelled' });
+      toast({
+        title: t.toasts.bookingUpdateTitle,
+        description: t.toasts.bookingUpdateDesc.replace('{name}', booking.name || 'N/A'),
+        variant: "destructive"
+      });
+    } catch (err) {
+      toast({
+        title: t.adminPage.errorTitle,
+        description: err instanceof Error ? err.message : "Failed to cancel booking.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleConfirmSubmit = async () => {
@@ -111,14 +119,22 @@ export default function AdminPage() {
       });
       return;
     }
-    const totalPrice = newHourlyPrice * editingBooking.duration;
-    await updateBooking(editingBooking.id, { status: 'awaiting-confirmation', price: totalPrice });
-    toast({
-      title: t.toasts.bookingUpdateTitle,
-      description: t.toasts.priceQuoteSent.replace('{name}', editingBooking.name || 'N/A'),
-    });
-    setEditingBooking(null);
-    setHourlyPrice("");
+    try {
+      const totalPrice = newHourlyPrice * editingBooking.duration;
+      await updateBooking(editingBooking.id, { status: 'awaiting-confirmation', price: totalPrice });
+      toast({
+        title: t.toasts.bookingUpdateTitle,
+        description: t.toasts.priceQuoteSent.replace('{name}', editingBooking.name || 'N/A'),
+      });
+      setEditingBooking(null);
+      setHourlyPrice("");
+    } catch (err) {
+      toast({
+        title: t.adminPage.errorTitle,
+        description: err instanceof Error ? err.message : "Failed to update booking.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSaveInstructions = async () => {
@@ -309,11 +325,20 @@ export default function AdminPage() {
                                         variant={buttonVariant}
                                         className={buttonClassName}
                                         disabled={isDisabled}
-                                        onClick={() => {
-                                            if (booking?.status === 'blocked') {
-                                                unblockSlot(booking.id!);
-                                            } else if (!booking) {
-                                                blockSlot(availabilityDate, time);
+                                        onClick={async () => {
+                                            if (!availabilityDate) return;
+                                            try {
+                                                if (booking?.status === 'blocked') {
+                                                    await unblockSlot(booking.id!);
+                                                } else if (!booking) {
+                                                    await blockSlot(availabilityDate, time);
+                                                }
+                                            } catch (err) {
+                                                toast({
+                                                    title: t.adminPage.errorTitle,
+                                                    description: err instanceof Error ? err.message : "Failed to update availability.",
+                                                    variant: "destructive",
+                                                });
                                             }
                                         }}
                                     >
