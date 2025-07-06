@@ -3,6 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { Providers } from './providers';
+import { AppBackground } from '@/components/app-background';
 
 export const metadata: Metadata = {
   title: 'Al Maidan Football Academy',
@@ -28,8 +29,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={cn('antialiased min-h-screen flex flex-col font-body')}>
+      <body className={cn('antialiased min-h-screen flex flex-col font-body bg-background')}>
         <Providers>
+          <AppBackground />
           {children}
           <Toaster />
         </Providers>

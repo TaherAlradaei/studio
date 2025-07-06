@@ -121,7 +121,7 @@ export function BookingHistoryTable() {
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden bg-card">
+      <div className="border rounded-lg overflow-hidden bg-card/80 backdrop-blur-sm">
         <Table>
           <TableHeader>
             <TableRow>

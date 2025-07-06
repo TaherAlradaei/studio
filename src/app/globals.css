@@ -83,6 +83,21 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
   }
+}
+
+@keyframes kenburns {
+  0% {
+    transform: scale(1.1) translate(-5%, -5%);
+    transform-origin: center;
+  }
+  100% {
+    transform: scale(1.1) translate(5%, 5%);
+    transform-origin: center;
+  }
+}
+
+.animate-kenburns {
+  animation: kenburns 40s ease-in-out alternate infinite;
 }

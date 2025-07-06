@@ -4,6 +4,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { BookingProvider } from "@/context/booking-context";
 import { LanguageProvider, useLanguage } from "@/context/language-context";
 import React, { useEffect } from "react";
+import { BackgroundProvider } from "@/context/background-context";
 
 function AppDirectionManager({ children }: { children: React.ReactNode }) {
     const { lang } = useLanguage();
@@ -27,9 +28,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <LanguageProvider>
       <AuthProvider>
         <BookingProvider>
-          <AppDirectionManager>
-              {children}
-          </AppDirectionManager>
+            <BackgroundProvider>
+              <AppDirectionManager>
+                  {children}
+              </AppDirectionManager>
+            </BackgroundProvider>
         </BookingProvider>
       </AuthProvider>
     </LanguageProvider>
