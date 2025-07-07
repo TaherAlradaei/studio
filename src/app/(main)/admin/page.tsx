@@ -350,51 +350,6 @@ export default function AdminPage() {
         
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
-                <div className="flex items-center gap-2">
-                    <ImageUp className="w-6 h-6 text-primary" />
-                    <CardTitle>{t.adminPage.manageBackgroundsCardTitle}</CardTitle>
-                </div>
-                <CardDescription>{t.adminPage.manageBackgroundsCardDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                {backgrounds.map((bg, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row items-center gap-4 p-4 border rounded-lg bg-background/50">
-                        <Image
-                            src={bg.url}
-                            alt={`Background ${index + 1}`}
-                            width={160}
-                            height={90}
-                            className="w-40 h-auto object-cover rounded-md aspect-video"
-                            data-ai-hint={bg.hint}
-                        />
-                        <div className="flex-1 w-full space-y-2">
-                            <Label htmlFor={`hint-${index}`}>{t.adminPage.imageHintLabel}</Label>
-                            <Input
-                                id={`hint-${index}`}
-                                value={hintInputs[index] || ''}
-                                onChange={(e) => handleHintChange(index, e.target.value)}
-                                placeholder={t.adminPage.imageHintPlaceholder}
-                            />
-                        </div>
-                        <div className="w-full sm:w-auto">
-                            <Button onClick={() => handleReplaceClick(index)} className="w-full">
-                                {t.adminPage.replaceImageButton}
-                            </Button>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                ref={el => fileInputRefs.current[index] = el}
-                                onChange={(e) => handleFileChange(e, index)}
-                                className="hidden"
-                            />
-                        </div>
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
                 <CardTitle>{t.adminPage.manageAvailabilityCardTitle}</CardTitle>
                 <CardDescription>{t.adminPage.manageAvailabilityCardDescription}</CardDescription>
             </CardHeader>
@@ -519,6 +474,51 @@ export default function AdminPage() {
                     </>
                     )}
                 </div>
+            </CardContent>
+        </Card>
+
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <ImageUp className="w-6 h-6 text-primary" />
+                    <CardTitle>{t.adminPage.manageBackgroundsCardTitle}</CardTitle>
+                </div>
+                <CardDescription>{t.adminPage.manageBackgroundsCardDescription}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {backgrounds.map((bg, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row items-center gap-4 p-4 border rounded-lg bg-background/50">
+                        <Image
+                            src={bg.url}
+                            alt={`Background ${index + 1}`}
+                            width={160}
+                            height={90}
+                            className="w-40 h-auto object-cover rounded-md aspect-video"
+                            data-ai-hint={bg.hint}
+                        />
+                        <div className="flex-1 w-full space-y-2">
+                            <Label htmlFor={`hint-${index}`}>{t.adminPage.imageHintLabel}</Label>
+                            <Input
+                                id={`hint-${index}`}
+                                value={hintInputs[index] || ''}
+                                onChange={(e) => handleHintChange(index, e.target.value)}
+                                placeholder={t.adminPage.imageHintPlaceholder}
+                            />
+                        </div>
+                        <div className="w-full sm:w-auto">
+                            <Button onClick={() => handleReplaceClick(index)} className="w-full">
+                                {t.adminPage.replaceImageButton}
+                            </Button>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={el => fileInputRefs.current[index] = el}
+                                onChange={(e) => handleFileChange(e, index)}
+                                className="hidden"
+                            />
+                        </div>
+                    </div>
+                ))}
             </CardContent>
         </Card>
 

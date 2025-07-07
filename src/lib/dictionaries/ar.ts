@@ -37,7 +37,7 @@ export const arStrings: Dictionary = {
     nameLabel: "الاسم الكامل",
     namePlaceholder: "مثال: وهيب حميد",
     phoneLabel: "رقم الهاتف",
-    phonePlaceholder: "مثال: ‏736 333 328",
+    phonePlaceholder: "مثال: 736 333 328",
     termsLabel: "أوافق على الشروط والأحكام",
     requestButton: "طلب حجز",
     validation: {
