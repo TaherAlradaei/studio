@@ -73,6 +73,7 @@ export default function BookingPage() {
                   disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
                   locale={lang === 'ar' ? arSA : undefined}
                   dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                  weekStartsOn={6}
                 />
               </div>
             </CardContent>

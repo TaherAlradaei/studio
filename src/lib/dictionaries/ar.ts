@@ -10,7 +10,7 @@ export const arStrings: Dictionary = {
   footer: {
     copyright: "© {year} أكاديمية الميدان لكرة القدم. جميع الحقوق محفوظة.",
     address: "شارع صفر، حدة مدينة، صنعاء، اليمن",
-    phone: "الهاتف: 736 333 328 967+",
+    phone: "الهاتف: +967 736 333 328",
   },
   bookingPage: {
     title: "احجز ملعبك",
