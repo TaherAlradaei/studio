@@ -13,6 +13,7 @@ import type { Booking } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { arSA } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +28,7 @@ const availableTimes = [
 ];
 
 export default function AdminPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { bookings, updateBooking, blockSlot, unblockSlot } = useBookings();
   const [bookingData, setBookingData] = useState("");
   const [recommendations, setRecommendations] = useState("");
@@ -250,7 +251,7 @@ export default function AdminPage() {
                   {bookings.length > 0 ? (
                     bookings.map((booking) => (
                       <TableRow key={booking.id}>
-                        <TableCell>{format(booking.date, 'PP')}</TableCell>
+                        <TableCell>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</TableCell>
                         <TableCell>{booking.time}</TableCell>
                         <TableCell>{booking.name}<br/><span className="text-sm text-muted-foreground">{booking.phone}</span></TableCell>
                         <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
@@ -347,6 +348,8 @@ export default function AdminPage() {
                             onSelect={setAvailabilityDate}
                             className="rounded-md"
                             disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                            locale={lang === 'ar' ? arSA : undefined}
+                            dir={lang === 'ar' ? 'rtl' : 'ltr'}
                         />
                     </div>
                 </div>
@@ -538,7 +541,7 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t.adminPage.confirmDialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              {editingBooking && `${editingBooking.name} - ${format(editingBooking.date, 'PPP')} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
+              {editingBooking && `${editingBooking.name} - ${format(editingBooking.date, 'PPP', { locale: lang === 'ar' ? arSA : undefined })} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
               <br />
               {t.adminPage.confirmDialogDescription}
             </AlertDialogDescription>

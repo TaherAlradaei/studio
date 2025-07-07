@@ -10,9 +10,10 @@ import { CalendarDays } from "lucide-react";
 import { FieldIcon } from "@/components/icons";
 import { useLanguage } from "@/context/language-context";
 import { useAuth } from "@/context/auth-context";
+import { arSA } from "date-fns/locale";
 
 export default function BookingPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user, isLoading } = useAuth();
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -70,6 +71,8 @@ export default function BookingPage() {
                   onSelect={handleDateSelect}
                   className="rounded-md"
                   disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                  locale={lang === 'ar' ? arSA : undefined}
+                  dir={lang === 'ar' ? 'rtl' : 'ltr'}
                 />
               </div>
             </CardContent>
