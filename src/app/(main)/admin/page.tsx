@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useLanguage } from "@/context/language-context";
@@ -18,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useBackground } from "@/context/background-context";
 
 const availableTimes = [
   "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00",
@@ -40,6 +42,15 @@ export default function AdminPage() {
 
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const { backgrounds, updateBackground } = useBackground();
+  const [hintInputs, setHintInputs] = useState<string[]>([]);
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    setHintInputs(backgrounds.map(b => b.hint));
+    fileInputRefs.current = backgrounds.map(() => null);
+  }, [backgrounds]);
 
   useEffect(() => {
     async function fetchInstructions() {
@@ -157,6 +168,34 @@ export default function AdminPage() {
     }
   };
 
+  const handleHintChange = (index: number, value: string) => {
+    const newHints = [...hintInputs];
+    newHints[index] = value;
+    setHintInputs(newHints);
+  };
+
+  const handleReplaceClick = (index: number) => {
+      fileInputRefs.current[index]?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+      const file = event.target.files?.[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+              const newUrl = e.target?.result as string;
+              const newHint = hintInputs[index] || '';
+              updateBackground(index, { url: newUrl, hint: newHint });
+              toast({
+                  title: t.adminPage.backgroundUpdatedToastTitle,
+                  description: t.adminPage.backgroundUpdatedToastDesc,
+              });
+          };
+          reader.readAsDataURL(file);
+      }
+      // Reset file input value to allow re-uploading the same file
+      event.target.value = '';
+  };
 
   const getStatusBadge = (status: Booking['status']) => {
     switch (status) {
@@ -243,6 +282,51 @@ export default function AdminPage() {
           </CardContent>
         </Card>
         
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <ImageUp className="w-6 h-6 text-primary" />
+                    <CardTitle>{t.adminPage.manageBackgroundsCardTitle}</CardTitle>
+                </div>
+                <CardDescription>{t.adminPage.manageBackgroundsCardDescription}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {backgrounds.map((bg, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row items-center gap-4 p-4 border rounded-lg bg-background/50">
+                        <Image
+                            src={bg.url}
+                            alt={`Background ${index + 1}`}
+                            width={160}
+                            height={90}
+                            className="w-40 h-auto object-cover rounded-md aspect-video"
+                            data-ai-hint={bg.hint}
+                        />
+                        <div className="flex-1 w-full space-y-2">
+                            <Label htmlFor={`hint-${index}`}>{t.adminPage.imageHintLabel}</Label>
+                            <Input
+                                id={`hint-${index}`}
+                                value={hintInputs[index] || ''}
+                                onChange={(e) => handleHintChange(index, e.target.value)}
+                                placeholder={t.adminPage.imageHintPlaceholder}
+                            />
+                        </div>
+                        <div className="w-full sm:w-auto">
+                            <Button onClick={() => handleReplaceClick(index)} className="w-full">
+                                {t.adminPage.replaceImageButton}
+                            </Button>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={el => fileInputRefs.current[index] = el}
+                                onChange={(e) => handleFileChange(e, index)}
+                                className="hidden"
+                            />
+                        </div>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle>{t.adminPage.manageAvailabilityCardTitle}</CardTitle>

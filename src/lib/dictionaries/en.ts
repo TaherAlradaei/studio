@@ -106,6 +106,13 @@ export const enStrings = {
     savingButton: "Saving...",
     instructionsSavedToastTitle: "Instructions Saved",
     instructionsSavedToastDesc: "The payment instructions have been updated successfully.",
+    manageBackgroundsCardTitle: "Manage Background Images",
+    manageBackgroundsCardDescription: "Replace the animated background images displayed throughout the application. Upload new images and provide descriptive hints for AI.",
+    replaceImageButton: "Replace",
+    imageHintLabel: "Image Hint (for AI)",
+    imageHintPlaceholder: "e.g. football goal",
+    backgroundUpdatedToastTitle: "Background Updated",
+    backgroundUpdatedToastDesc: "The background image has been successfully updated.",
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",

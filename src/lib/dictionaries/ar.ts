@@ -108,6 +108,13 @@ export const arStrings: Dictionary = {
     savingButton: "جارٍ الحفظ...",
     instructionsSavedToastTitle: "تم حفظ التعليمات",
     instructionsSavedToastDesc: "تم تحديث تعليمات الدفع بنجاح.",
+    manageBackgroundsCardTitle: "إدارة صور الخلفية",
+    manageBackgroundsCardDescription: "استبدل صور الخلفية المتحركة المعروضة في جميع أنحاء التطبيق. قم بتحميل صور جديدة وقدم تلميحات وصفية للذكاء الاصطناعي.",
+    replaceImageButton: "استبدال",
+    imageHintLabel: "تلميح الصورة (للذكاء الاصطناعي)",
+    imageHintPlaceholder: "مثال: هدف كرة قدم",
+    backgroundUpdatedToastTitle: "تم تحديث الخلفية",
+    backgroundUpdatedToastDesc: "تم تحديث صورة الخلفية بنجاح.",
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",

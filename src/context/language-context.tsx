@@ -20,7 +20,7 @@ const dictionaries: Record<Language, Dictionary> = {
 };
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [lang, setLang] = useState<Language>("en");
+  const [lang, setLang] = useState<Language>("ar");
 
   const value = useMemo(() => {
     return {
