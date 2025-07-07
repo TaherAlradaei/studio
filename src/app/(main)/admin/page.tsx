@@ -23,6 +23,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useBackground } from "@/context/background-context";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLogo } from "@/context/logo-context";
 
 const availableTimes = [
   "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00",
@@ -52,8 +53,10 @@ export default function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const { backgrounds, updateBackground } = useBackground();
+  const { logo, updateLogo } = useLogo();
   const [hintInputs, setHintInputs] = useState<string[]>([]);
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const logoFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setHintInputs(backgrounds.map(b => b.hint));
@@ -225,6 +228,27 @@ export default function AdminPage() {
       // Reset file input value to allow re-uploading the same file
       event.target.value = '';
   };
+  
+    const handleLogoReplaceClick = () => {
+        logoFileInputRef.current?.click();
+    };
+
+    const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const newUrl = e.target?.result as string;
+                updateLogo(newUrl);
+                toast({
+                    title: t.adminPage.logoUpdatedToastTitle,
+                    description: t.adminPage.logoUpdatedToastDesc,
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        event.target.value = '';
+    };
 
   const getStatusBadge = (status: Booking['status']) => {
     switch (status) {
@@ -476,6 +500,37 @@ export default function AdminPage() {
                         </div>
                     </>
                     )}
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <ImageUp className="w-6 h-6 text-primary" />
+                    <CardTitle>{t.adminPage.manageLogoCardTitle}</CardTitle>
+                </div>
+                <CardDescription>{t.adminPage.manageLogoCardDescription}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+                <Image
+                    src={logo.url}
+                    alt="Current Logo"
+                    width={80}
+                    height={88}
+                    className="h-20 w-auto object-contain rounded-md bg-white/80 p-2"
+                />
+                <div className="flex-1 w-full">
+                     <Button onClick={handleLogoReplaceClick} className="w-full sm:w-auto">
+                        {t.adminPage.replaceLogoButton}
+                    </Button>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        ref={logoFileInputRef}
+                        onChange={handleLogoFileChange}
+                        className="hidden"
+                    />
                 </div>
             </CardContent>
         </Card>
