@@ -1,3 +1,4 @@
+
 import type { Dictionary } from "./en";
 
 export const arStrings: Dictionary = {
@@ -115,6 +116,13 @@ export const arStrings: Dictionary = {
     imageHintPlaceholder: "مثال: هدف كرة قدم",
     backgroundUpdatedToastTitle: "تم تحديث الخلفية",
     backgroundUpdatedToastDesc: "تم تحديث صورة الخلفية بنجاح.",
+    filterByDate: "تصفية حسب تاريخ البدء",
+    filterByRange: "تصفية حسب النطاق",
+    day: "يوم",
+    week: "أسبوع",
+    month: "شهر",
+    filterDescription: "سيعرض الجدول أدناه الحجوزات للتاريخ والنطاق المحددين.",
+    noBookingsInView: "لم يتم العثور على حجوزات للفترة المحددة.",
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",
@@ -139,3 +147,5 @@ export const arStrings: Dictionary = {
       ok: "موافق",
   }
 };
+
+    

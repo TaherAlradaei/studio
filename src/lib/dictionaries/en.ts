@@ -1,3 +1,4 @@
+
 export const enStrings = {
   header: {
     title: "Al Maidan Football Academy",
@@ -113,6 +114,13 @@ export const enStrings = {
     imageHintPlaceholder: "e.g. football goal",
     backgroundUpdatedToastTitle: "Background Updated",
     backgroundUpdatedToastDesc: "The background image has been successfully updated.",
+    filterByDate: "Filter by Start Date",
+    filterByRange: "Filter by Range",
+    day: "Day",
+    week: "Week",
+    month: "Month",
+    filterDescription: "The table below will show bookings for the selected date and range.",
+    noBookingsInView: "No bookings found for the selected period.",
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",
@@ -139,3 +147,5 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
+
+    

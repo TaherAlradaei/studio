@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +13,7 @@ import { useLanguage } from "@/context/language-context";
 import type { Booking } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay, addDays, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useBackground } from "@/context/background-context";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const availableTimes = [
   "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00",
@@ -40,6 +42,9 @@ export default function AdminPage() {
   const [hourlyPrice, setHourlyPrice] = useState("");
 
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
+  
+  const [filterDate, setFilterDate] = useState<Date | undefined>(new Date());
+  const [filterType, setFilterType] = useState<"week" | "day" | "month">("week");
 
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -68,6 +73,27 @@ export default function AdminPage() {
     }
     fetchInstructions();
   }, [toast, t]);
+
+  const filteredBookings = useMemo(() => {
+    const date = filterDate || new Date();
+    
+    let interval;
+    switch (filterType) {
+      case 'day':
+        interval = { start: startOfDay(date), end: endOfDay(date) };
+        break;
+      case 'week':
+        interval = { start: startOfDay(date), end: endOfDay(addDays(date, 6)) };
+        break;
+      case 'month':
+        interval = { start: startOfMonth(date), end: endOfMonth(date) };
+        break;
+    }
+
+    return bookings
+      .filter(booking => isWithinInterval(new Date(booking.date), interval))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.time.localeCompare(b.time));
+  }, [bookings, filterDate, filterType]);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -234,6 +260,34 @@ export default function AdminPage() {
             <CardDescription>{t.adminPage.bookingManagementCardDescription}</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="flex flex-col md:flex-row gap-6 mb-6 p-4 border rounded-lg bg-background/50">
+              <div className="flex-shrink-0">
+                <Label className="px-1">{t.adminPage.filterByDate}</Label>
+                <div className="mt-2">
+                  <Calendar
+                    mode="single"
+                    selected={filterDate}
+                    onSelect={setFilterDate}
+                    className="rounded-md border w-full sm:w-auto"
+                    locale={lang === 'ar' ? arSA : undefined}
+                    dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                    weekStartsOn={6}
+                  />
+                </div>
+              </div>
+              <div className="flex-1">
+                <Label>{t.adminPage.filterByRange}</Label>
+                <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)} className="mt-2">
+                  <TabsList>
+                    <TabsTrigger value="day">{t.adminPage.day}</TabsTrigger>
+                    <TabsTrigger value="week">{t.adminPage.week}</TabsTrigger>
+                    <TabsTrigger value="month">{t.adminPage.month}</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <p className="text-sm text-muted-foreground mt-4">{t.adminPage.filterDescription}</p>
+              </div>
+            </div>
+            
             <div className="border rounded-lg">
               <Table>
                 <TableHeader>
@@ -248,8 +302,8 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {bookings.length > 0 ? (
-                    bookings.map((booking) => (
+                  {filteredBookings.length > 0 ? (
+                    filteredBookings.map((booking) => (
                       <TableRow key={booking.id}>
                         <TableCell>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</TableCell>
                         <TableCell>{booking.time}</TableCell>
@@ -274,7 +328,7 @@ export default function AdminPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noBookings}</TableCell>
+                      <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noBookingsInView}</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -560,3 +614,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
