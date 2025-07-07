@@ -16,6 +16,9 @@ export const enStrings = {
     description: "Follow the simple steps below to reserve your football field at Al Maidan Football Academy.",
     selectDate: "Select a Date",
     selectDateDesc: "Click on a date to see available time slots.",
+    calendarView: "Calendar View",
+    oneMonth: "1 Month",
+    twoMonths: "2 Months",
   },
   timeSlotPicker: {
     title: "Select a Time Slot",
@@ -121,6 +124,9 @@ export const enStrings = {
     month: "Month",
     filterDescription: "The table below will show bookings for the selected date and range.",
     noBookingsInView: "No bookings found for the selected period.",
+    calendarView: "Calendar View",
+    oneMonth: "1 Month",
+    twoMonths: "2 Months",
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",
@@ -147,5 +153,3 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
-
-    

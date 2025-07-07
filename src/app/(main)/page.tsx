@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -11,6 +12,8 @@ import { FieldIcon } from "@/components/icons";
 import { useLanguage } from "@/context/language-context";
 import { useAuth } from "@/context/auth-context";
 import { arSA } from "date-fns/locale";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
 
 export default function BookingPage() {
   const { t, lang } = useLanguage();
@@ -20,6 +23,7 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
   const { bookings } = useBookings();
+  const [calendarView, setCalendarView] = useState<'1m' | '2m'>('1m');
 
   if (isLoading || !user) {
     return null; // Or a loading spinner
@@ -64,6 +68,17 @@ export default function BookingPage() {
               <CardDescription>{t.bookingPage.selectDateDesc}</CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="flex justify-end mb-4">
+                  <div className="flex flex-col items-end">
+                      <Label className="text-xs mb-1">{t.bookingPage.calendarView}</Label>
+                      <Tabs value={calendarView} onValueChange={(v) => setCalendarView(v as any)}>
+                          <TabsList className="h-8">
+                              <TabsTrigger value="1m" className="text-xs px-2 py-1 h-auto">{t.bookingPage.oneMonth}</TabsTrigger>
+                              <TabsTrigger value="2m" className="text-xs px-2 py-1 h-auto">{t.bookingPage.twoMonths}</TabsTrigger>
+                          </TabsList>
+                      </Tabs>
+                  </div>
+              </div>
               <div className="flex justify-center">
                 <Calendar
                   mode="single"
@@ -74,6 +89,7 @@ export default function BookingPage() {
                   locale={lang === 'ar' ? arSA : undefined}
                   dir={lang === 'ar' ? 'rtl' : 'ltr'}
                   weekStartsOn={6}
+                  numberOfMonths={calendarView === '1m' ? 1 : 2}
                 />
               </div>
             </CardContent>

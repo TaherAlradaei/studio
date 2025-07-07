@@ -18,6 +18,9 @@ export const arStrings: Dictionary = {
     description: "اتبع الخطوات البسيطة أدناه لحجز ملعب كرة القدم الخاص بك في أكاديمية الميدان.",
     selectDate: "اختر تاريخًا",
     selectDateDesc: "انقر على تاريخ لرؤية الأوقات المتاحة.",
+    calendarView: "عرض التقويم",
+    oneMonth: "شهر واحد",
+    twoMonths: "شهران",
   },
   timeSlotPicker: {
     title: "اختر فترة زمنية",
@@ -123,6 +126,9 @@ export const arStrings: Dictionary = {
     month: "شهر",
     filterDescription: "سيعرض الجدول أدناه الحجوزات للتاريخ والنطاق المحددين.",
     noBookingsInView: "لم يتم العثور على حجوزات للفترة المحددة.",
+    calendarView: "عرض التقويم",
+    oneMonth: "شهر واحد",
+    twoMonths: "شهران",
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",
@@ -147,5 +153,3 @@ export const arStrings: Dictionary = {
       ok: "موافق",
   }
 };
-
-    
