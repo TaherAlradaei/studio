@@ -35,7 +35,7 @@ export const enStrings = {
     nameLabel: "Full Name",
     namePlaceholder: "e.g. Waheeb Hameed",
     phoneLabel: "Phone Number",
-    phonePlaceholder: "e.g. 736 333 328",
+    phonePlaceholder: "e.g. 736333328",
     termsLabel: "Accept terms and conditions",
     requestButton: "Request Booking",
     validation: {
@@ -127,6 +127,10 @@ export const enStrings = {
     calendarView: "Calendar View",
     oneMonth: "1 Month",
     twoMonths: "2 Months",
+    bookingDetailsTitle: "Booking Details",
+    bookingDetailsDescription: "Details for the booking at {time}.",
+    bookingDetailsName: "Name",
+    bookingDetailsPhone: "Phone",
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",

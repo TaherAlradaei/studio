@@ -39,6 +39,7 @@ export default function AdminPage() {
   const { toast } = useToast();
 
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [infoBooking, setInfoBooking] = useState<Booking | null>(null);
   const [hourlyPrice, setHourlyPrice] = useState("");
 
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
@@ -414,7 +415,7 @@ export default function AdminPage() {
                                 let isDisabled = isPast;
 
                                 if (booking) {
-                                    if (booking.status !== 'blocked') {
+                                    if (booking.status === 'pending' || booking.status === 'awaiting-confirmation') {
                                         isDisabled = true;
                                     }
                                     
@@ -450,6 +451,8 @@ export default function AdminPage() {
                                             try {
                                                 if (booking?.status === 'blocked') {
                                                     await unblockSlot(booking.id!);
+                                                } else if (booking?.status === 'confirmed') {
+                                                    setInfoBooking(booking);
                                                 } else if (!booking) {
                                                     await blockSlot(availabilityDate, time);
                                                 }
@@ -633,6 +636,30 @@ export default function AdminPage() {
             <AlertDialogCancel>{t.adminPage.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmSubmit}>{t.adminPage.confirmSubmitButton}</AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!infoBooking} onOpenChange={() => setInfoBooking(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{t.adminPage.bookingDetailsTitle}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {t.adminPage.bookingDetailsDescription.replace('{time}', infoBooking?.time || '')}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="grid gap-4 py-4 text-sm">
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                    <Label className={cn("text-right", lang === 'ar' && "text-left")}>{t.adminPage.bookingDetailsName}</Label>
+                    <span className="font-semibold">{infoBooking?.name}</span>
+                </div>
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                    <Label className={cn("text-right", lang === 'ar' && "text-left")}>{t.adminPage.bookingDetailsPhone}</Label>
+                    <span className="font-semibold" dir="ltr">{infoBooking?.phone}</span>
+                </div>
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogAction onClick={() => setInfoBooking(null)}>{t.actions.ok}</AlertDialogAction>
+            </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

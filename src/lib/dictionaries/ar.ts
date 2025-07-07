@@ -37,7 +37,7 @@ export const arStrings: Dictionary = {
     nameLabel: "الاسم الكامل",
     namePlaceholder: "مثال: وهيب حميد",
     phoneLabel: "رقم الهاتف",
-    phonePlaceholder: "مثال: 736 333 328",
+    phonePlaceholder: "مثال: 736333328",
     termsLabel: "أوافق على الشروط والأحكام",
     requestButton: "طلب حجز",
     validation: {
@@ -129,6 +129,10 @@ export const arStrings: Dictionary = {
     calendarView: "عرض التقويم",
     oneMonth: "شهر واحد",
     twoMonths: "شهران",
+    bookingDetailsTitle: "تفاصيل الحجز",
+    bookingDetailsDescription: "تفاصيل الحجز في الساعة {time}.",
+    bookingDetailsName: "الاسم",
+    bookingDetailsPhone: "الهاتف",
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",
