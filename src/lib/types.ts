@@ -1,3 +1,4 @@
+
 export interface Booking {
   id: string;
   userId: string | null;
@@ -8,4 +9,16 @@ export interface Booking {
   duration: number; // in hours
   status: 'pending' | 'awaiting-confirmation' | 'confirmed' | 'cancelled' | 'blocked';
   price?: number;
+}
+
+export interface AcademyRegistration {
+  id: string;
+  userId: string;
+  parentName: string;
+  phone: string;
+  talentName: string;
+  birthDate: Date;
+  ageGroup: "U10" | "U14";
+  status: 'pending' | 'accepted' | 'rejected';
+  submittedAt: Date;
 }

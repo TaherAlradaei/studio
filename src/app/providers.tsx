@@ -1,3 +1,4 @@
+
 "use client";
 
 import { AuthProvider } from "@/context/auth-context";
@@ -6,6 +7,7 @@ import { LanguageProvider, useLanguage } from "@/context/language-context";
 import React, { useEffect } from "react";
 import { BackgroundProvider } from "@/context/background-context";
 import { LogoProvider } from "@/context/logo-context";
+import { AcademyProvider } from "@/context/academy-context";
 
 function AppDirectionManager({ children }: { children: React.ReactNode }) {
     const { lang } = useLanguage();
@@ -29,13 +31,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <LanguageProvider>
       <AuthProvider>
         <BookingProvider>
-          <LogoProvider>
-            <BackgroundProvider>
-              <AppDirectionManager>
-                  {children}
-              </AppDirectionManager>
-            </BackgroundProvider>
-          </LogoProvider>
+          <AcademyProvider>
+            <LogoProvider>
+              <BackgroundProvider>
+                <AppDirectionManager>
+                    {children}
+                </AppDirectionManager>
+              </BackgroundProvider>
+            </LogoProvider>
+          </AcademyProvider>
         </BookingProvider>
       </AuthProvider>
     </LanguageProvider>

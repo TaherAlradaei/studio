@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -8,6 +9,7 @@ import { useLanguage } from "@/context/language-context";
 import { Logo } from "./logo";
 import { useAuth } from "@/context/auth-context";
 import { useBookings } from "@/context/booking-context";
+import { useAcademy } from "@/context/academy-context";
 import { Badge } from "@/components/ui/badge";
 
 const LanguageSwitcher = () => {
@@ -38,13 +40,17 @@ export function Header() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { bookings } = useBookings();
+  const { registrations } = useAcademy();
 
   const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
+  const pendingRegistrationsCount = registrations.filter(r => r.status === 'pending').length;
+  const totalPendingCount = pendingBookingsCount + pendingRegistrationsCount;
 
   const navLinks = [
     { href: "/", label: t.header.bookField },
+    { href: "/academy", label: t.header.academy },
     { href: "/bookings", label: t.header.myBookings },
-    { href: "/admin", label: t.header.admin, notificationCount: pendingBookingsCount },
+    { href: "/admin", label: t.header.admin, notificationCount: totalPendingCount },
   ];
 
   const visibleNavLinks = user ? navLinks : [];

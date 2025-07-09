@@ -6,14 +6,15 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions } from "./actions";
 import { useBookings } from "@/context/booking-context";
+import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
-import type { Booking } from "@/lib/types";
+import type { Booking, AcademyRegistration } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { format, startOfDay, endOfDay, addDays, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { format, startOfDay, endOfDay, addDays, startOfMonth, endOfMonth, isWithinInterval, differenceInYears } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ const availableTimes = [
 export default function AdminPage() {
   const { t, lang } = useLanguage();
   const { bookings, updateBooking, blockSlot, unblockSlot } = useBookings();
+  const { registrations, updateRegistrationStatus } = useAcademy();
   const [bookingData, setBookingData] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -250,6 +252,24 @@ export default function AdminPage() {
         event.target.value = '';
     };
 
+    const handleRegistrationStatusUpdate = async (registration: AcademyRegistration, status: 'accepted' | 'rejected') => {
+        try {
+            await updateRegistrationStatus(registration.id, status);
+            toast({
+                title: t.toasts.registrationUpdateTitle,
+                description: t.toasts.registrationUpdateDesc
+                    .replace('{name}', registration.talentName)
+                    .replace('{status}', status === 'accepted' ? t.academyPage.statusAccepted : t.academyPage.statusRejected),
+            });
+        } catch (err) {
+            toast({
+                title: t.adminPage.errorTitle,
+                description: err instanceof Error ? err.message : "Failed to update registration.",
+                variant: "destructive",
+            });
+        }
+    };
+
   const getStatusBadge = (status: Booking['status']) => {
     switch (status) {
       case 'pending':
@@ -267,6 +287,18 @@ export default function AdminPage() {
     }
   };
 
+  const getRegistrationStatusBadge = (status: AcademyRegistration['status']) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="secondary">{t.academyPage.statusPending}</Badge>;
+      case 'accepted':
+        return <Badge variant="default">{t.academyPage.statusAccepted}</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">{t.academyPage.statusRejected}</Badge>;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="container py-8">
@@ -371,6 +403,57 @@ export default function AdminPage() {
               </Table>
             </div>
           </CardContent>
+        </Card>
+
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-6 h-6 text-primary" />
+                    <CardTitle>{t.adminPage.academyRegistrationsTitle}</CardTitle>
+                </div>
+                <CardDescription>{t.adminPage.academyRegistrationsDesc}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="border rounded-lg">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{t.adminPage.talentName}</TableHead>
+                                <TableHead>{t.adminPage.age}</TableHead>
+                                <TableHead>{t.adminPage.ageGroup}</TableHead>
+                                <TableHead>{t.adminPage.parentContact}</TableHead>
+                                <TableHead>{t.adminPage.status}</TableHead>
+                                <TableHead className="text-right">{t.adminPage.actions}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {registrations.length > 0 ? (
+                                registrations.map((reg) => (
+                                    <TableRow key={reg.id}>
+                                        <TableCell>{reg.talentName}</TableCell>
+                                        <TableCell>{differenceInYears(new Date(), new Date(reg.birthDate))}</TableCell>
+                                        <TableCell>{reg.ageGroup}</TableCell>
+                                        <TableCell>{reg.parentName}<br /><span className="text-sm text-muted-foreground">{reg.phone}</span></TableCell>
+                                        <TableCell>{getRegistrationStatusBadge(reg.status)}</TableCell>
+                                        <TableCell className="text-right">
+                                            {reg.status === 'pending' && (
+                                                <div className="flex gap-2 justify-end">
+                                                    <Button size="sm" onClick={() => handleRegistrationStatusUpdate(reg, 'accepted')}>{t.actions.accept}</Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => handleRegistrationStatusUpdate(reg, 'rejected')}>{t.actions.decline}</Button>
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center h-24">{t.adminPage.noRegistrations}</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
         </Card>
         
         <Card className="bg-card/80 backdrop-blur-sm">
