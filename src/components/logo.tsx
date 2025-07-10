@@ -10,9 +10,9 @@ export function Logo() {
     <Image
       src={logo.url}
       alt="Al Maidan Football Academy Logo"
-      width={40}
-      height={44}
-      className="h-10 w-auto"
+      width={44}
+      height={48}
+      className="h-11 w-auto"
       priority
     />
   );
