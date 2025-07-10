@@ -38,7 +38,7 @@ export const arStrings: Dictionary = {
     nameLabel: "الاسم الكامل",
     namePlaceholder: "مثال: وهيب حميد",
     phoneLabel: "رقم الهاتف",
-    phonePlaceholder: "مثال: 736 333 328",
+    phonePlaceholder: "مثال: 736333328",
     termsLabel: "أوافق على الشروط والأحكام",
     requestButton: "طلب حجز",
     validation: {
@@ -146,6 +146,10 @@ export const arStrings: Dictionary = {
     ageGroup: "الفئة العمرية",
     parentContact: "ولي الأمر",
     noRegistrations: "لا توجد طلبات تسجيل في الأكاديمية.",
+    dashboardTab: "لوحة التحكم",
+    layoutTab: "التخطيط",
+    layoutTabDescription: "قم بتخصيص تخطيط لوحة التحكم الخاصة بك.",
+    reorderComingSoon: "ستتوفر إمكانية إعادة ترتيب الأقسام قريبًا.",
   },
   academyPage: {
     title: "انضم إلى الأكاديمية",

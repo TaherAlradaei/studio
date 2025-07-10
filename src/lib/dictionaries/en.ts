@@ -36,7 +36,7 @@ export const enStrings = {
     nameLabel: "Full Name",
     namePlaceholder: "e.g. Waheeb Hameed",
     phoneLabel: "Phone Number",
-    phonePlaceholder: "e.g. 736 333 328",
+    phonePlaceholder: "e.g. 736333328",
     termsLabel: "Accept terms and conditions",
     requestButton: "Request Booking",
     validation: {
@@ -144,6 +144,10 @@ export const enStrings = {
     ageGroup: "Age Group",
     parentContact: "Parent Contact",
     noRegistrations: "No academy registrations found.",
+    dashboardTab: "Dashboard",
+    layoutTab: "Layout",
+    layoutTabDescription: "Customize the layout of your admin dashboard.",
+    reorderComingSoon: "The ability to reorder sections will be available soon.",
   },
   academyPage: {
     title: "Join the Academy",

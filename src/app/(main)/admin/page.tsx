@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
@@ -23,13 +23,21 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useBackground } from "@/context/background-context";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLogo } from "@/context/logo-context";
 
 const availableTimes = [
   "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00",
   "17:00", "18:00", "19:00", "20:00", "21:00", "22:00",
 ];
+
+type SectionId = 'bookingManagement' | 'academyRegistrations' | 'manageAvailability' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
+
+interface AdminSection {
+  id: SectionId;
+  title: string;
+  component: React.ReactNode;
+}
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
@@ -59,6 +67,16 @@ export default function AdminPage() {
   const [hintInputs, setHintInputs] = useState<string[]>([]);
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const logoFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [sectionsOrder, setSectionsOrder] = useState<SectionId[]>([
+    'bookingManagement', 
+    'academyRegistrations', 
+    'manageAvailability', 
+    'manageLogo', 
+    'manageBackgrounds', 
+    'paymentInstructions', 
+    'schedulingAssistant'
+  ]);
 
   useEffect(() => {
     setHintInputs(backgrounds.map(b => b.hint));
@@ -300,18 +318,11 @@ export default function AdminPage() {
     }
   };
 
-  return (
-    <div className="container py-8">
-      <div className="text-center mb-12">
-        <div className="flex justify-center items-center gap-4 mb-2">
-          <Wand2 className="w-12 h-12 text-primary" />
-          <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
-            {t.header.admin}
-          </h1>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto grid gap-8">
+  const sections: Record<SectionId, AdminSection> = {
+    bookingManagement: {
+      id: 'bookingManagement',
+      title: t.adminPage.bookingManagementCardTitle,
+      component: (
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>{t.adminPage.bookingManagementCardTitle}</CardTitle>
@@ -404,7 +415,12 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
-
+      ),
+    },
+    academyRegistrations: {
+      id: 'academyRegistrations',
+      title: t.adminPage.academyRegistrationsTitle,
+      component: (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
                 <div className="flex items-center gap-2">
@@ -455,7 +471,12 @@ export default function AdminPage() {
                 </div>
             </CardContent>
         </Card>
-        
+      ),
+    },
+    manageAvailability: {
+      id: 'manageAvailability',
+      title: t.adminPage.manageAvailabilityCardTitle,
+      component: (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle>{t.adminPage.manageAvailabilityCardTitle}</CardTitle>
@@ -586,7 +607,12 @@ export default function AdminPage() {
                 </div>
             </CardContent>
         </Card>
-
+      ),
+    },
+    manageLogo: {
+      id: 'manageLogo',
+      title: t.adminPage.manageLogoCardTitle,
+      component: (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
                 <div className="flex items-center gap-2">
@@ -617,7 +643,12 @@ export default function AdminPage() {
                 </div>
             </CardContent>
         </Card>
-
+      ),
+    },
+    manageBackgrounds: {
+      id: 'manageBackgrounds',
+      title: t.adminPage.manageBackgroundsCardTitle,
+      component: (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
                 <div className="flex items-center gap-2">
@@ -662,7 +693,12 @@ export default function AdminPage() {
                 ))}
             </CardContent>
         </Card>
-
+      ),
+    },
+    paymentInstructions: {
+      id: 'paymentInstructions',
+      title: t.adminPage.paymentInstructionsCardTitle,
+      component: (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
                 <div className="flex items-center gap-2">
@@ -692,7 +728,13 @@ export default function AdminPage() {
                 </Button>
             </CardContent>
         </Card>
-
+      ),
+    },
+    schedulingAssistant: {
+      id: 'schedulingAssistant',
+      title: t.adminPage.title,
+      component: (
+        <>
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>{t.adminPage.title}</CardTitle>
@@ -755,7 +797,54 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         )}
+        </>
+      ),
+    }
+  };
+
+
+  return (
+    <div className="container py-8">
+      <div className="text-center mb-6">
+        <div className="flex justify-center items-center gap-4 mb-2">
+          <Settings className="w-12 h-12 text-primary" />
+          <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
+            {t.header.admin}
+          </h1>
+        </div>
       </div>
+
+       <Tabs defaultValue="dashboard" className="max-w-6xl mx-auto">
+        <TabsList className="mb-6">
+          <TabsTrigger value="dashboard">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            {t.adminPage.dashboardTab}
+          </TabsTrigger>
+          <TabsTrigger value="layout">
+            <Wand2 className="mr-2 h-4 w-4" />
+            {t.adminPage.layoutTab}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="dashboard" className="grid gap-8">
+            {sectionsOrder.map(id => (
+              <div key={id}>
+                {sections[id].component}
+              </div>
+            ))}
+        </TabsContent>
+        <TabsContent value="layout">
+            <Card className="bg-card/80 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle>{t.adminPage.layoutTab}</CardTitle>
+                    <CardDescription>{t.adminPage.layoutTabDescription}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                   <p className="text-muted-foreground">{t.adminPage.reorderComingSoon}</p>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
+
       <AlertDialog open={!!editingBooking} onOpenChange={() => setEditingBooking(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
