@@ -50,7 +50,6 @@ export function Header() {
     { href: "/academy", label: t.header.academy },
     { href: "/", label: t.header.bookField },
     { href: "/bookings", label: t.header.myBookings },
-    { href: "/member-area", label: t.header.memberArea },
     { href: "/admin", label: t.header.admin, notificationCount: totalPendingCount },
   ];
 
@@ -59,7 +58,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
+        <Link href="/member-area" className="mr-6 flex items-center space-x-2">
           <Logo />
           <span className="font-bold text-xl text-primary font-headline">
             {t.header.title}

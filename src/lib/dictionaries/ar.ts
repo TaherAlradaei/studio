@@ -7,7 +7,6 @@ export const arStrings: Dictionary = {
     bookField: "احجز ملعب",
     academy: "انضم للأكاديمية",
     myBookings: "حجوزاتي",
-    memberArea: "ساحة الأعضاء",
     admin: "الإدارة",
   },
   footer: {

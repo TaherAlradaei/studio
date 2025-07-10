@@ -5,7 +5,6 @@ export const enStrings = {
     bookField: "Book a Field",
     academy: "Join Academy",
     myBookings: "My Bookings",
-    memberArea: "Member Area",
     admin: "Admin",
   },
   footer: {
