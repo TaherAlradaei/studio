@@ -6,7 +6,7 @@ import type { AcademyRegistration } from "@/lib/types";
 
 interface AcademyContextType {
   registrations: AcademyRegistration[];
-  addRegistration: (registration: Omit<AcademyRegistration, "id" | "status">) => Promise<void>;
+  addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt">) => Promise<void>;
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
 }
 
@@ -15,7 +15,7 @@ const AcademyContext = createContext<AcademyContextType | undefined>(undefined);
 export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
 
-  const addRegistration = async (newRegistrationData: Omit<AcademyRegistration, "id" | "status">) => {
+  const addRegistration = async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt">) => {
     const newRegistration: AcademyRegistration = {
       ...newRegistrationData,
       id: Math.random().toString(36).substr(2, 9),
