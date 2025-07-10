@@ -137,7 +137,7 @@ export default function AcademyRegistrationPage() {
                     <FormItem>
                       <FormLabel>{t.bookingForm.phoneLabel}</FormLabel>
                       <FormControl>
-                        <Input placeholder={t.bookingForm.phonePlaceholder} {...field} />
+                        <Input placeholder={t.bookingForm.phonePlaceholder} dir="ltr" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -163,7 +163,7 @@ export default function AcademyRegistrationPage() {
                     <FormItem>
                       <FormLabel>{t.academyPage.birthDateLabel}</FormLabel>
                       <FormControl>
-                        <Input placeholder="YYYY-MM-DD" {...field} />
+                        <Input placeholder="YYYY-MM-DD" dir="ltr" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -175,7 +175,7 @@ export default function AcademyRegistrationPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t.academyPage.ageGroupLabel}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={t.academyPage.ageGroupPlaceholder} />

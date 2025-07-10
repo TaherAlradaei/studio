@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -138,7 +139,7 @@ export function BookingForm({
                 <FormItem>
                   <FormLabel>{t.bookingForm.phoneLabel}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t.bookingForm.phonePlaceholder} {...field} />
+                    <Input placeholder={t.bookingForm.phonePlaceholder} dir="ltr" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
