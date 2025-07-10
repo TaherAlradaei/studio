@@ -50,6 +50,7 @@ export function Header() {
     { href: "/academy", label: t.header.academy },
     { href: "/", label: t.header.bookField },
     { href: "/bookings", label: t.header.myBookings },
+    { href: "/member-area", label: t.header.memberArea },
     { href: "/admin", label: t.header.admin, notificationCount: totalPendingCount },
   ];
 

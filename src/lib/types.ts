@@ -11,6 +11,12 @@ export interface Booking {
   price?: number;
 }
 
+export interface MemberPost {
+  id: string;
+  photoUrl: string;
+  story?: string;
+}
+
 export interface AcademyRegistration {
   id: string;
   userId: string;
@@ -22,4 +28,5 @@ export interface AcademyRegistration {
   status: 'pending' | 'accepted' | 'rejected';
   submittedAt: Date;
   accessCode?: string;
+  posts: MemberPost[];
 }
