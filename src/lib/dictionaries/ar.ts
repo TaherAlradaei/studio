@@ -153,7 +153,7 @@ export const arStrings: Dictionary = {
     formTitle: "استمارة التسجيل",
     formDescription: "يرجى ملء النموذج أدناه. سيقوم فريقنا بمراجعة الطلب والاتصال بك.",
     parentNameLabel: "اسم ولي الأمر",
-    parentNamePlaceholder: "مثال: جون دو",
+    parentNamePlaceholder: "مثال: وهيب حميد",
     talentNameLabel: "اسم الموهبة الكامل",
     talentNamePlaceholder: "مثال: سام دو",
     birthDateLabel: "تاريخ ميلاد الموهبة",

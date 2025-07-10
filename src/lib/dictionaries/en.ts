@@ -151,7 +151,7 @@ export const enStrings = {
     formTitle: "Registration Form",
     formDescription: "Please fill out the form below. Our team will review the application and contact you.",
     parentNameLabel: "Parent/Guardian Name",
-    parentNamePlaceholder: "e.g. John Doe",
+    parentNamePlaceholder: "e.g. Waheeb Hameed",
     talentNameLabel: "Talent's Full Name",
     talentNamePlaceholder: "e.g. Sam Doe",
     birthDateLabel: "Talent's Date of Birth",
