@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { getPaymentInstructions, isTrustedCustomer } from "@/app/(main)/admin/actions";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { getDefaultPrice } from "@/lib/pricing";
 
 export function BookingHistoryTable() {
   const { bookings, updateBooking, acceptBooking } = useBookings();
@@ -115,7 +116,7 @@ export function BookingHistoryTable() {
       return `${booking.price.toLocaleString()} YR`;
     }
     if (booking.status === 'pending') {
-      const estimatedPrice = 8000 * booking.duration;
+      const estimatedPrice = getDefaultPrice(booking.time) * booking.duration;
       const formattedPrice = t.bookingHistoryTable.priceEstimated.replace('{price}', estimatedPrice.toLocaleString());
       return <span className="text-muted-foreground" title={t.bookingHistoryTable.priceTBD}>{formattedPrice}</span>;
     }
@@ -193,3 +194,5 @@ export function BookingHistoryTable() {
     </>
   );
 }
+
+    

@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useBackground } from "@/context/background-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLogo } from "@/context/logo-context";
+import { getDefaultPrice } from "@/lib/pricing";
 
 const availableTimes = [
   "07:00", "08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00",
@@ -155,7 +156,8 @@ export default function AdminPage() {
     if (booking.price && booking.duration > 0) {
       setHourlyPrice((booking.price / booking.duration).toString());
     } else {
-      setHourlyPrice("8000"); // Default hourly rate
+      const defaultPrice = getDefaultPrice(booking.time);
+      setHourlyPrice(defaultPrice.toString());
     }
   };
 
@@ -1010,3 +1012,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
