@@ -47,8 +47,8 @@ export function Header() {
   const totalPendingCount = pendingBookingsCount + pendingRegistrationsCount;
 
   const navLinks = [
-    { href: "/academy", label: t.header.academy },
     { href: "/", label: t.header.bookField },
+    { href: "/academy", label: t.header.academy },
     { href: "/bookings", label: t.header.myBookings },
     { href: "/admin", label: t.header.admin, notificationCount: totalPendingCount },
   ];
