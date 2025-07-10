@@ -137,7 +137,7 @@ export default function AcademyRegistrationPage() {
                     <FormItem>
                       <FormLabel>{t.bookingForm.phoneLabel}</FormLabel>
                       <FormControl>
-                        <Input placeholder={t.bookingForm.phonePlaceholder} dir="ltr" {...field} />
+                        <Input placeholder={t.bookingForm.phonePlaceholder} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
