@@ -6,8 +6,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions } from "./actions";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2 } from "lucide-react";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, addTrustedCustomer, removeTrustedCustomer } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -31,7 +31,7 @@ const availableTimes = [
   "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
 ];
 
-type SectionId = 'bookingManagement' | 'academyRegistrations' | 'manageAvailability' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
+type SectionId = 'bookingManagement' | 'academyRegistrations' | 'manageAvailability' | 'trustedCustomers' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
 
 interface AdminSection {
   id: SectionId;
@@ -61,6 +61,9 @@ export default function AdminPage() {
 
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  
+  const [trustedCustomers, setTrustedCustomers] = useState<string[]>([]);
+  const [newTrustedCustomer, setNewTrustedCustomer] = useState("");
 
   const { backgrounds, updateBackground } = useBackground();
   const { logo, updateLogo } = useLogo();
@@ -71,7 +74,8 @@ export default function AdminPage() {
   const [sectionsOrder, setSectionsOrder] = useState<SectionId[]>([
     'bookingManagement', 
     'academyRegistrations', 
-    'manageAvailability', 
+    'manageAvailability',
+    'trustedCustomers',
     'manageLogo', 
     'manageBackgrounds', 
     'paymentInstructions', 
@@ -84,19 +88,21 @@ export default function AdminPage() {
   }, [backgrounds]);
 
   useEffect(() => {
-    async function fetchInstructions() {
+    async function fetchAdminData() {
       try {
         const instructions = await getPaymentInstructions();
         setPaymentInstructions(instructions);
+        const customers = await getTrustedCustomers();
+        setTrustedCustomers(customers);
       } catch (err) {
         toast({
             title: t.adminPage.errorTitle,
-            description: err instanceof Error ? err.message : "Failed to load payment instructions.",
+            description: err instanceof Error ? err.message : "Failed to load admin data.",
             variant: "destructive",
         });
       }
     }
-    fetchInstructions();
+    fetchAdminData();
   }, [toast, t]);
 
   const filteredBookings = useMemo(() => {
@@ -217,6 +223,39 @@ export default function AdminPage() {
         });
     } finally {
         setIsSaving(false);
+    }
+  };
+  
+  const handleAddTrustedCustomer = async () => {
+    if (!newTrustedCustomer.trim()) return;
+    try {
+      await addTrustedCustomer(newTrustedCustomer);
+      const updatedCustomers = await getTrustedCustomers();
+      setTrustedCustomers(updatedCustomers);
+      setNewTrustedCustomer("");
+      toast({
+        title: t.adminPage.trustedCustomerAddedToastTitle,
+        description: t.adminPage.trustedCustomerAddedToastDesc.replace('{name}', newTrustedCustomer),
+      });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to add trusted customer.";
+        toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
+    }
+  };
+  
+  const handleRemoveTrustedCustomer = async (customerName: string) => {
+    try {
+      await removeTrustedCustomer(customerName);
+      const updatedCustomers = await getTrustedCustomers();
+      setTrustedCustomers(updatedCustomers);
+       toast({
+        title: t.adminPage.trustedCustomerRemovedToastTitle,
+        description: t.adminPage.trustedCustomerRemovedToastDesc.replace('{name}', customerName),
+        variant: "destructive",
+      });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to remove trusted customer.";
+        toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
     }
   };
 
@@ -617,6 +656,52 @@ export default function AdminPage() {
             </CardContent>
         </Card>
       ),
+    },
+    trustedCustomers: {
+      id: 'trustedCustomers',
+      title: t.adminPage.trustedCustomersCardTitle,
+      component: (
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <UserCheck className="w-6 h-6 text-primary" />
+                    <CardTitle>{t.adminPage.trustedCustomersCardTitle}</CardTitle>
+                </div>
+                <CardDescription>{t.adminPage.trustedCustomersCardDescription}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="new-trusted-customer">{t.adminPage.addTrustedCustomerLabel}</Label>
+                  <div className="flex gap-2 mt-2">
+                      <Input 
+                          id="new-trusted-customer"
+                          value={newTrustedCustomer}
+                          onChange={(e) => setNewTrustedCustomer(e.target.value)}
+                          placeholder={t.adminPage.trustedCustomerNamePlaceholder}
+                      />
+                      <Button onClick={handleAddTrustedCustomer}>{t.adminPage.addCustomerButton}</Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                    <h4 className="font-medium text-sm">{t.adminPage.trustedCustomersListTitle}</h4>
+                    {trustedCustomers.length > 0 ? (
+                        <div className="border rounded-lg p-2 space-y-2 max-h-48 overflow-y-auto">
+                            {trustedCustomers.map(customer => (
+                                <div key={customer} className="flex justify-between items-center bg-background/50 p-2 rounded-md">
+                                    <span>{customer}</span>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveTrustedCustomer(customer)}>
+                                        <Trash2 className="w-4 h-4 text-destructive"/>
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">{t.adminPage.noTrustedCustomers}</p>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+      )
     },
     manageLogo: {
       id: 'manageLogo',

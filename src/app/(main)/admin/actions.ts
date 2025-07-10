@@ -16,3 +16,25 @@ export async function getPaymentInstructions(): Promise<string> {
 export async function updatePaymentInstructions(instructions: string): Promise<void> {
     paymentInstructions = instructions;
 }
+
+// In-memory store for trusted customers.
+let trustedCustomers: string[] = ["Waheeb Hameed"];
+
+export async function getTrustedCustomers(): Promise<string[]> {
+  return trustedCustomers;
+}
+
+export async function addTrustedCustomer(name: string): Promise<void> {
+    if (name && !trustedCustomers.includes(name)) {
+        trustedCustomers.push(name);
+    }
+}
+
+export async function removeTrustedCustomer(name: string): Promise<void> {
+    trustedCustomers = trustedCustomers.filter(customer => customer !== name);
+}
+
+export async function isTrustedCustomer(name: string | null): Promise<boolean> {
+    if (!name) return false;
+    return trustedCustomers.includes(name);
+}

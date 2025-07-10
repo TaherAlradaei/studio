@@ -17,7 +17,7 @@ import { useAuth } from "@/context/auth-context";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { getPaymentInstructions } from "@/app/(main)/admin/actions";
+import { getPaymentInstructions, isTrustedCustomer } from "@/app/(main)/admin/actions";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export function BookingHistoryTable() {
@@ -30,6 +30,7 @@ export function BookingHistoryTable() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
+  const [trustedStatus, setTrustedStatus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
       async function fetchInstructions() {
@@ -42,6 +43,22 @@ export function BookingHistoryTable() {
       }
       fetchInstructions();
   }, []);
+  
+  useEffect(() => {
+    async function checkTrustedStatus() {
+        const newTrustedStatus: Record<string, boolean> = {};
+        for (const booking of userBookings) {
+            if (booking.name) {
+                newTrustedStatus[booking.id] = await isTrustedCustomer(booking.name);
+            }
+        }
+        setTrustedStatus(newTrustedStatus);
+    }
+    if (userBookings.length > 0) {
+        checkTrustedStatus();
+    }
+  }, [bookings, user?.uid]);
+
 
   const userBookings = bookings.filter(b => b.userId === user?.uid && new Date(b.date) >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled');
 
@@ -147,7 +164,7 @@ export function BookingHistoryTable() {
                     {getStatusBadge(booking.status)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {booking.status === 'awaiting-confirmation' && (
+                    {booking.status === 'awaiting-confirmation' && trustedStatus[booking.id] && (
                       <div className="flex gap-2 justify-end">
                         <Button size="sm" onClick={() => handleAccept(booking)}>{t.actions.accept}</Button>
                         <Button size="sm" variant="destructive" onClick={() => handleDecline(booking)}>{t.actions.decline}</Button>
