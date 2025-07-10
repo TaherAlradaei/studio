@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
 import type { AcademyRegistration } from "@/lib/types";
@@ -17,9 +17,7 @@ function MemberSpace({ member }: { member: AcademyRegistration }) {
   const { addPost, getPosts } = useAcademy();
   const { toast } = useToast();
   const [story, setStory] = useState("");
-  const fileInputRef = useState<React.RefObject<HTMLInputElement>>(
-    () => React.createRef()
-  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const posts = getPosts(member.id);
 
@@ -41,7 +39,7 @@ function MemberSpace({ member }: { member: AcademyRegistration }) {
   };
 
   const handleAddPost = () => {
-    fileInputRef[0].current?.click();
+    fileInputRef.current?.click();
   };
 
   return (
@@ -70,7 +68,7 @@ function MemberSpace({ member }: { member: AcademyRegistration }) {
           <input
             type="file"
             accept="image/*"
-            ref={fileInputRef[0]}
+            ref={fileInputRef}
             onChange={handleFileChange}
             className="hidden"
           />
