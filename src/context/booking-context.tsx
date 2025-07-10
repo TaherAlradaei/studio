@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, type ReactNode } from "react";
@@ -9,7 +10,7 @@ interface BookingContextType {
   updateBooking: (id: string, updates: Partial<Omit<Booking, 'id'>>) => Promise<void>;
   blockSlot: (date: Date, time: string) => Promise<void>;
   unblockSlot: (id: string) => Promise<void>;
-  acceptBooking: (booking: Booking) => Promise<'accepted' | 'slot-taken'>;
+  acceptBooking: (booking: Booking, isTrusted: boolean) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -52,17 +53,24 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     setBookings(prev => prev.filter(b => b.id !== id));
   };
 
-  const acceptBooking = async (bookingToAccept: Booking): Promise<'accepted' | 'slot-taken'> => {
+  const acceptBooking = async (bookingToAccept: Booking, isTrusted: boolean): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
+      if (!isTrusted) {
+        // For non-trusted users, just show instructions. Admin must confirm.
+        return 'requires-admin';
+      }
+    
+      // For trusted users, proceed with confirmation logic.
       const newBookingStartTime = new Date(bookingToAccept.date);
       const newBookingEndTime = new Date(newBookingStartTime.getTime() + bookingToAccept.duration * 3600 * 1000);
 
       const isSlotTaken = bookings.some(b => {
-          if (b.status !== 'confirmed') return false;
+          if (b.id !== bookingToAccept.id && b.status === 'confirmed') {
+              const existingBookingStartTime = new Date(b.date);
+              const existingBookingEndTime = new Date(existingBookingStartTime.getTime() + b.duration * 3600 * 1000);
 
-          const existingBookingStartTime = new Date(b.date);
-          const existingBookingEndTime = new Date(existingBookingStartTime.getTime() + b.duration * 3600 * 1000);
-
-          return Math.max(newBookingStartTime.getTime(), existingBookingStartTime.getTime()) < Math.min(newBookingEndTime.getTime(), existingBookingEndTime.getTime());
+              return Math.max(newBookingStartTime.getTime(), existingBookingStartTime.getTime()) < Math.min(newBookingEndTime.getTime(), existingBookingEndTime.getTime());
+          }
+          return false;
       });
 
       if (isSlotTaken) {
@@ -76,13 +84,14 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
               return { ...b, status: 'confirmed' };
           }
           
-          const bookingStartTime = new Date(b.date);
-          const bookingEndTime = new Date(bookingStartTime.getTime() + b.duration * 3600 * 1000);
-
-          const conflict = Math.max(newBookingStartTime.getTime(), bookingStartTime.getTime()) < Math.min(newBookingEndTime.getTime(), bookingEndTime.getTime());
-
-          if (conflict && (b.status === 'pending' || b.status === 'awaiting-confirmation')) {
-              return { ...b, status: 'cancelled' };
+          // Cancel other pending requests for the same slot
+          if (b.status === 'pending' || b.status === 'awaiting-confirmation') {
+              const bookingStartTime = new Date(b.date);
+              const bookingEndTime = new Date(bookingStartTime.getTime() + b.duration * 3600 * 1000);
+              const conflict = Math.max(newBookingStartTime.getTime(), bookingStartTime.getTime()) < Math.min(newBookingEndTime.getTime(), bookingEndTime.getTime());
+              if (conflict) {
+                  return { ...b, status: 'cancelled' };
+              }
           }
           
           return b;
