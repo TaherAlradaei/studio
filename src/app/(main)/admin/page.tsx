@@ -41,7 +41,7 @@ interface AdminSection {
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
-  const { bookings, updateBooking, blockSlot, unblockSlot } = useBookings();
+  const { bookings, updateBooking, blockSlot, unblockSlot, confirmBooking } = useBookings();
   const { registrations, updateRegistrationStatus } = useAcademy();
   const [bookingData, setBookingData] = useState("");
   const [recommendations, setRecommendations] = useState("");
@@ -150,7 +150,7 @@ export default function AdminPage() {
     setBookingData(JSON.stringify(bookings, null, 2));
   };
 
-  const handleConfirmClick = (booking: Booking) => {
+  const handleSetPriceClick = (booking: Booking) => {
     setEditingBooking(booking);
     if (booking.price && booking.duration > 0) {
       setHourlyPrice((booking.price / booking.duration).toString());
@@ -177,7 +177,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleConfirmSubmit = async () => {
+  const handleQuoteSubmit = async () => {
     if (!editingBooking || !editingBooking.id) return;
     const newHourlyPrice = parseFloat(hourlyPrice);
     if (isNaN(newHourlyPrice) || newHourlyPrice < 0) {
@@ -202,6 +202,24 @@ export default function AdminPage() {
         title: t.adminPage.errorTitle,
         description: err instanceof Error ? err.message : "Failed to update booking.",
         variant: "destructive"
+      });
+    }
+  };
+
+  const handleAdminConfirmBooking = async (booking: Booking) => {
+    try {
+      const result = await confirmBooking(booking);
+      if (result === 'confirmed') {
+        toast({
+            title: t.toasts.bookingConfirmedTitle,
+            description: t.toasts.bookingConfirmedDescAdmin.replace('{name}', booking.name || 'N/A'),
+        });
+      }
+    } catch (err) {
+      toast({
+        title: t.adminPage.errorTitle,
+        description: err instanceof Error ? err.message : "Failed to confirm booking.",
+        variant: "destructive",
       });
     }
   };
@@ -431,11 +449,17 @@ export default function AdminPage() {
                         <TableCell>{getStatusBadge(booking.status)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
-                            {booking.status === 'pending' && (
-                              <Button size="sm" onClick={() => handleConfirmClick(booking)}>{t.adminPage.confirm}</Button>
+                             {booking.status === 'pending' && (
+                              <Button size="sm" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.setPriceButton}</Button>
                             )}
-                            {(booking.status === 'awaiting-confirmation' || booking.status === 'confirmed') && (
-                              <Button size="sm" variant="outline" onClick={() => handleConfirmClick(booking)}>{t.adminPage.edit}</Button>
+                            {booking.status === 'awaiting-confirmation' && (
+                                <>
+                                    <Button size="sm" variant="default" onClick={() => handleAdminConfirmBooking(booking)}>{t.adminPage.confirmButton}</Button>
+                                    <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                </>
+                            )}
+                            {booking.status === 'confirmed' && (
+                              <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
                             )}
                             {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
                                 <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
@@ -955,7 +979,7 @@ export default function AdminPage() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>{t.adminPage.cancel}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSubmit}>{t.adminPage.confirmSubmitButton}</AlertDialogAction>
+            <AlertDialogAction onClick={handleQuoteSubmit}>{t.adminPage.confirmSubmitButton}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

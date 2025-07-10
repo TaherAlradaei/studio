@@ -90,7 +90,8 @@ export const arStrings: Dictionary = {
     price: "السعر",
     status: "الحالة",
     actions: "الإجراءات",
-    confirm: "تحديد السعر",
+    setPriceButton: "تحديد السعر",
+    confirmButton: "تأكيد",
     cancel: "إلغاء",
     edit: "تعديل",
     noBookings: "لا توجد حجوزات لعرضها.",
@@ -209,6 +210,7 @@ export const arStrings: Dictionary = {
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",
     bookingConfirmedDesc: "تم تأكيد حجزك بتاريخ {date} في الساعة {time}.",
+    bookingConfirmedDescAdmin: "تم تأكيد الحجز لـ {name}.",
     bookingPendingTitle: "تم إرسال طلب الحجز",
     bookingPendingDesc: "طلبك بتاريخ {date} في الساعة {time} قيد انتظار التأكيد من الإدارة.",
     bookingUpdateTitle: "تم تحديث الحجز",

@@ -88,7 +88,8 @@ export const enStrings = {
     price: "Price",
     status: "Status",
     actions: "Actions",
-    confirm: "Set Price",
+    setPriceButton: "Set Price",
+    confirmButton: "Confirm",
     cancel: "Cancel",
     edit: "Edit",
     noBookings: "No bookings to display.",
@@ -207,6 +208,7 @@ export const enStrings = {
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",
     bookingConfirmedDesc: "Your booking for {date} at {time} is confirmed.",
+    bookingConfirmedDescAdmin: "The booking for {name} has been confirmed.",
     bookingPendingTitle: "Booking Request Sent",
     bookingPendingDesc: "Your request for {date} at {time} is pending confirmation from the admin.",
     bookingUpdateTitle: "Booking Updated",

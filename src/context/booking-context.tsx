@@ -11,6 +11,7 @@ interface BookingContextType {
   blockSlot: (date: Date, time: string) => Promise<void>;
   unblockSlot: (id: string) => Promise<void>;
   acceptBooking: (booking: Booking, isTrusted: boolean) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
+  confirmBooking: (bookingToConfirm: Booking) => Promise<'confirmed' | 'slot-taken'>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -53,18 +54,12 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     setBookings(prev => prev.filter(b => b.id !== id));
   };
 
-  const acceptBooking = async (bookingToAccept: Booking, isTrusted: boolean): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
-      if (!isTrusted) {
-        // For non-trusted users, just show instructions. Admin must confirm.
-        return 'requires-admin';
-      }
-    
-      // For trusted users, proceed with confirmation logic.
-      const newBookingStartTime = new Date(bookingToAccept.date);
-      const newBookingEndTime = new Date(newBookingStartTime.getTime() + bookingToAccept.duration * 3600 * 1000);
+  const confirmBooking = async (bookingToConfirm: Booking): Promise<'confirmed' | 'slot-taken'> => {
+      const newBookingStartTime = new Date(bookingToConfirm.date);
+      const newBookingEndTime = new Date(newBookingStartTime.getTime() + bookingToConfirm.duration * 3600 * 1000);
 
-      const isSlotTaken = bookings.some(b => {
-          if (b.id !== bookingToAccept.id && b.status === 'confirmed') {
+      const isSlotTakenByOther = bookings.some(b => {
+          if (b.id !== bookingToConfirm.id && b.status === 'confirmed') {
               const existingBookingStartTime = new Date(b.date);
               const existingBookingEndTime = new Date(existingBookingStartTime.getTime() + b.duration * 3600 * 1000);
 
@@ -73,18 +68,18 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
           return false;
       });
 
-      if (isSlotTaken) {
-          await updateBooking(bookingToAccept.id, { status: 'cancelled' });
+      if (isSlotTakenByOther) {
           return 'slot-taken';
       }
 
       // If slot is not taken, confirm booking and cancel conflicting requests
       let newBookings = bookings.map(b => {
-          if (b.id === bookingToAccept.id) {
+          // Confirm the target booking
+          if (b.id === bookingToConfirm.id) {
               return { ...b, status: 'confirmed' };
           }
           
-          // Cancel other pending requests for the same slot
+          // Cancel other pending or awaiting-confirmation requests for the same slot
           if (b.status === 'pending' || b.status === 'awaiting-confirmation') {
               const bookingStartTime = new Date(b.date);
               const bookingEndTime = new Date(bookingStartTime.getTime() + b.duration * 3600 * 1000);
@@ -98,11 +93,28 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       });
 
       setBookings(newBookings);
+      return 'confirmed';
+  };
+
+  const acceptBooking = async (bookingToAccept: Booking, isTrusted: boolean): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
+      if (!isTrusted) {
+        // For non-trusted users, just show instructions. Admin must confirm.
+        return 'requires-admin';
+      }
+    
+      // For trusted users, proceed with confirmation logic.
+      const result = await confirmBooking(bookingToAccept);
+      
+      if (result === 'slot-taken') {
+          await updateBooking(bookingToAccept.id, { status: 'cancelled' });
+          return 'slot-taken';
+      }
+
       return 'accepted';
   };
 
   return (
-    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot, acceptBooking }}>
+    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot, acceptBooking, confirmBooking }}>
       {children}
     </BookingContext.Provider>
   );
