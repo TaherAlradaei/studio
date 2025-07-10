@@ -38,7 +38,7 @@ export const arStrings: Dictionary = {
     nameLabel: "الاسم الكامل",
     namePlaceholder: "مثال: وهيب حميد",
     phoneLabel: "رقم الهاتف",
-    phonePlaceholder: "مثال: 736333328",
+    phonePlaceholder: "مثال: 736 333 328",
     termsLabel: "أوافق على الشروط والأحكام",
     requestButton: "طلب حجز",
     validation: {
@@ -170,7 +170,7 @@ export const arStrings: Dictionary = {
     validation: {
       parentNameMin: "يجب أن يتكون اسم ولي الأمر من حرفين على الأقل.",
       talentNameMin: "يجب أن يتكون اسم الموهبة من حرفين على الأقل.",
-      birthDateInvalid: "الرجاء إدخال تاريخ ميلاد صحيح.",
+      birthDateInvalid: "الرجاء إدخال تاريخ ميلاد صحيح بالتنسيق YYYY-MM-DD.",
     },
   },
   toasts: {

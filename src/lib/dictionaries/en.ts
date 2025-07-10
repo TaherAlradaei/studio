@@ -168,7 +168,7 @@ export const enStrings = {
     validation: {
       parentNameMin: "Parent's name must be at least 2 characters.",
       talentNameMin: "Talent's name must be at least 2 characters.",
-      birthDateInvalid: "Please enter a valid date of birth.",
+      birthDateInvalid: "Please enter a valid date in YYYY-MM-DD format.",
     },
   },
   toasts: {

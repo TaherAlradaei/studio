@@ -45,8 +45,8 @@ export default function AcademyRegistrationPage() {
     parentName: z.string().min(2, { message: t.academyPage.validation.parentNameMin }),
     phone: z.string().regex(/^[\d\s]{7,15}$/, { message: t.bookingForm.validation.phoneFormat }),
     talentName: z.string().min(2, { message: t.academyPage.validation.talentNameMin }),
-    birthDate: z.date({
-      required_error: "A date of birth is required.",
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      message: t.academyPage.validation.birthDateInvalid,
     }),
     ageGroup: z.enum(["U10", "U14"]),
   });
@@ -57,6 +57,7 @@ export default function AcademyRegistrationPage() {
       parentName: "",
       phone: "",
       talentName: "",
+      birthDate: "",
     },
   });
 
@@ -74,6 +75,7 @@ export default function AcademyRegistrationPage() {
       await addRegistration({
         userId: user.uid,
         ...values,
+        birthDate: new Date(values.birthDate),
       });
       toast({
         title: t.academyPage.toastSuccessTitle,
@@ -158,42 +160,11 @@ export default function AcademyRegistrationPage() {
                   control={form.control}
                   name="birthDate"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem>
                       <FormLabel>{t.academyPage.birthDateLabel}</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP", { locale: lang === 'ar' ? arSA : undefined })
-                              ) : (
-                                <span>{t.bookingPage.selectDate}</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1990-01-01")
-                            }
-                            initialFocus
-                            locale={lang === 'ar' ? arSA : undefined}
-                            dir={lang === 'ar' ? 'rtl' : 'ltr'}
-                            weekStartsOn={6}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <FormControl>
+                        <Input placeholder="YYYY-MM-DD" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
