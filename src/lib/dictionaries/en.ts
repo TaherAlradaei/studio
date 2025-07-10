@@ -153,7 +153,7 @@ export const enStrings = {
     parentNameLabel: "Parent/Guardian Name",
     parentNamePlaceholder: "e.g. Waheeb Hameed",
     talentNameLabel: "Talent's Full Name",
-    talentNamePlaceholder: "e.g. Sam Doe",
+    talentNamePlaceholder: "e.g. Mohammed Waheeb Hameed",
     birthDateLabel: "Talent's Date of Birth",
     ageGroupLabel: "Age Group",
     ageGroupPlaceholder: "Select an age group",

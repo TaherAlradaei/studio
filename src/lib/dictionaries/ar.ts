@@ -155,7 +155,7 @@ export const arStrings: Dictionary = {
     parentNameLabel: "اسم ولي الأمر",
     parentNamePlaceholder: "مثال: وهيب حميد",
     talentNameLabel: "اسم الموهبة الكامل",
-    talentNamePlaceholder: "مثال: سام دو",
+    talentNamePlaceholder: "مثال: محمد وهيب حميد",
     birthDateLabel: "تاريخ ميلاد الموهبة",
     ageGroupLabel: "الفئة العمرية",
     ageGroupPlaceholder: "اختر فئة عمرية",
