@@ -143,6 +143,7 @@ export const enStrings = {
     age: "Age",
     ageGroup: "Age Group",
     parentContact: "Parent Contact",
+    accessCode: "Access Code",
     noRegistrations: "No academy registrations found.",
     dashboardTab: "Dashboard",
     layoutTab: "Layout",

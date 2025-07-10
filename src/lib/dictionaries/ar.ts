@@ -145,6 +145,7 @@ export const arStrings: Dictionary = {
     age: "العمر",
     ageGroup: "الفئة العمرية",
     parentContact: "ولي الأمر",
+    accessCode: "رمز الدخول",
     noRegistrations: "لا توجد طلبات تسجيل في الأكاديمية.",
     dashboardTab: "لوحة التحكم",
     layoutTab: "التخطيط",

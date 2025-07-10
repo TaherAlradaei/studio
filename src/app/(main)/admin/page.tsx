@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
@@ -438,6 +438,7 @@ export default function AdminPage() {
                                 <TableHead>{t.adminPage.age}</TableHead>
                                 <TableHead>{t.adminPage.ageGroup}</TableHead>
                                 <TableHead>{t.adminPage.parentContact}</TableHead>
+                                <TableHead>{t.adminPage.accessCode}</TableHead>
                                 <TableHead>{t.adminPage.status}</TableHead>
                                 <TableHead className="text-right">{t.adminPage.actions}</TableHead>
                             </TableRow>
@@ -450,6 +451,14 @@ export default function AdminPage() {
                                         <TableCell>{differenceInYears(new Date(), new Date(reg.birthDate))}</TableCell>
                                         <TableCell>{reg.ageGroup}</TableCell>
                                         <TableCell>{reg.parentName}<br /><span className="text-sm text-muted-foreground">{reg.phone}</span></TableCell>
+                                        <TableCell>
+                                            {reg.status === 'accepted' && reg.accessCode && (
+                                                <div className="flex items-center gap-2 font-mono text-sm">
+                                                    <KeyRound className="w-4 h-4 text-muted-foreground" />
+                                                    <span>{reg.accessCode}</span>
+                                                </div>
+                                            )}
+                                        </TableCell>
                                         <TableCell>{getRegistrationStatusBadge(reg.status)}</TableCell>
                                         <TableCell className="text-right">
                                             {reg.status === 'pending' && (
@@ -463,7 +472,7 @@ export default function AdminPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center h-24">{t.adminPage.noRegistrations}</TableCell>
+                                    <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noRegistrations}</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>

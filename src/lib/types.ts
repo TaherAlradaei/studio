@@ -21,4 +21,5 @@ export interface AcademyRegistration {
   ageGroup: "U10" | "U14";
   status: 'pending' | 'accepted' | 'rejected';
   submittedAt: Date;
+  accessCode?: string;
 }
