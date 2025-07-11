@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation } from "lucide-react";
 import { getSchedulingRecommendations } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
@@ -32,6 +32,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
+import { useWelcomePage } from "@/context/welcome-page-context";
 
 
 const generateAvailableTimes = () => {
@@ -51,7 +52,7 @@ const generateAvailableTimes = () => {
 const availableTimes = generateAvailableTimes();
 
 
-type SectionId = 'bookingManagement' | 'academyRegistrations' | 'addAcademyMember' | 'manageAvailability' | 'trustedCustomers' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
+type SectionId = 'bookingManagement' | 'academyRegistrations' | 'addAcademyMember' | 'manageAvailability' | 'trustedCustomers' | 'manageWelcomePage' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
 
 interface AdminSection {
   id: SectionId;
@@ -216,6 +217,7 @@ export default function AdminPage() {
   const { bookings, updateBooking, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
   const { registrations, updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
+  const { welcomePageContent, updateWelcomePageContent } = useWelcomePage();
 
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState("");
@@ -250,6 +252,11 @@ export default function AdminPage() {
   const [hintInputs, setHintInputs] = useState<string[]>([]);
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const logoFileInputRef = useRef<HTMLInputElement | null>(null);
+  
+  const welcomePageFieldImageInputRef = useRef<HTMLInputElement | null>(null);
+  const welcomePageCoachImageInputRef = useRef<HTMLInputElement | null>(null);
+  const [welcomeTitle, setWelcomeTitle] = useState(welcomePageContent.title);
+  const [welcomeMessage, setWelcomeMessage] = useState(welcomePageContent.message);
 
   const [sectionsOrder, setSectionsOrder] = useState<SectionId[]>([
     'bookingManagement', 
@@ -257,6 +264,7 @@ export default function AdminPage() {
     'academyRegistrations', 
     'addAcademyMember',
     'trustedCustomers',
+    'manageWelcomePage',
     'manageLogo', 
     'manageBackgrounds', 
     'paymentInstructions', 
@@ -551,6 +559,34 @@ export default function AdminPage() {
         event.target.value = '';
     };
 
+    const handleWelcomePageImageChange = (
+      event: React.ChangeEvent<HTMLInputElement>,
+      imageType: 'fieldImageUrl' | 'coachImageUrl'
+    ) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newUrl = e.target?.result as string;
+          updateWelcomePageContent({ [imageType]: newUrl });
+          toast({
+            title: t.adminPage.welcomePageContentUpdatedTitle,
+            description: t.adminPage.welcomePageImageUpdatedDesc,
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+      event.target.value = '';
+    };
+
+    const handleSaveWelcomeText = () => {
+      updateWelcomePageContent({ title: welcomeTitle, message: welcomeMessage });
+      toast({
+        title: t.adminPage.welcomePageContentUpdatedTitle,
+        description: t.adminPage.welcomePageTextUpdatedDesc,
+      });
+    };
+
     const handleRegistrationStatusUpdate = async (registration: AcademyRegistration, status: 'accepted' | 'rejected') => {
         try {
             await updateRegistrationStatus(registration.id, status);
@@ -706,7 +742,7 @@ export default function AdminPage() {
                         <TableCell>{booking.time}</TableCell>
                         <TableCell>{booking.name}<br/><span className="text-sm text-muted-foreground">{booking.phone}</span></TableCell>
                         <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
-                        <TableCell>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</TableCell>
+                        <TableCell>{booking.price ? `${booking.toLocaleString()} YR` : '-'}</TableCell>
                         <TableCell>{getStatusBadge(booking.status)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
@@ -1011,6 +1047,96 @@ export default function AdminPage() {
             </CardContent>
         </Card>
       )
+    },
+     manageWelcomePage: {
+      id: 'manageWelcomePage',
+      title: t.adminPage.manageWelcomePageCardTitle,
+      component: (
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <Presentation className="w-6 h-6 text-primary" />
+                    <CardTitle>{t.adminPage.manageWelcomePageCardTitle}</CardTitle>
+                </div>
+                <CardDescription>{t.adminPage.manageWelcomePageCardDescription}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="welcome-title">{t.adminPage.welcomePageTitleLabel}</Label>
+                  <Input 
+                      id="welcome-title"
+                      value={welcomeTitle}
+                      onChange={(e) => setWelcomeTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="welcome-message">{t.adminPage.welcomePageMessageLabel}</Label>
+                  <Textarea
+                      id="welcome-message"
+                      value={welcomeMessage}
+                      onChange={(e) => setWelcomeMessage(e.target.value)}
+                      rows={4}
+                  />
+                </div>
+                 <Button onClick={handleSaveWelcomeText} disabled={isSaving}>
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t.adminPage.savingButton}
+                        </>
+                    ) : (
+                        t.adminPage.saveButton
+                    )}
+                </Button>
+
+                <div className="grid md:grid-cols-2 gap-6 pt-6 border-t">
+                    <div className="space-y-4">
+                        <Label>{t.adminPage.welcomePageFieldImageLabel}</Label>
+                        <Image
+                            src={welcomePageContent.fieldImageUrl}
+                            alt="Football Field"
+                            width={200}
+                            height={150}
+                            className="w-full h-auto object-cover rounded-md aspect-video border"
+                            data-ai-hint="football field"
+                        />
+                        <Button onClick={() => welcomePageFieldImageInputRef.current?.click()} className="w-full">
+                            {t.adminPage.replaceImageButton}
+                        </Button>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            ref={welcomePageFieldImageInputRef}
+                            onChange={(e) => handleWelcomePageImageChange(e, 'fieldImageUrl')}
+                            className="hidden"
+                        />
+                    </div>
+                     <div className="space-y-4">
+                        <Label>{t.adminPage.welcomePageCoachImageLabel}</Label>
+                        <Image
+                            src={welcomePageContent.coachImageUrl}
+                            alt="Academy Coach"
+                            width={200}
+                            height={150}
+                            className="w-full h-auto object-cover rounded-md aspect-video border"
+                            data-ai-hint="football coach"
+                        />
+                        <Button onClick={() => welcomePageCoachImageInputRef.current?.click()} className="w-full">
+                            {t.adminPage.replaceImageButton}
+                        </Button>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            ref={welcomePageCoachImageInputRef}
+                            onChange={(e) => handleWelcomePageImageChange(e, 'coachImageUrl')}
+                            className="hidden"
+                        />
+                    </div>
+                </div>
+
+            </CardContent>
+        </Card>
+      ),
     },
     manageLogo: {
       id: 'manageLogo',

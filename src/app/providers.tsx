@@ -8,6 +8,7 @@ import React, { useEffect } from "react";
 import { BackgroundProvider } from "@/context/background-context";
 import { LogoProvider } from "@/context/logo-context";
 import { AcademyProvider } from "@/context/academy-context";
+import { WelcomePageProvider } from "@/context/welcome-page-context";
 
 function AppDirectionManager({ children }: { children: React.ReactNode }) {
     const { lang } = useLanguage();
@@ -30,17 +31,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <BookingProvider>
-          <AcademyProvider>
-            <LogoProvider>
-              <BackgroundProvider>
-                <AppDirectionManager>
-                    {children}
-                </AppDirectionManager>
-              </BackgroundProvider>
-            </LogoProvider>
-          </AcademyProvider>
-        </BookingProvider>
+        <WelcomePageProvider>
+          <BookingProvider>
+            <AcademyProvider>
+              <LogoProvider>
+                <BackgroundProvider>
+                  <AppDirectionManager>
+                      {children}
+                  </AppDirectionManager>
+                </BackgroundProvider>
+              </LogoProvider>
+            </AcademyProvider>
+          </BookingProvider>
+        </WelcomePageProvider>
       </AuthProvider>
     </LanguageProvider>
   );
