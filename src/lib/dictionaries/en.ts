@@ -162,6 +162,11 @@ export const enStrings = {
     trustedCustomerAddedToastDesc: "{name} has been added to the trusted customers list.",
     trustedCustomerRemovedToastTitle: "Trusted Customer Removed",
     trustedCustomerRemovedToastDesc: "{name} has been removed from the trusted customers list.",
+    addMemberCardTitle: "Add New Academy Member",
+    addMemberCardDesc: "Manually enter the details for a new academy member. They will be automatically accepted and an access code generated.",
+    addMemberButton: "Add Member",
+    memberAddedSuccessTitle: "Member Added Successfully",
+    memberAddedSuccessDesc: "{name} has been successfully added to the academy.",
   },
   academyPage: {
     title: "Join the Academy",

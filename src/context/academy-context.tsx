@@ -6,7 +6,7 @@ import type { AcademyRegistration, MemberPost, PostComment } from "@/lib/types";
 
 interface AcademyContextType {
   registrations: AcademyRegistration[];
-  addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts">) => Promise<void>;
+  addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts">, status?: AcademyRegistration['status']) => Promise<void>;
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
   validateAccessCode: (code: string) => AcademyRegistration | null;
   addPost: (memberId: string, post: Omit<MemberPost, 'id'>) => void;
@@ -30,13 +30,14 @@ const generateAccessCode = (length = 6) => {
 export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
 
-  const addRegistration = async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts">) => {
+  const addRegistration = async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts">, status: AcademyRegistration['status'] = 'pending') => {
     const newRegistration: AcademyRegistration = {
       ...newRegistrationData,
       id: Math.random().toString(36).substr(2, 9),
-      status: 'pending',
+      status: status,
       submittedAt: new Date(),
       posts: [],
+      accessCode: status === 'accepted' ? generateAccessCode() : undefined,
     };
     setRegistrations(prev => [...prev, newRegistration]);
   };

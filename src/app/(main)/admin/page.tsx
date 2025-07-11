@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, addTrustedCustomer, removeTrustedCustomer } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
@@ -26,19 +26,178 @@ import { useBackground } from "@/context/background-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLogo } from "@/context/logo-context";
 import { getDefaultPrice } from "@/lib/pricing";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/context/auth-context";
+
 
 const availableTimes = [
   "07:00", "08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00",
   "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
 ];
 
-type SectionId = 'bookingManagement' | 'academyRegistrations' | 'manageAvailability' | 'trustedCustomers' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
+type SectionId = 'bookingManagement' | 'academyRegistrations' | 'addAcademyMember' | 'manageAvailability' | 'trustedCustomers' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
 
 interface AdminSection {
   id: SectionId;
   title: string;
   component: React.ReactNode;
 }
+
+const AddMemberForm = () => {
+  const { t, lang } = useLanguage();
+  const { toast } = useToast();
+  const { addRegistration } = useAcademy();
+  const { user } = useAuth();
+
+  const formSchema = z.object({
+    parentName: z.string().min(2, { message: t.academyPage.validation.parentNameMin }),
+    phone: z.string().regex(/^[\d\s]{7,15}$/, { message: t.bookingForm.validation.phoneFormat }),
+    talentName: z.string().min(2, { message: t.academyPage.validation.talentNameMin }),
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      message: t.academyPage.validation.birthDateInvalid,
+    }),
+    ageGroup: z.enum(["U10", "U14"]),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      parentName: "",
+      phone: "",
+      talentName: "",
+      birthDate: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+     if (!user) {
+        toast({
+            title: t.auth.notLoggedInTitle,
+            description: t.auth.notLoggedInDesc,
+            variant: "destructive",
+        });
+        return;
+    }
+    
+    try {
+      await addRegistration({
+        userId: 'admin_added', // or some other identifier
+        ...values,
+        birthDate: new Date(values.birthDate),
+      }, 'accepted'); // Automatically accept members added by admin
+      toast({
+        title: t.adminPage.memberAddedSuccessTitle,
+        description: t.adminPage.memberAddedSuccessDesc.replace('{name}', values.talentName),
+      });
+      form.reset();
+    } catch (error) {
+      toast({
+        title: t.adminPage.errorTitle,
+        description: error instanceof Error ? error.message : "Failed to add member.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  return (
+    <Card className="bg-card/80 backdrop-blur-sm">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+            <UserPlus className="w-6 h-6 text-primary" />
+            <CardTitle>{t.adminPage.addMemberCardTitle}</CardTitle>
+        </div>
+        <CardDescription>{t.adminPage.addMemberCardDesc}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="parentName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.academyPage.parentNameLabel}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t.academyPage.parentNamePlaceholder} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.bookingForm.phoneLabel}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t.bookingForm.phonePlaceholder} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="talentName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.academyPage.talentNameLabel}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t.academyPage.talentNamePlaceholder} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="birthDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.academyPage.birthDateLabel}</FormLabel>
+                  <FormControl>
+                    <Input placeholder="YYYY-MM-DD" dir="ltr" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="ageGroup"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.academyPage.ageGroupLabel}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.academyPage.ageGroupPlaceholder} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="U10">{t.academyPage.ageGroupU10}</SelectItem>
+                      <SelectItem value="U14">{t.academyPage.ageGroupU14}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full sm:w-auto">
+              {t.adminPage.addMemberButton}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
@@ -75,6 +234,7 @@ export default function AdminPage() {
     'bookingManagement', 
     'manageAvailability',
     'academyRegistrations', 
+    'addAcademyMember',
     'trustedCustomers',
     'manageLogo', 
     'manageBackgrounds', 
@@ -534,6 +694,11 @@ export default function AdminPage() {
         </Card>
       ),
     },
+    addAcademyMember: {
+        id: 'addAcademyMember',
+        title: t.adminPage.addMemberCardTitle,
+        component: <AddMemberForm />
+    },
     manageAvailability: {
       id: 'manageAvailability',
       title: t.adminPage.manageAvailabilityCardTitle,
@@ -987,5 +1152,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
