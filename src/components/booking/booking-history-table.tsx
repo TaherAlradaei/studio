@@ -39,7 +39,7 @@ export function BookingHistoryTable() {
             const instructions = await getPaymentInstructions();
             setPaymentInstructions(instructions);
           } catch (err) {
-            // Error is handled by the action itself now
+            // Error handling can be added here if needed
           }
       }
       fetchInstructions();
@@ -55,13 +55,11 @@ export function BookingHistoryTable() {
 
   const handleAccept = async (booking: Booking) => {
     try {
-      // Pass the trusted check result to the acceptBooking function
       const trusted = await isTrustedCustomer(booking.name);
       const result = await acceptBooking(booking, trusted);
-
-      setCurrentBooking(booking);
-      setShowPaymentDialog(true);
       
+      setCurrentBooking(booking);
+
       if (result === 'slot-taken') {
           toast({
               title: t.toasts.slotUnavailableTitle,
@@ -69,6 +67,17 @@ export function BookingHistoryTable() {
               variant: "destructive",
           });
           router.push('/');
+      } else if (result === 'requires-admin') {
+          // Non-trusted user accepted, show payment instructions.
+          setShowPaymentDialog(true);
+      } else if (result === 'accepted') {
+          // Trusted user accepted, show simple confirmation.
+          toast({
+              title: t.toasts.bookingConfirmedTitle,
+              description: t.toasts.bookingConfirmedDesc
+                  .replace('{date}', new Date(booking.date).toLocaleDateString(lang))
+                  .replace('{time}', booking.time),
+          });
       }
     } catch(err) {
       toast({
