@@ -42,9 +42,11 @@ const generateAvailableTimes = () => {
         times.push(`${i.toString().padStart(2, '0')}:30`);
     }
     // Afternoon: 14:00 to 23:30
-    for (let i = 14; i < 24; i++) {
+    for (let i = 14; i <= 23; i++) {
         times.push(`${i.toString().padStart(2, '0')}:00`);
-        times.push(`${i.toString().padStart(2, '0')}:30`);
+        if (i < 23) {
+            times.push(`${i.toString().padStart(2, '0')}:30`);
+        }
     }
     return times;
 };
@@ -213,26 +215,9 @@ const AddMemberForm = () => {
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
-  const { bookings, updateBooking, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
-  const { registrations, updateRegistrationStatus } = useAcademy();
-  const [bookingData, setBookingData] = useState("");
-  const [recommendations, setRecommendations] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const { toast } = useToast();
-
-  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [newManualBooking, setNewManualBooking] = useState<{date: Date, time: string, duration: number} | null>(null);
-  const [manualBookingName, setManualBookingName] = useState("");
-  const [manualBookingPhone, setManualBookingPhone] = useState("");
-  const [manualBookingDuration, setManualBookingDuration] = useState(1);
-  const [infoBooking, setInfoBooking] = useState<Booking | null>(null);
-  const [hourlyPrice, setHourlyPrice] = useState("");
-
-  const [recurringBooking, setRecurringBooking] = useState<Booking | null>(null);
-  const [recurringMonths, setRecurringMonths] = useState(1);
-
+  const { bookings, updateBooking, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } Bounding Client Rect
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
+  const [availabilityDuration, setAvailabilityDuration] = useState(1);
   
   const [filterDate, setFilterDate] = useState<Date | undefined>(new Date());
   const [filterType, setFilterType] = useState<"week" | "day" | "month">("week");
@@ -419,8 +404,8 @@ export default function AdminPage() {
             phone: manualBookingPhone,
             date: newManualBooking.date,
             time: newManualBooking.time,
-            duration: newManualBooking.duration,
-            price: getDefaultPrice(newManualBooking.time) * newManualBooking.duration,
+            duration: manualBookingDuration,
+            price: getDefaultPrice(newManualBooking.time) * manualBookingDuration,
         });
         toast({
             title: t.toasts.bookingConfirmedTitle,
@@ -822,7 +807,7 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-8 items-start">
                 <div>
-                     <CardHeader>
+                     <CardHeader className="p-0 mb-4">
                         <div className="flex items-center gap-2">
                             <CalendarDays className="w-6 h-6 text-primary" />
                             <CardTitle className="font-headline text-xl">{t.bookingPage.selectDate}</CardTitle>
@@ -844,12 +829,31 @@ export default function AdminPage() {
                 <div>
                     {availabilityDate && (
                     <>
-                        <CardHeader>
+                        <CardHeader className="p-0 mb-4">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-6 h-6 text-primary" />
                                 <CardTitle className="font-headline text-xl">{t.timeSlotPicker.title}</CardTitle>
                             </div>
                         </CardHeader>
+                        <div className="mb-4">
+                            <Label htmlFor="admin-duration" className="block text-sm font-medium mb-2">
+                                {t.timeSlotPicker.durationLabel}
+                            </Label>
+                            <Select
+                                value={availabilityDuration.toString()}
+                                onValueChange={(value) => setAvailabilityDuration(parseFloat(value))}
+                            >
+                                <SelectTrigger id="admin-duration" className="w-[180px]">
+                                    <SelectValue placeholder={t.timeSlotPicker.durationPlaceholder} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1">{t.timeSlotPicker.oneHour}</SelectItem>
+                                    <SelectItem value="1.5">{t.timeSlotPicker.oneAndHalfHour}</SelectItem>
+                                    <SelectItem value="2">{t.timeSlotPicker.twoHours}</SelectItem>
+                                    <SelectItem value="2.5">2.5 Hours</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                             {availableTimes.map((time) => {
                                 const slotDateTime = new Date(availabilityDate);
@@ -869,11 +873,12 @@ export default function AdminPage() {
                                 });
 
                                 const isPast = new Date() > slotDateTime;
+                                const isBookedForManual = isSlotBooked(availabilityDate, time, availabilityDuration, bookings);
                                 
                                 let buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" = "outline";
                                 let buttonClassName = "w-full";
                                 let badgeContent = null;
-                                let isDisabled = isPast;
+                                let isDisabled = isPast || (isBookedForManual && !booking);
 
                                 if (booking) {
                                     isDisabled = true;
@@ -912,7 +917,7 @@ export default function AdminPage() {
                                                 } else if (booking?.status === 'confirmed') {
                                                     setInfoBooking(booking);
                                                 } else if (!booking) {
-                                                    setNewManualBooking({date: availabilityDate, time, duration: 1});
+                                                    setNewManualBooking({date: availabilityDate, time, duration: availabilityDuration});
                                                 }
                                             } catch (err) {
                                                 toast({
