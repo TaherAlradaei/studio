@@ -44,9 +44,7 @@ const generateAvailableTimes = () => {
     // Afternoon: 14:00 to 23:30
     for (let i = 14; i <= 23; i++) {
         times.push(`${i.toString().padStart(2, '0')}:00`);
-        if (i < 23) {
-            times.push(`${i.toString().padStart(2, '0')}:30`);
-        }
+        times.push(`${i.toString().padStart(2, '0')}:30`);
     }
     return times;
 };
@@ -215,7 +213,27 @@ const AddMemberForm = () => {
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
-  const { bookings, updateBooking, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } Bounding Client Rect
+  const { bookings, updateBooking, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
+  const { registrations, updateRegistrationStatus } = useAcademy();
+  const { toast } = useToast();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [recommendations, setRecommendations] = useState("");
+  const [error, setError] = useState("");
+  const [bookingData, setBookingData] = useState("");
+
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [hourlyPrice, setHourlyPrice] = useState("");
+
+  const [newManualBooking, setNewManualBooking] = useState<{date: Date, time: string, duration: number} | null>(null);
+  const [manualBookingName, setManualBookingName] = useState("");
+  const [manualBookingPhone, setManualBookingPhone] = useState("");
+  const [manualBookingDuration, setManualBookingDuration] = useState(1);
+  
+  const [infoBooking, setInfoBooking] = useState<Booking | null>(null);
+  const [recurringBooking, setRecurringBooking] = useState<Booking | null>(null);
+  const [recurringMonths, setRecurringMonths] = useState(1);
+  
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
   const [availabilityDuration, setAvailabilityDuration] = useState(1);
   
@@ -917,6 +935,7 @@ export default function AdminPage() {
                                                 } else if (booking?.status === 'confirmed') {
                                                     setInfoBooking(booking);
                                                 } else if (!booking) {
+                                                    setManualBookingDuration(availabilityDuration);
                                                     setNewManualBooking({date: availabilityDate, time, duration: availabilityDuration});
                                                 }
                                             } catch (err) {
@@ -1247,7 +1266,12 @@ export default function AdminPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!newManualBooking} onOpenChange={() => setNewManualBooking(null)}>
+      <AlertDialog open={!!newManualBooking} onOpenChange={(isOpen) => {
+            if (!isOpen) {
+                setNewManualBooking(null);
+                setManualBookingDuration(1);
+            }
+        }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.adminPage.manualBookingTitle}</AlertDialogTitle>
@@ -1346,3 +1370,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
