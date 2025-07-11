@@ -172,6 +172,12 @@ export const arStrings: Dictionary = {
     manualBookingTitle: "إنشاء حجز مؤكد",
     manualBookingDescription: "أدخل تفاصيل العميل للحجز بتاريخ {date} في الساعة {time}.",
     manualBookingError: "الرجاء إدخال الاسم ورقم الهاتف لإنشاء حجز.",
+    makeRecurringButton: "جعله متكررًا",
+    recurringBookingTitle: "إنشاء حجز شهري متكرر",
+    recurringBookingDesc: "كرر الحجز لـ {name} في الساعة {time} في اليوم {date} من كل شهر.",
+    recurringBookingMonthsLabel: "كرر لعدد الأشهر التالية:",
+    recurringBookingSuccessTitle: "تم إنشاء الحجوزات المتكررة",
+    recurringBookingSuccessDesc: "تم إنشاء {months} حجوزات شهرية جديدة لـ {name} بنجاح.",
   },
   academyPage: {
     title: "انضم إلى الأكاديمية",

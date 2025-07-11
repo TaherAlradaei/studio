@@ -170,6 +170,12 @@ export const enStrings = {
     manualBookingTitle: "Create Confirmed Booking",
     manualBookingDescription: "Enter customer details for the booking on {date} at {time}.",
     manualBookingError: "Please enter both name and phone number to create a booking.",
+    makeRecurringButton: "Make Recurring",
+    recurringBookingTitle: "Create Recurring Monthly Booking",
+    recurringBookingDesc: "Repeat the booking for {name} at {time} on the {date} of each month.",
+    recurringBookingMonthsLabel: "Repeat for the next number of months:",
+    recurringBookingSuccessTitle: "Recurring Bookings Created",
+    recurringBookingSuccessDesc: "Successfully created {months} new monthly bookings for {name}.",
   },
   academyPage: {
     title: "Join the Academy",

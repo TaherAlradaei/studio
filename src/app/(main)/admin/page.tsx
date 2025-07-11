@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, addTrustedCustomer, removeTrustedCustomer } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
@@ -213,7 +213,7 @@ const AddMemberForm = () => {
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
-  const { bookings, updateBooking, blockSlot, unblockSlot, confirmBooking, createConfirmedBooking } = useBookings();
+  const { bookings, updateBooking, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
   const { registrations, updateRegistrationStatus } = useAcademy();
   const [bookingData, setBookingData] = useState("");
   const [recommendations, setRecommendations] = useState("");
@@ -228,6 +228,9 @@ export default function AdminPage() {
   const [manualBookingDuration, setManualBookingDuration] = useState(1);
   const [infoBooking, setInfoBooking] = useState<Booking | null>(null);
   const [hourlyPrice, setHourlyPrice] = useState("");
+
+  const [recurringBooking, setRecurringBooking] = useState<Booking | null>(null);
+  const [recurringMonths, setRecurringMonths] = useState(1);
 
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
   
@@ -557,6 +560,31 @@ export default function AdminPage() {
             });
         }
     };
+    
+    const handleMakeRecurring = (booking: Booking) => {
+        setRecurringBooking(booking);
+    };
+
+    const handleConfirmRecurring = async () => {
+        if (!recurringBooking || recurringMonths <= 0) return;
+        try {
+            await createRecurringBookings(recurringBooking, recurringMonths);
+            toast({
+                title: t.adminPage.recurringBookingSuccessTitle,
+                description: t.adminPage.recurringBookingSuccessDesc
+                    .replace('{months}', recurringMonths.toString())
+                    .replace('{name}', recurringBooking.name || ''),
+            });
+            setRecurringBooking(null);
+            setRecurringMonths(1);
+        } catch (err) {
+             toast({
+                title: t.adminPage.errorTitle,
+                description: err instanceof Error ? err.message : "Failed to create recurring bookings.",
+                variant: "destructive",
+            });
+        }
+    };
 
   const getStatusBadge = (status: Booking['status']) => {
     switch (status) {
@@ -686,7 +714,13 @@ export default function AdminPage() {
                                 </>
                             )}
                             {booking.status === 'confirmed' && (
-                              <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                <>
+                                  <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                  <Button size="sm" variant="outline" onClick={() => handleMakeRecurring(booking)}>
+                                      <Repeat className="mr-2 h-4 w-4" />
+                                      {t.adminPage.makeRecurringButton}
+                                  </Button>
+                                </>
                             )}
                             {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
                                 <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
@@ -1272,6 +1306,37 @@ export default function AdminPage() {
                 <AlertDialogAction onClick={() => setInfoBooking(null)}>{t.actions.ok}</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!recurringBooking} onOpenChange={() => setRecurringBooking(null)}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>{t.adminPage.recurringBookingTitle}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {recurringBooking && 
+                        t.adminPage.recurringBookingDesc
+                            .replace('{name}', recurringBooking.name || '')
+                            .replace('{time}', recurringBooking.time)
+                            .replace('{date}', format(new Date(recurringBooking.date), 'do'))
+                    }
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="grid gap-2">
+                  <Label htmlFor="recurring-months">{t.adminPage.recurringBookingMonthsLabel}</Label>
+                  <Input 
+                      id="recurring-months" 
+                      type="number" 
+                      value={recurringMonths} 
+                      onChange={e => setRecurringMonths(parseInt(e.target.value, 10) || 1)} 
+                      min="1"
+                      max="12"
+                  />
+              </div>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>{t.adminPage.cancel}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleConfirmRecurring}>{t.adminPage.confirmButton}</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
       </AlertDialog>
     </div>
   );

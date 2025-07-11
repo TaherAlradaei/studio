@@ -9,6 +9,7 @@ export interface Booking {
   duration: number; // in hours
   status: 'pending' | 'awaiting-confirmation' | 'confirmed' | 'cancelled' | 'blocked';
   price?: number;
+  isRecurring?: boolean;
 }
 
 export interface PostComment {

@@ -3,6 +3,8 @@
 
 import React, { createContext, useContext, useState, type ReactNode } from "react";
 import type { Booking } from "@/lib/types";
+import { addMonths, setDate, lastDayOfMonth } from 'date-fns';
+
 
 interface BookingContextType {
   bookings: Booking[];
@@ -13,6 +15,7 @@ interface BookingContextType {
   acceptBooking: (booking: Booking, isTrusted: boolean) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
   confirmBooking: (bookingToConfirm: Booking) => Promise<'confirmed' | 'slot-taken'>;
   createConfirmedBooking: (bookingData: Omit<Booking, "id" | "status" | "userId">) => Promise<'confirmed' | 'slot-taken'>;
+  createRecurringBookings: (booking: Booking, months: number) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -66,7 +69,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       const newBookingDateStr = new Date(bookingToConfirm.date).toDateString();
 
       const isSlotTakenByOther = bookings.some(b => {
-          if (b.id !== bookingToConfirm.id && b.status === 'confirmed') {
+          if (b.id !== bookingToConfirm.id && (b.status === 'confirmed' || b.status === 'blocked')) {
               const existingBookingDateStr = new Date(b.date).toDateString();
               if (existingBookingDateStr !== newBookingDateStr) return false;
 
@@ -134,6 +137,58 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       return 'confirmed';
   };
 
+    const createRecurringBookings = async (originalBooking: Booking, months: number): Promise<void> => {
+        const newBookings: Booking[] = [];
+        const originalDate = new Date(originalBooking.date);
+        const dayOfMonth = originalDate.getDate();
+
+        for (let i = 1; i <= months; i++) {
+            let nextDate = addMonths(originalDate, i);
+            const lastDayOfNextMonth = lastDayOfMonth(nextDate).getDate();
+
+            // If the original day is greater than the last day of the next month, use the last day.
+            if (dayOfMonth > lastDayOfNextMonth) {
+                nextDate = setDate(nextDate, lastDayOfNextMonth);
+            } else {
+                nextDate = setDate(nextDate, dayOfMonth);
+            }
+
+            const newBooking: Booking = {
+                ...originalBooking,
+                id: `${originalBooking.id}-recur-${i}`,
+                date: nextDate,
+                status: 'confirmed', // Recurring bookings are always confirmed
+                isRecurring: true,
+            };
+            newBookings.push(newBooking);
+        }
+
+        // Check for conflicts before adding
+        for (const booking of newBookings) {
+            const isSlotTaken = bookings.some(b => {
+                if (b.status === 'confirmed' || b.status === 'blocked') {
+                    const existingBookingDateStr = new Date(b.date).toDateString();
+                    const newBookingDateStr = new Date(booking.date).toDateString();
+                    if (existingBookingDateStr !== newBookingDateStr) return false;
+
+                    const existingBookingStartMinutes = timeToMinutes(b.time);
+                    const existingBookingEndMinutes = existingBookingStartMinutes + b.duration * 60;
+                    const newBookingStartMinutes = timeToMinutes(booking.time);
+                    const newBookingEndMinutes = newBookingStartMinutes + booking.duration * 60;
+
+                    return Math.max(newBookingStartMinutes, existingBookingStartMinutes) < Math.min(newBookingEndMinutes, existingBookingEndMinutes);
+                }
+                return false;
+            });
+
+            if (isSlotTaken) {
+                throw new Error(`A booking conflict exists for ${format(booking.date, 'PPP')}. Recurring booking creation failed.`);
+            }
+        }
+        
+        setBookings(prev => [...prev, ...newBookings].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+    };
+
   const acceptBooking = async (bookingToAccept: Booking, isTrusted: boolean): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
       if (!isTrusted) {
         // For non-trusted users, just show instructions. Admin must confirm.
@@ -152,7 +207,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot, acceptBooking, confirmBooking, createConfirmedBooking }}>
+    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot, acceptBooking, confirmBooking, createConfirmedBooking, createRecurringBookings }}>
       {children}
     </BookingContext.Provider>
   );
