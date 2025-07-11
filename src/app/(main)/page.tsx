@@ -7,13 +7,18 @@ import { TimeSlotPicker } from "@/components/booking/time-slot-picker";
 import { BookingForm } from "@/components/booking/booking-form";
 import { useBookings } from "@/context/booking-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, DollarSign } from "lucide-react";
 import { FieldIcon } from "@/components/icons";
 import { useLanguage } from "@/context/language-context";
 import { useAuth } from "@/context/auth-context";
 import { arSA } from "date-fns/locale";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const pricingData = [
+    { slot: "07:00 - 11:00", price: "6,000" },
+    { slot: "14:00 - 17:00", price: "7,000" },
+    { slot: "18:00 - 23:00", price: "8,000" },
+];
 
 export default function BookingPage() {
   const { t, lang } = useLanguage();
@@ -23,7 +28,6 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
   const { bookings } = useBookings();
-  const [calendarView, setCalendarView] = useState<'1m' | '2m'>('1m');
 
   if (isLoading || !user) {
     return null; // Or a loading spinner
@@ -68,17 +72,6 @@ export default function BookingPage() {
               <CardDescription>{t.bookingPage.selectDateDesc}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-end mb-4">
-                  <div className="flex flex-col items-end">
-                      <Label className="text-xs mb-1">{t.bookingPage.calendarView}</Label>
-                      <Tabs value={calendarView} onValueChange={(v) => setCalendarView(v as any)}>
-                          <TabsList className="h-8">
-                              <TabsTrigger value="1m" className="text-xs px-2 py-1 h-auto">{t.bookingPage.oneMonth}</TabsTrigger>
-                              <TabsTrigger value="2m" className="text-xs px-2 py-1 h-auto">{t.bookingPage.twoMonths}</TabsTrigger>
-                          </TabsList>
-                      </Tabs>
-                  </div>
-              </div>
               <div className="flex justify-center">
                 <Calendar
                   mode="single"
@@ -89,12 +82,41 @@ export default function BookingPage() {
                   locale={lang === 'ar' ? arSA : undefined}
                   dir={lang === 'ar' ? 'rtl' : 'ltr'}
                   weekStartsOn={6}
-                  numberOfMonths={calendarView === '1m' ? 1 : 2}
                 />
               </div>
             </CardContent>
           </Card>
 
+          <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <DollarSign className="w-6 h-6 text-primary" />
+                    <CardTitle className="font-headline text-2xl">{t.bookingPage.pricingTitle}</CardTitle>
+                </div>
+                <CardDescription>{t.bookingPage.pricingDesc}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>{t.bookingPage.pricingTimeSlot}</TableHead>
+                            <TableHead className="text-right">{t.bookingPage.pricingPriceYER}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {pricingData.map((item) => (
+                            <TableRow key={item.slot}>
+                                <TableCell className="font-medium">{item.slot}</TableCell>
+                                <TableCell className="text-right">{item.price}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="lg:sticky lg:top-24 flex flex-col gap-8">
           {selectedDate && (
             <TimeSlotPicker
               selectedDate={selectedDate}
@@ -103,9 +125,6 @@ export default function BookingPage() {
               selectedTime={selectedTime}
             />
           )}
-        </div>
-        
-        <div className="lg:sticky lg:top-24">
           {selectedDate && selectedTime && (
             <BookingForm
               selectedDate={selectedDate}

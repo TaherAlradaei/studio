@@ -19,9 +19,10 @@ export const arStrings: Dictionary = {
     description: "اتبع الخطوات البسيطة أدناه لحجز ملعب كرة القدم الخاص بك في أكاديمية الميدان.",
     selectDate: "اختر تاريخًا",
     selectDateDesc: "انقر على تاريخ لرؤية الأوقات المتاحة.",
-    calendarView: "عرض التقويم",
-    oneMonth: "شهر واحد",
-    twoMonths: "شهران",
+    pricingTitle: "الأسعار الافتراضية",
+    pricingDesc: "الأسعار التالية هي للساعة الواحدة وقد تختلف.",
+    pricingTimeSlot: "الفترة الزمنية",
+    pricingPriceYER: "السعر (ريال يمني)",
   },
   timeSlotPicker: {
     title: "اختر فترة زمنية",

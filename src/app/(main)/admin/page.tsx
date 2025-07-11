@@ -58,7 +58,6 @@ export default function AdminPage() {
   
   const [filterDate, setFilterDate] = useState<Date | undefined>(new Date());
   const [filterType, setFilterType] = useState<"week" | "day" | "month">("week");
-  const [calendarView, setCalendarView] = useState<'1m' | '2m'>('1m');
 
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -390,27 +389,15 @@ export default function AdminPage() {
           <CardContent>
             <div className="flex flex-col md:flex-row gap-6 mb-6 p-4 border rounded-lg bg-background/50">
               <div className="flex-shrink-0">
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="px-1">{t.adminPage.filterByDate}</Label>
-                    <div className="flex flex-col items-end">
-                        <Label className="text-xs mb-1">{t.adminPage.calendarView}</Label>
-                        <Tabs value={calendarView} onValueChange={(v) => setCalendarView(v as any)}>
-                            <TabsList className="h-8">
-                                <TabsTrigger value="1m" className="text-xs px-2 py-1 h-auto">{t.adminPage.oneMonth}</TabsTrigger>
-                                <TabsTrigger value="2m" className="text-xs px-2 py-1 h-auto">{t.adminPage.twoMonths}</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                    </div>
-                </div>
+                <Label className="px-1">{t.adminPage.filterByDate}</Label>
                 <Calendar
                   mode="single"
                   selected={filterDate}
                   onSelect={setFilterDate}
-                  className="rounded-md border w-full sm:w-auto"
+                  className="rounded-md border w-full sm:w-auto mt-2"
                   locale={lang === 'ar' ? arSA : undefined}
                   dir={lang === 'ar' ? 'rtl' : 'ltr'}
                   weekStartsOn={6}
-                  numberOfMonths={calendarView === '1m' ? 1 : 2}
                 />
               </div>
               <div className="flex-1">
@@ -559,20 +546,9 @@ export default function AdminPage() {
             <CardContent className="grid md:grid-cols-2 gap-8 items-start">
                 <div>
                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-2">
-                                <CalendarDays className="w-6 h-6 text-primary" />
-                                <CardTitle className="font-headline text-xl">{t.bookingPage.selectDate}</CardTitle>
-                            </div>
-                            <div className="flex flex-col items-end">
-                                <Label className="text-xs mb-1">{t.adminPage.calendarView}</Label>
-                                <Tabs value={calendarView} onValueChange={(v) => setCalendarView(v as any)}>
-                                    <TabsList className="h-8">
-                                        <TabsTrigger value="1m" className="text-xs px-2 py-1 h-auto">{t.adminPage.oneMonth}</TabsTrigger>
-                                        <TabsTrigger value="2m" className="text-xs px-2 py-1 h-auto">{t.adminPage.twoMonths}</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                            </div>
+                        <div className="flex items-center gap-2">
+                            <CalendarDays className="w-6 h-6 text-primary" />
+                            <CardTitle className="font-headline text-xl">{t.bookingPage.selectDate}</CardTitle>
                         </div>
                     </CardHeader>
                     <div className="flex justify-center">
@@ -585,7 +561,6 @@ export default function AdminPage() {
                             locale={lang === 'ar' ? arSA : undefined}
                             dir={lang === 'ar' ? 'rtl' : 'ltr'}
                             weekStartsOn={6}
-                            numberOfMonths={calendarView === '1m' ? 1 : 2}
                         />
                     </div>
                 </div>

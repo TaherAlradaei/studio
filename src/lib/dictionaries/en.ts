@@ -17,9 +17,10 @@ export const enStrings = {
     description: "Follow the simple steps below to reserve your football field at Al Maidan Football Academy.",
     selectDate: "Select a Date",
     selectDateDesc: "Click on a date to see available time slots.",
-    calendarView: "Calendar View",
-    oneMonth: "1 Month",
-    twoMonths: "2 Months",
+    pricingTitle: "Default Pricing",
+    pricingDesc: "The following prices are per hour and subject to change.",
+    pricingTimeSlot: "Time Slot",
+    pricingPriceYER: "Price (YER)",
   },
   timeSlotPicker: {
     title: "Select a Time Slot",
