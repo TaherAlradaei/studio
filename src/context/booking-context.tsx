@@ -12,6 +12,7 @@ interface BookingContextType {
   unblockSlot: (id: string) => Promise<void>;
   acceptBooking: (booking: Booking, isTrusted: boolean) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
   confirmBooking: (bookingToConfirm: Booking) => Promise<'confirmed' | 'slot-taken'>;
+  createConfirmedBooking: (bookingData: Omit<Booking, "id" | "status" | "userId">) => Promise<'confirmed' | 'slot-taken'>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -96,6 +97,32 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       return 'confirmed';
   };
 
+  const createConfirmedBooking = async (bookingData: Omit<Booking, "id" | "status" | "userId">): Promise<'confirmed' | 'slot-taken'> => {
+      const newBooking: Booking = {
+        ...bookingData,
+        id: Math.random().toString(36).substr(2, 9),
+        userId: 'admin_manual',
+        status: 'pending', // Temporarily set as pending to run through confirmBooking logic
+      };
+
+      const result = await confirmBooking(newBooking);
+
+      if (result === 'slot-taken') {
+          return 'slot-taken';
+      }
+      
+      // Manually add the booking as confirmed if it wasn't already in the list
+      setBookings(prev => {
+          const bookingExists = prev.some(b => b.id === newBooking.id);
+          if (bookingExists) {
+              return prev.map(b => b.id === newBooking.id ? {...b, status: 'confirmed'} : b);
+          }
+          return [...prev, {...newBooking, status: 'confirmed'}].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      });
+
+      return 'confirmed';
+  };
+
   const acceptBooking = async (bookingToAccept: Booking, isTrusted: boolean): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
       if (!isTrusted) {
         // For non-trusted users, just show instructions. Admin must confirm.
@@ -114,7 +141,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot, acceptBooking, confirmBooking }}>
+    <BookingContext.Provider value={{ bookings, addBooking, updateBooking, blockSlot, unblockSlot, acceptBooking, confirmBooking, createConfirmedBooking }}>
       {children}
     </BookingContext.Provider>
   );

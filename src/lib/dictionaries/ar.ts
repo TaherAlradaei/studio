@@ -101,7 +101,7 @@ export const arStrings: Dictionary = {
     priceLabel: "السعر للساعة (ريال يمني)",
     confirmSubmitButton: "إرسال عرض السعر",
     manageAvailabilityCardTitle: "إدارة توفر الملعب",
-    manageAvailabilityCardDescription: "قم بحظر أو إلغاء حظر فترات زمنية مباشرة في التقويم.",
+    manageAvailabilityCardDescription: "أنشئ حجزًا مؤكدًا جديدًا، أو قم بحظر أو إلغاء حظر فترات زمنية مباشرة في التقويم.",
     block: "حظر",
     unblock: "إلغاء الحظر",
     booked: "محجوز",
@@ -169,6 +169,9 @@ export const arStrings: Dictionary = {
     addMemberButton: "إضافة عضو",
     memberAddedSuccessTitle: "تمت إضافة العضو بنجاح",
     memberAddedSuccessDesc: "تمت إضافة {name} إلى الأكاديمية بنجاح.",
+    manualBookingTitle: "إنشاء حجز مؤكد",
+    manualBookingDescription: "أدخل تفاصيل العميل للحجز بتاريخ {date} في الساعة {time}.",
+    manualBookingError: "الرجاء إدخال الاسم ورقم الهاتف لإنشاء حجز.",
   },
   academyPage: {
     title: "انضم إلى الأكاديمية",

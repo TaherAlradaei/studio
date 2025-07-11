@@ -35,7 +35,7 @@ import { useAuth } from "@/context/auth-context";
 
 
 const availableTimes = [
-  "07:00", "08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00",
+  "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00",
   "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
 ];
 
@@ -201,7 +201,7 @@ const AddMemberForm = () => {
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
-  const { bookings, updateBooking, blockSlot, unblockSlot, confirmBooking } = useBookings();
+  const { bookings, updateBooking, blockSlot, unblockSlot, confirmBooking, createConfirmedBooking } = useBookings();
   const { registrations, updateRegistrationStatus } = useAcademy();
   const [bookingData, setBookingData] = useState("");
   const [recommendations, setRecommendations] = useState("");
@@ -210,6 +210,9 @@ export default function AdminPage() {
   const { toast } = useToast();
 
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [newManualBooking, setNewManualBooking] = useState<{date: Date, time: string} | null>(null);
+  const [manualBookingName, setManualBookingName] = useState("");
+  const [manualBookingPhone, setManualBookingPhone] = useState("");
   const [infoBooking, setInfoBooking] = useState<Booking | null>(null);
   const [hourlyPrice, setHourlyPrice] = useState("");
 
@@ -384,6 +387,41 @@ export default function AdminPage() {
       });
     }
   };
+
+  const handleManualBookingSubmit = async () => {
+    if (!newManualBooking || !manualBookingName || !manualBookingPhone) {
+        toast({
+            title: t.adminPage.errorTitle,
+            description: t.adminPage.manualBookingError,
+            variant: "destructive",
+        });
+        return;
+    }
+    try {
+        await createConfirmedBooking({
+            name: manualBookingName,
+            phone: manualBookingPhone,
+            date: newManualBooking.date,
+            time: newManualBooking.time,
+            duration: 1, // Defaulting to 1 hour for manual bookings
+            price: getDefaultPrice(newManualBooking.time), // Auto-set default price
+        });
+        toast({
+            title: t.toasts.bookingConfirmedTitle,
+            description: t.toasts.bookingConfirmedDescAdmin.replace('{name}', manualBookingName),
+        });
+        setNewManualBooking(null);
+        setManualBookingName("");
+        setManualBookingPhone("");
+    } catch (err) {
+        toast({
+            title: t.adminPage.errorTitle,
+            description: err instanceof Error ? err.message : "Failed to create booking.",
+            variant: "destructive",
+        });
+    }
+  };
+
 
   const handleSaveInstructions = async () => {
     setIsSaving(true);
@@ -796,7 +834,7 @@ export default function AdminPage() {
                                                 } else if (booking?.status === 'confirmed') {
                                                     setInfoBooking(booking);
                                                 } else if (!booking) {
-                                                    await blockSlot(availabilityDate, time);
+                                                    setNewManualBooking({date: availabilityDate, time});
                                                 }
                                             } catch (err) {
                                                 toast({
@@ -1122,6 +1160,31 @@ export default function AdminPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t.adminPage.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={handleQuoteSubmit}>{t.adminPage.confirmSubmitButton}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!newManualBooking} onOpenChange={() => setNewManualBooking(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.adminPage.manualBookingTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {newManualBooking && t.adminPage.manualBookingDescription.replace('{date}', format(newManualBooking.date, 'PPP', { locale: lang === 'ar' ? arSA : undefined })).replace('{time}', newManualBooking.time)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="manual-name" className="text-right">{t.bookingForm.nameLabel}</Label>
+                  <Input id="manual-name" value={manualBookingName} onChange={(e) => setManualBookingName(e.target.value)} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="manual-phone" className="text-right">{t.bookingForm.phoneLabel}</Label>
+                  <Input id="manual-phone" value={manualBookingPhone} onChange={(e) => setManualBookingPhone(e.target.value)} className="col-span-3" />
+              </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.adminPage.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleManualBookingSubmit}>{t.adminPage.confirmButton}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

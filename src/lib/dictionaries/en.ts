@@ -99,7 +99,7 @@ export const enStrings = {
     priceLabel: "Price per Hour (YR)",
     confirmSubmitButton: "Send Quote",
     manageAvailabilityCardTitle: "Manage Field Availability",
-    manageAvailabilityCardDescription: "Block or unblock time slots directly on the calendar.",
+    manageAvailabilityCardDescription: "Create a new confirmed booking, or block/unblock time slots directly on the calendar.",
     block: "Block",
     unblock: "Unblock",
     booked: "Booked",
@@ -167,6 +167,9 @@ export const enStrings = {
     addMemberButton: "Add Member",
     memberAddedSuccessTitle: "Member Added Successfully",
     memberAddedSuccessDesc: "{name} has been successfully added to the academy.",
+    manualBookingTitle: "Create Confirmed Booking",
+    manualBookingDescription: "Enter customer details for the booking on {date} at {time}.",
+    manualBookingError: "Please enter both name and phone number to create a booking.",
   },
   academyPage: {
     title: "Join the Academy",
