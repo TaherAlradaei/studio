@@ -46,13 +46,15 @@ export const arStrings: Dictionary = {
   },
   bookingForm: {
     title: "أدخل بياناتك",
+    titleConfirm: "تأكيد تفاصيل الحجز",
     bookingFor: "الحجز بتاريخ {date} في الساعة {time} لمدة {duration} ساعة (ساعات).",
     nameLabel: "الاسم الكامل",
     namePlaceholder: "مثال: وهيب حميد",
     phoneLabel: "رقم الهاتف",
     phonePlaceholder: "مثال: 736333328",
     termsLabel: "أوافق على الشروط والأحكام",
-    requestButton: "طلب حجز",
+    requestButton: "تأكيد طلب الحجز",
+    bookingAs: "الحجز باسم:",
     validation: {
       nameMin: "يجب أن يتكون الاسم من حرفين على الأقل.",
       phoneFormat: "الرجاء إدخال رقم هاتف صحيح.",
@@ -262,6 +264,14 @@ export const arStrings: Dictionary = {
       errorTitle: "خطأ في المصادقة",
       notLoggedInTitle: "غير مسجل الدخول",
       notLoggedInDesc: "يجب عليك تسجيل الدخول لتنفيذ هذا الإجراء.",
+      createAccountTitle: "إنشاء حساب / تسجيل الدخول",
+      createAccountDesc: "أدخل بياناتك للمتابعة. إذا كان لديك حساب، فسيتم تسجيل دخولك.",
+      getStartedTitle: "ابدأ الآن",
+      getStartedDesc: "أنشئ حسابك لبدء حجز الملاعب والانضمام إلى مجتمعنا.",
+      createAccountAction: "إنشاء حساب",
+      login: "تسجيل الدخول",
+      logout: "تسجيل الخروج",
+      continue: "متابعة",
   },
   actions: {
       accept: "قبول",
@@ -269,5 +279,3 @@ export const arStrings: Dictionary = {
       ok: "موافق",
   }
 };
-
-    

@@ -38,3 +38,9 @@ export interface AcademyRegistration {
   accessCode?: string;
   posts: MemberPost[];
 }
+
+export interface User {
+    uid: string;
+    displayName: string | null;
+    phone: string | null;
+}

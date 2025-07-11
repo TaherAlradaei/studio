@@ -8,9 +8,11 @@ import { useLanguage } from "@/context/language-context";
 import { useWelcomePage } from "@/context/welcome-page-context";
 import { FieldIcon } from "@/components/icons";
 import { Shield, User } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 
 export default function WelcomePage() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const { welcomePageContent } = useWelcomePage();
 
   return (
@@ -63,12 +65,24 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      <div className="text-center">
-        <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.alreadyMember}</h3>
-        <p className="text-muted-foreground mb-6">{t.welcomePage.alreadyMemberDesc}</p>
-        <Button asChild variant="outline" size="lg">
-          <Link href="/member-area">{t.welcomePage.memberAreaButton}</Link>
-        </Button>
+       <div className="text-center">
+         {user ? (
+          <>
+            <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.alreadyMember}</h3>
+            <p className="text-muted-foreground mb-6">{t.welcomePage.alreadyMemberDesc}</p>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/member-area">{t.welcomePage.memberAreaButton}</Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-4">{t.auth.getStartedTitle}</h3>
+            <p className="text-muted-foreground mb-6">{t.auth.getStartedDesc}</p>
+            <Button asChild size="lg">
+              <Link href="/login">{t.auth.createAccountAction}</Link>
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

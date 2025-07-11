@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
 import { TimeSlotPicker } from "@/components/booking/time-slot-picker";
 import { BookingForm } from "@/components/booking/booking-form";
@@ -13,6 +14,7 @@ import { useLanguage } from "@/context/language-context";
 import { useAuth } from "@/context/auth-context";
 import { arSA } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
 const pricingData = [
     { slot: "07:00 - 11:00", price: "6,000" },
@@ -22,15 +24,26 @@ const pricingData = [
 
 export default function BookingPage() {
   const { t, lang } = useLanguage();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
   const { bookings } = useBookings();
+  
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isAuthLoading, router]);
 
-  if (isLoading || !user) {
-    return null; // Or a loading spinner
+  if (isAuthLoading || !user) {
+    return (
+       <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   const handleDateSelect = (date: Date | undefined) => {

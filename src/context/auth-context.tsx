@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
@@ -6,53 +7,54 @@ import { Loader2 } from "lucide-react";
 // Local User type definition
 export interface User {
     uid: string;
-    email: string | null;
-    emailVerified: boolean;
     displayName: string | null;
-    isAnonymous: boolean;
-    photoURL: string | null;
-    providerData: any[]; // Using any for simplicity as it's a mock
-    getIdToken: () => Promise<string>;
-    getIdTokenResult: () => Promise<any>;
-    reload: () => Promise<void>;
-    delete: () => Promise<void>;
-    toJSON: () => object;
-    providerId: string;
+    phone: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  login: (userData: Omit<User, 'uid'>) => void;
+  logout: () => void;
 }
 
-// Create a mock user object to represent a guest session.
-const guestUser: User = {
-    uid: 'guest-user-001',
-    email: null,
-    emailVerified: false,
-    displayName: 'Guest',
-    isAnonymous: true,
-    photoURL: null,
-    providerData: [],
-    getIdToken: async () => 'mock-guest-token',
-    getIdTokenResult: async () => ({ token: 'mock-guest-token', claims: {}, authTime: '', issuedAtTime: '', signInProvider: null, signInSecondFactor: null, expirationTime: '' }),
-    reload: async () => {},
-    delete: async () => {},
-    toJSON: () => ({}),
-    providerId: 'guest'
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const GUEST_USER_ID = 'guest-user-session';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Automatically set the guest user.
-    setUser(guestUser);
+    try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        localStorage.removeItem('user');
+    }
     setIsLoading(false);
   }, []);
+
+  const login = (userData: Omit<User, 'uid'>) => {
+      const newUser = {
+          uid: `user-${Date.now()}`,
+          ...userData,
+      };
+      localStorage.setItem('user', JSON.stringify(newUser));
+      setUser(newUser);
+  };
+
+  const logout = () => {
+      localStorage.removeItem('user');
+      setUser(null);
+      // Optional: redirect to home or login page after logout
+      // window.location.href = '/login'; 
+  };
+
 
   if (isLoading) {
     return (
@@ -63,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

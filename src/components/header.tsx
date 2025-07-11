@@ -11,6 +11,7 @@ import { useAuth } from "@/context/auth-context";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { Badge } from "@/components/ui/badge";
+import { User, LogOut } from "lucide-react";
 
 const LanguageSwitcher = () => {
   const { lang, setLang } = useLanguage();
@@ -38,7 +39,7 @@ const LanguageSwitcher = () => {
 export function Header() {
   const pathname = usePathname();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { bookings } = useBookings();
   const { registrations } = useAcademy();
 
@@ -46,14 +47,20 @@ export function Header() {
   const pendingRegistrationsCount = registrations.filter(r => r.status === 'pending').length;
   const totalPendingCount = pendingBookingsCount + pendingRegistrationsCount;
 
+  // Admin link should only be visible for a specific user, for now we will hardcode a phone number.
+  // In a real app, this would be based on user roles from a database.
+  const isAdmin = user?.phone === '+967736333328';
+
   const navLinks = [
     { href: "/booking", label: t.header.bookField },
     { href: "/academy", label: t.header.academy },
     { href: "/bookings", label: t.header.myBookings },
-    { href: "/admin", label: t.header.admin, notificationCount: totalPendingCount },
   ];
+  
+  if (isAdmin) {
+    navLinks.push({ href: "/admin", label: t.header.admin, notificationCount: totalPendingCount });
+  }
 
-  const visibleNavLinks = user ? navLinks : [];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -64,8 +71,8 @@ export function Header() {
             {t.header.title}
           </span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm lg:gap-6">
-          {visibleNavLinks.map((link) => (
+        <nav className="hidden md:flex items-center gap-4 text-sm lg:gap-6">
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -87,10 +94,18 @@ export function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitcher />
-           {pathname !== '/member-area' && (
-             <Button asChild variant="outline" size="sm">
-                <Link href="/member-area">
-                    {t.welcomePage.memberAreaButton}
+           {user ? (
+             <div className="flex items-center gap-2">
+               <span className="text-sm font-medium hidden sm:inline">{user.displayName}</span>
+                <Button onClick={logout} variant="outline" size="sm">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t.auth.logout}
+                </Button>
+             </div>
+           ) : (
+            <Button asChild variant="default" size="sm">
+                <Link href="/login">
+                    {t.auth.login}
                 </Link>
             </Button>
            )}

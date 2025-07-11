@@ -44,13 +44,15 @@ export const enStrings = {
   },
   bookingForm: {
     title: "Enter Your Details",
+    titleConfirm: "Confirm Booking Details",
     bookingFor: "Booking for {date} at {time} for {duration} hour(s).",
     nameLabel: "Full Name",
     namePlaceholder: "e.g. Waheeb Hameed",
     phoneLabel: "Phone Number",
     phonePlaceholder: "e.g. 736333328",
     termsLabel: "Accept terms and conditions",
-    requestButton: "Request Booking",
+    requestButton: "Confirm Booking Request",
+    bookingAs: "Booking as:",
     validation: {
       nameMin: "Name must be at least 2 characters.",
       phoneFormat: "Please enter a valid phone number.",
@@ -260,6 +262,14 @@ export const enStrings = {
       errorTitle: "Authentication Error",
       notLoggedInTitle: "Not Logged In",
       notLoggedInDesc: "You must be logged in to perform this action.",
+      createAccountTitle: "Create Account / Login",
+      createAccountDesc: "Enter your details to continue. If you have an account, you'll be logged in.",
+      getStartedTitle: "Get Started",
+      getStartedDesc: "Create your account to start booking fields and join our community.",
+      createAccountAction: "Create an Account",
+      login: "Login",
+      logout: "Logout",
+      continue: "Continue",
   },
   actions: {
       accept: "Accept",
@@ -269,5 +279,3 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
-
-    
