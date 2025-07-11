@@ -17,6 +17,11 @@ interface BookingContextType {
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
+const timeToMinutes = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+};
+
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
@@ -56,18 +61,23 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const confirmBooking = async (bookingToConfirm: Booking): Promise<'confirmed' | 'slot-taken'> => {
-      const newBookingStartTime = new Date(bookingToConfirm.date);
-      const newBookingEndTime = new Date(newBookingStartTime.getTime() + bookingToConfirm.duration * 3600 * 1000);
+      const newBookingStartMinutes = timeToMinutes(bookingToConfirm.time);
+      const newBookingEndMinutes = newBookingStartMinutes + bookingToConfirm.duration * 60;
+      const newBookingDateStr = new Date(bookingToConfirm.date).toDateString();
 
       const isSlotTakenByOther = bookings.some(b => {
           if (b.id !== bookingToConfirm.id && b.status === 'confirmed') {
-              const existingBookingStartTime = new Date(b.date);
-              const existingBookingEndTime = new Date(existingBookingStartTime.getTime() + b.duration * 3600 * 1000);
+              const existingBookingDateStr = new Date(b.date).toDateString();
+              if (existingBookingDateStr !== newBookingDateStr) return false;
 
-              return Math.max(newBookingStartTime.getTime(), existingBookingStartTime.getTime()) < Math.min(newBookingEndTime.getTime(), existingBookingEndTime.getTime());
+              const existingBookingStartMinutes = timeToMinutes(b.time);
+              const existingBookingEndMinutes = existingBookingStartMinutes + b.duration * 60;
+
+              return Math.max(newBookingStartMinutes, existingBookingStartMinutes) < Math.min(newBookingEndMinutes, existingBookingEndMinutes);
           }
           return false;
       });
+
 
       if (isSlotTakenByOther) {
           return 'slot-taken';
@@ -81,10 +91,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
           }
           
           // Cancel other pending or awaiting-confirmation requests for the same slot
-          if (b.status === 'pending' || b.status === 'awaiting-confirmation') {
-              const bookingStartTime = new Date(b.date);
-              const bookingEndTime = new Date(bookingStartTime.getTime() + b.duration * 3600 * 1000);
-              const conflict = Math.max(newBookingStartTime.getTime(), bookingStartTime.getTime()) < Math.min(newBookingEndTime.getTime(), bookingEndTime.getTime());
+          const bookingDateStr = new Date(b.date).toDateString();
+          if ((b.status === 'pending' || b.status === 'awaiting-confirmation') && bookingDateStr === newBookingDateStr) {
+              const bookingStartMinutes = timeToMinutes(b.time);
+              const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
+              const conflict = Math.max(newBookingStartMinutes, bookingStartMinutes) < Math.min(newBookingEndMinutes, bookingEndMinutes);
               if (conflict) {
                   return { ...b, status: 'cancelled' };
               }

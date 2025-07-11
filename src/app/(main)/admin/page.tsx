@@ -34,10 +34,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/context/auth-context";
 
 
-const availableTimes = [
-  "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00",
-  "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
-];
+const generateAvailableTimes = () => {
+    const times = [];
+    // Morning: 07:00 to 11:30
+    for (let i = 7; i < 12; i++) {
+        times.push(`${i.toString().padStart(2, '0')}:00`);
+        times.push(`${i.toString().padStart(2, '0')}:30`);
+    }
+    // Afternoon: 14:00 to 23:30
+    for (let i = 14; i < 24; i++) {
+        times.push(`${i.toString().padStart(2, '0')}:00`);
+        times.push(`${i.toString().padStart(2, '0')}:30`);
+    }
+    return times;
+};
+const availableTimes = generateAvailableTimes();
+
 
 type SectionId = 'bookingManagement' | 'academyRegistrations' | 'addAcademyMember' | 'manageAvailability' | 'trustedCustomers' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
 
@@ -210,9 +222,10 @@ export default function AdminPage() {
   const { toast } = useToast();
 
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [newManualBooking, setNewManualBooking] = useState<{date: Date, time: string} | null>(null);
+  const [newManualBooking, setNewManualBooking] = useState<{date: Date, time: string, duration: number} | null>(null);
   const [manualBookingName, setManualBookingName] = useState("");
   const [manualBookingPhone, setManualBookingPhone] = useState("");
+  const [manualBookingDuration, setManualBookingDuration] = useState(1);
   const [infoBooking, setInfoBooking] = useState<Booking | null>(null);
   const [hourlyPrice, setHourlyPrice] = useState("");
 
@@ -403,8 +416,8 @@ export default function AdminPage() {
             phone: manualBookingPhone,
             date: newManualBooking.date,
             time: newManualBooking.time,
-            duration: 1, // Defaulting to 1 hour for manual bookings
-            price: getDefaultPrice(newManualBooking.time), // Auto-set default price
+            duration: newManualBooking.duration,
+            price: getDefaultPrice(newManualBooking.time) * newManualBooking.duration,
         });
         toast({
             title: t.toasts.bookingConfirmedTitle,
@@ -413,6 +426,7 @@ export default function AdminPage() {
         setNewManualBooking(null);
         setManualBookingName("");
         setManualBookingPhone("");
+        setManualBookingDuration(1);
     } catch (err) {
         toast({
             title: t.adminPage.errorTitle,
@@ -572,6 +586,32 @@ export default function AdminPage() {
       default:
         return null;
     }
+  };
+  
+  const timeToMinutes = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  const isSlotBooked = (date: Date, time: string, duration: number, bookings: Booking[]): boolean => {
+    const slotStartMinutes = timeToMinutes(time);
+    const newBookingStartMinutes = slotStartMinutes;
+    const newBookingEndMinutes = newBookingStartMinutes + duration * 60;
+
+    for (const booking of bookings) {
+      if (booking.status !== 'confirmed' && booking.status !== 'blocked') continue;
+      
+      const bookingDate = new Date(booking.date);
+      if (bookingDate.toDateString() === date.toDateString()) {
+        const existingBookingStartMinutes = timeToMinutes(booking.time);
+        const existingBookingEndMinutes = existingBookingStartMinutes + booking.duration * 60;
+        
+        if (Math.max(newBookingStartMinutes, existingBookingStartMinutes) < Math.min(newBookingEndMinutes, existingBookingEndMinutes)) {
+          return true;
+        }
+      }
+    }
+    return false;
   };
 
   const sections: Record<SectionId, AdminSection> = {
@@ -783,8 +823,15 @@ export default function AdminPage() {
                                 slotDateTime.setHours(hours, minutes, 0, 0);
 
                                 const booking = bookings.find(b => {
-                                    const bookingDate = new Date(b.date);
-                                    return bookingDate.toDateString() === slotDateTime.toDateString() && b.time === time && b.status !== 'cancelled';
+                                  if (b.status === 'cancelled') return false;
+                                  const bookingDate = new Date(b.date);
+                                  if (bookingDate.toDateString() !== slotDateTime.toDateString()) return false;
+                                  
+                                  const bookingStartMinutes = timeToMinutes(b.time);
+                                  const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
+                                  const slotStartMinutes = timeToMinutes(time);
+
+                                  return slotStartMinutes >= bookingStartMinutes && slotStartMinutes < bookingEndMinutes;
                                 });
 
                                 const isPast = new Date() > slotDateTime;
@@ -795,10 +842,7 @@ export default function AdminPage() {
                                 let isDisabled = isPast;
 
                                 if (booking) {
-                                    if (booking.status === 'pending' || booking.status === 'awaiting-confirmation') {
-                                        isDisabled = true;
-                                    }
-                                    
+                                    isDisabled = true;
                                     switch (booking.status) {
                                         case 'blocked':
                                             buttonVariant = 'destructive';
@@ -834,7 +878,7 @@ export default function AdminPage() {
                                                 } else if (booking?.status === 'confirmed') {
                                                     setInfoBooking(booking);
                                                 } else if (!booking) {
-                                                    setNewManualBooking({date: availabilityDate, time});
+                                                    setNewManualBooking({date: availabilityDate, time, duration: 1});
                                                 }
                                             } catch (err) {
                                                 toast({
@@ -1180,6 +1224,23 @@ export default function AdminPage() {
               <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="manual-phone" className="text-right">{t.bookingForm.phoneLabel}</Label>
                   <Input id="manual-phone" value={manualBookingPhone} onChange={(e) => setManualBookingPhone(e.target.value)} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="manual-duration" className="text-right">{t.bookingHistoryTable.duration}</Label>
+                   <Select
+                        value={manualBookingDuration.toString()}
+                        onValueChange={(value) => setManualBookingDuration(parseFloat(value))}
+                    >
+                        <SelectTrigger id="manual-duration" className="col-span-3">
+                            <SelectValue placeholder={t.timeSlotPicker.durationPlaceholder} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="1">{t.timeSlotPicker.oneHour}</SelectItem>
+                            <SelectItem value="1.5">{t.timeSlotPicker.oneAndHalfHour}</SelectItem>
+                            <SelectItem value="2">{t.timeSlotPicker.twoHours}</SelectItem>
+                            <SelectItem value="2.5">2.5 Hours</SelectItem>
+                        </SelectContent>
+                    </Select>
               </div>
           </div>
           <AlertDialogFooter>

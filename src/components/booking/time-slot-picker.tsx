@@ -16,10 +16,22 @@ import {
 import type { Booking } from "@/lib/types";
 import { useLanguage } from "@/context/language-context";
 
-const availableTimes = [
-  "07:00", "08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00",
-  "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
-];
+const generateAvailableTimes = () => {
+    const times = [];
+    // Morning: 07:00 to 11:30
+    for (let i = 7; i < 12; i++) {
+        times.push(`${i.toString().padStart(2, '0')}:00`);
+        times.push(`${i.toString().padStart(2, '0')}:30`);
+    }
+    // Afternoon: 14:00 to 23:30
+    for (let i = 14; i < 24; i++) {
+        times.push(`${i.toString().padStart(2, '0')}:00`);
+        times.push(`${i.toString().padStart(2, '0')}:30`);
+    }
+    return times;
+};
+const availableTimes = generateAvailableTimes();
+
 
 interface TimeSlotPickerProps {
   selectedDate: Date;
@@ -37,39 +49,66 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
     setIsClient(true);
   }, []);
 
+  const timeToMinutes = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
   const isSlotBooked = (time: string) => {
-    const slotHour = parseInt(time.split(':')[0], 10);
+    const slotStartMinutes = timeToMinutes(time);
     
     if (isClient) {
       const now = new Date();
-      // Disable past time slots for the current day
-      if (selectedDate.toDateString() === now.toDateString() && slotHour < now.getHours()) {
-        return true;
+      if (selectedDate.toDateString() === now.toDateString()) {
+          const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+          if (slotStartMinutes < nowInMinutes) {
+              return true;
+          }
       }
     }
 
-    const newBookingStartHour = slotHour;
-    const newBookingEndHour = slotHour + duration;
+    const newBookingStartMinutes = slotStartMinutes;
+    const newBookingEndMinutes = newBookingStartMinutes + duration * 60;
 
     for (const booking of bookings) {
-      // A slot is only considered unavailable if it's confirmed or blocked by an admin.
       if (booking.status !== 'confirmed' && booking.status !== 'blocked') {
         continue;
       }
 
       const bookingDate = new Date(booking.date);
       if (bookingDate.toDateString() === selectedDate.toDateString()) {
-        const existingBookingStartHour = bookingDate.getHours();
-        const existingBookingEndHour = existingBookingStartHour + booking.duration;
-
+        const existingBookingStartMinutes = timeToMinutes(booking.time);
+        const existingBookingEndMinutes = existingBookingStartMinutes + booking.duration * 60;
+        
         if (
-          Math.max(newBookingStartHour, existingBookingStartHour) <
-          Math.min(newBookingEndHour, existingBookingEndHour)
+          Math.max(newBookingStartMinutes, existingBookingStartMinutes) <
+          Math.min(newBookingEndMinutes, existingBookingEndMinutes)
         ) {
           return true;
         }
       }
     }
+
+    // Check if the selected duration exceeds the field's closing time or break time
+    const endHour = Math.floor(newBookingEndMinutes / 60);
+    const endMinute = newBookingEndMinutes % 60;
+    
+    // Check break time
+    if ( (newBookingStartMinutes < 12 * 60 && newBookingEndMinutes > 12 * 60) || (newBookingStartMinutes < 14*60 && newBookingEndMinutes > 12*60 && newBookingStartMinutes >= 12*60)) {
+        if(newBookingStartMinutes < 12 * 60 && newBookingEndMinutes > 12*60){
+            return true;
+        }
+    }
+     if (newBookingStartMinutes >= 12*60 && newBookingStartMinutes < 14*60) {
+        return true;
+     }
+
+
+    // Check closing time
+    if (endHour > 24 || (endHour === 24 && endMinute > 0)) {
+        return true;
+    }
+
 
     return false;
   };
@@ -103,6 +142,7 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
               <SelectItem value="1">{t.timeSlotPicker.oneHour}</SelectItem>
               <SelectItem value="1.5">{t.timeSlotPicker.oneAndHalfHour}</SelectItem>
               <SelectItem value="2">{t.timeSlotPicker.twoHours}</SelectItem>
+              <SelectItem value="2.5">2.5 Hours</SelectItem>
             </SelectContent>
           </Select>
         </div>
