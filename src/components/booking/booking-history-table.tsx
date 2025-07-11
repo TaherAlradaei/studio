@@ -18,7 +18,6 @@ import { useAuth } from "@/context/auth-context";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { getPaymentInstructions, isTrustedCustomer } from "@/app/(main)/admin/actions";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getDefaultPrice } from "@/lib/pricing";
 
@@ -34,15 +33,17 @@ export function BookingHistoryTable() {
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
-      async function fetchInstructions() {
-          try {
-            const instructions = await getPaymentInstructions();
-            setPaymentInstructions(instructions);
-          } catch (err) {
-            // Error handling can be added here if needed
-          }
+      try {
+        const storedInstructions = localStorage.getItem('paymentInstructions');
+        if (storedInstructions) {
+            setPaymentInstructions(storedInstructions);
+        } else {
+            setPaymentInstructions("Please contact us at +967 736 333 328 to finalize payment.");
+        }
+      } catch (err) {
+          // Error handling can be added here if needed
+          console.error("Failed to load payment instructions from local storage:", err);
       }
-      fetchInstructions();
   }, []);
 
   const userBookings = bookings.filter(b => b.userId === user?.uid && new Date(b.date) >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled');
@@ -55,8 +56,18 @@ export function BookingHistoryTable() {
 
   const handleAccept = async (booking: Booking) => {
     try {
-      const trusted = await isTrustedCustomer(booking.name);
-      const result = await acceptBooking(booking, trusted);
+      let isTrusted = false;
+      try {
+        const storedCustomers = localStorage.getItem('trustedCustomers');
+        if (storedCustomers) {
+            const trustedCustomers: string[] = JSON.parse(storedCustomers);
+            isTrusted = trustedCustomers.includes(booking.name || "");
+        }
+      } catch (err) {
+        console.error("Failed to load trusted customers from local storage:", err);
+      }
+        
+      const result = await acceptBooking(booking, isTrusted);
       
       setCurrentBooking(booking);
 

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, addTrustedCustomer, removeTrustedCustomer } from "./actions";
+import { getSchedulingRecommendations } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -269,21 +269,27 @@ export default function AdminPage() {
   }, [backgrounds]);
 
   useEffect(() => {
-    async function fetchAdminData() {
-      try {
-        const instructions = await getPaymentInstructions();
-        setPaymentInstructions(instructions);
-        const customers = await getTrustedCustomers();
-        setTrustedCustomers(customers);
-      } catch (err) {
+    try {
+        const storedInstructions = localStorage.getItem('paymentInstructions');
+        if (storedInstructions) {
+            setPaymentInstructions(storedInstructions);
+        } else {
+            setPaymentInstructions("Please contact us at +967 736 333 328 to finalize payment.");
+        }
+
+        const storedCustomers = localStorage.getItem('trustedCustomers');
+        if (storedCustomers) {
+            setTrustedCustomers(JSON.parse(storedCustomers));
+        } else {
+            setTrustedCustomers(["Waheeb Hameed"]);
+        }
+    } catch (err) {
         toast({
             title: t.adminPage.errorTitle,
-            description: err instanceof Error ? err.message : "Failed to load admin data.",
+            description: "Failed to load settings from local storage.",
             variant: "destructive",
         });
-      }
     }
-    fetchAdminData();
   }, [toast, t]);
 
   const filteredBookings = useMemo(() => {
@@ -445,7 +451,7 @@ export default function AdminPage() {
   const handleSaveInstructions = async () => {
     setIsSaving(true);
     try {
-        await updatePaymentInstructions(paymentInstructions);
+        localStorage.setItem('paymentInstructions', paymentInstructions);
         toast({
             title: t.adminPage.instructionsSavedToastTitle,
             description: t.adminPage.instructionsSavedToastDesc,
@@ -465,14 +471,14 @@ export default function AdminPage() {
   const handleAddTrustedCustomer = async () => {
     if (!newTrustedCustomer.trim()) return;
     try {
-      await addTrustedCustomer(newTrustedCustomer);
-      const updatedCustomers = await getTrustedCustomers();
-      setTrustedCustomers(updatedCustomers);
-      setNewTrustedCustomer("");
-      toast({
-        title: t.adminPage.trustedCustomerAddedToastTitle,
-        description: t.adminPage.trustedCustomerAddedToastDesc.replace('{name}', newTrustedCustomer),
-      });
+        const updatedCustomers = [...trustedCustomers, newTrustedCustomer.trim()];
+        setTrustedCustomers(updatedCustomers);
+        localStorage.setItem('trustedCustomers', JSON.stringify(updatedCustomers));
+        setNewTrustedCustomer("");
+        toast({
+            title: t.adminPage.trustedCustomerAddedToastTitle,
+            description: t.adminPage.trustedCustomerAddedToastDesc.replace('{name}', newTrustedCustomer),
+        });
     } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to add trusted customer.";
         toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
@@ -481,14 +487,14 @@ export default function AdminPage() {
   
   const handleRemoveTrustedCustomer = async (customerName: string) => {
     try {
-      await removeTrustedCustomer(customerName);
-      const updatedCustomers = await getTrustedCustomers();
-      setTrustedCustomers(updatedCustomers);
-       toast({
-        title: t.adminPage.trustedCustomerRemovedToastTitle,
-        description: t.adminPage.trustedCustomerRemovedToastDesc.replace('{name}', customerName),
-        variant: "destructive",
-      });
+        const updatedCustomers = trustedCustomers.filter(customer => customer !== customerName);
+        setTrustedCustomers(updatedCustomers);
+        localStorage.setItem('trustedCustomers', JSON.stringify(updatedCustomers));
+        toast({
+            title: t.adminPage.trustedCustomerRemovedToastTitle,
+            description: t.adminPage.trustedCustomerRemovedToastDesc.replace('{name}', customerName),
+            variant: "destructive",
+        });
     } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to remove trusted customer.";
         toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });

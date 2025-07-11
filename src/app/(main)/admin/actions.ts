@@ -6,35 +6,43 @@ export async function getSchedulingRecommendations(input: AnalyzeBookingPatterns
     return await analyzeBookingPatterns(input);
 }
 
-// In-memory store for payment instructions. Will be reset on server restart.
-let paymentInstructions = "Please contact us at +967 736 333 328 to finalize payment.";
+// In-memory stores have been moved to client-side localStorage in AdminPage to ensure persistence.
+// These server actions are no longer used but are kept for reference or future server-side implementation.
+
+// let paymentInstructions = "Please contact us at +967 736 333 328 to finalize payment.";
 
 export async function getPaymentInstructions(): Promise<string> {
-  return paymentInstructions;
+  // This is a placeholder. The value is now managed client-side.
+  return "Please contact us at +967 736 333 328 to finalize payment.";
 }
 
 export async function updatePaymentInstructions(instructions: string): Promise<void> {
-    paymentInstructions = instructions;
+    // This is a placeholder. The value is now managed client-side.
+    // paymentInstructions = instructions;
 }
 
-// In-memory store for trusted customers.
-let trustedCustomers: string[] = ["Waheeb Hameed"];
+// let trustedCustomers: string[] = ["Waheeb Hameed"];
 
 export async function getTrustedCustomers(): Promise<string[]> {
-  return trustedCustomers;
+  // This is a placeholder. The value is now managed client-side.
+  return ["Waheeb Hameed"];
 }
 
 export async function addTrustedCustomer(name: string): Promise<void> {
-    if (name && !trustedCustomers.includes(name)) {
-        trustedCustomers.push(name);
-    }
+    // This is a placeholder. The value is now managed client-side.
+    // if (name && !trustedCustomers.includes(name)) {
+    //     trustedCustomers.push(name);
+    // }
 }
 
 export async function removeTrustedCustomer(name: string): Promise<void> {
-    trustedCustomers = trustedCustomers.filter(customer => customer !== name);
+    // This is a placeholder. The value is now managed client-side.
+    // trustedCustomers = trustedCustomers.filter(customer => customer !== name);
 }
 
 export async function isTrustedCustomer(name: string | null): Promise<boolean> {
+    // This is a placeholder. The value is now managed client-side.
     if (!name) return false;
-    return trustedCustomers.includes(name);
+    // return trustedCustomers.includes(name);
+    return name === "Waheeb Hameed"; // Default fallback
 }
