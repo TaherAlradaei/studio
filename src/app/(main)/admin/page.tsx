@@ -415,7 +415,7 @@ export default function AdminPage() {
       toast({
         title: t.adminPage.errorTitle,
         description: err instanceof Error ? err.message : "Failed to confirm booking.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -450,7 +450,7 @@ export default function AdminPage() {
         toast({
             title: t.adminPage.errorTitle,
             description: err instanceof Error ? err.message : "Failed to create booking.",
-            variant: "destructive",
+            variant: "destructive"
         });
     }
   };
