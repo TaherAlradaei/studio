@@ -11,20 +11,18 @@ import { Button } from "@/components/ui/button";
 import { KeyRound, Camera, BookOpen, Trash2, MessageSquare, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { useAuth } from "@/context/auth-context";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
   const { t } = useLanguage();
-  const { user } = useAuth();
   const { addPost, getPosts, addComment, deletePost } = useAcademy();
   const { toast } = useToast();
   const [story, setStory] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
 
-  // Show all posts from all members
   const allPosts = getPosts();
+  const isAdmin = member.id === 'admin';
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -53,59 +51,58 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
 
   const handleAddComment = (postId: string) => {
     const commentText = commentInputs[postId];
-    if (commentText && user?.displayName) {
-      // In a real app, you'd verify this user is an admin
-      addComment(postId, { author: user.displayName, text: commentText });
-      setCommentInputs(prev => ({ ...prev, [postId]: '' })); // Clear input
+    if (commentText && isAdmin) {
+      addComment(postId, { author: t.header.title, text: commentText });
+      setCommentInputs(prev => ({ ...prev, [postId]: '' }));
     }
   };
   
   const handleDeletePost = (postId: string) => {
-    // Here you would add checks to ensure only the post author or an admin can delete
-    deletePost(postId);
-    toast({ title: "Post Deleted", description: "The post has been successfully removed.", variant: "destructive" });
+    if (isAdmin) {
+        deletePost(postId);
+        toast({ title: "Post Deleted", description: "The post has been successfully removed.", variant: "destructive" });
+    }
   }
-
-  // A simple check to see if the logged-in user should have admin rights.
-  // In a real app, this would be based on user roles from your auth provider.
-  const isAdmin = user?.uid === 'admin';
 
   return (
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-3xl font-bold font-headline text-primary">
-          {t.memberArea.welcome.replace("{name}", member.talentName)}
+          {isAdmin ? t.header.title : t.memberArea.welcome.replace("{name}", member.talentName)}
         </h2>
-        <p className="text-muted-foreground">{t.memberArea.welcomeDesc}</p>
+        <p className="text-muted-foreground">{isAdmin ? t.academyRegistrationsTitle : t.memberArea.welcomeDesc}</p>
         <Button onClick={onLogout} variant="link" className="mt-2 text-destructive">{t.memberArea.logout}</Button>
       </div>
 
-      <Card className="bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Camera className="w-6 h-6 text-primary" />
-            <CardTitle>{t.memberArea.addPostTitle}</CardTitle>
-          </div>
-          <CardDescription>{t.memberArea.addPostDesc}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            value={story}
-            onChange={(e) => setStory(e.target.value)}
-            placeholder={t.memberArea.storyPlaceholder}
-          />
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          <Button onClick={handleAddPost} className="w-full sm:w-auto">
-            {t.memberArea.addPostButton}
-          </Button>
-        </CardContent>
-      </Card>
+      {!isAdmin && (
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+            <div className="flex items-center gap-2">
+                <Camera className="w-6 h-6 text-primary" />
+                <CardTitle>{t.memberArea.addPostTitle}</CardTitle>
+            </div>
+            <CardDescription>{t.memberArea.addPostDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+            <Input
+                value={story}
+                onChange={(e) => setStory(e.target.value)}
+                placeholder={t.memberArea.storyPlaceholder}
+            />
+            <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+            />
+            <Button onClick={handleAddPost} className="w-full sm:w-auto">
+                {t.memberArea.addPostButton}
+            </Button>
+            </CardContent>
+        </Card>
+      )}
+
 
       <div className="space-y-6">
          <div className="flex items-center gap-2">
@@ -139,14 +136,14 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
                     <p className="text-sm font-semibold">{post.author}</p>
                     <p className="text-muted-foreground">{post.story}</p>
                 </CardContent>
-                <CardFooter className="flex flex-col items-start gap-4 p-4 border-t">
-                    <div className="w-full space-y-2">
+                <CardFooter className="flex flex-col items-start gap-4 p-4 border-t bg-background/20">
+                    <div className="w-full space-y-2 max-h-32 overflow-y-auto">
                         {post.comments && post.comments.map((comment, index) => (
                              <div key={index} className="flex items-start gap-2 text-sm">
                                 <Avatar className="w-6 h-6">
                                     <AvatarFallback className="text-xs bg-secondary text-secondary-foreground">{comment.author.substring(0, 1)}</AvatarFallback>
                                 </Avatar>
-                                <div className="flex-1">
+                                <div className="flex-1 bg-muted/50 p-2 rounded-md">
                                     <p className="font-semibold text-xs">{comment.author}</p>
                                     <p className="text-muted-foreground">{comment.text}</p>
                                 </div>
@@ -154,7 +151,7 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
                         ))}
                     </div>
                      {isAdmin && (
-                        <div className="w-full flex items-center gap-2">
+                        <div className="w-full flex items-center gap-2 pt-2 border-t">
                             <Input
                                 value={commentInputs[post.id] || ''}
                                 onChange={(e) => handleCommentChange(post.id, e.target.value)}
@@ -189,14 +186,14 @@ export default function MemberAreaPage() {
 
   const handleLogin = () => {
     setIsLoading(true);
-    // Simulate admin login
-    if (accessCode === 'ADMIN') {
+    
+    if (accessCode.toUpperCase() === 'ADMIN') {
         const adminMember: AcademyRegistration = {
             id: 'admin',
-            userId: 'admin',
+            userId: 'admin_user_id',
             parentName: 'Admin',
             phone: '',
-            talentName: 'Admin',
+            talentName: t.header.title,
             birthDate: new Date(),
             ageGroup: 'U14',
             status: 'accepted',
@@ -244,7 +241,7 @@ export default function MemberAreaPage() {
                  <div className="space-y-4">
                     <Input
                         value={accessCode}
-                        onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                        onChange={(e) => setAccessCode(e.target.value)}
                         placeholder={t.memberArea.accessCodePlaceholder}
                         className="text-center tracking-widest font-mono text-lg h-12"
                     />
