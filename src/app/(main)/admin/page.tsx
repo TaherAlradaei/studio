@@ -73,8 +73,8 @@ export default function AdminPage() {
 
   const [sectionsOrder, setSectionsOrder] = useState<SectionId[]>([
     'bookingManagement', 
-    'academyRegistrations', 
     'manageAvailability',
+    'academyRegistrations', 
     'trustedCustomers',
     'manageLogo', 
     'manageBackgrounds', 
