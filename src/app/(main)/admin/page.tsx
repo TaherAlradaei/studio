@@ -232,7 +232,6 @@ export default function AdminPage() {
   
   const [infoBooking, setInfoBooking] = useState<Booking | null>(null);
   const [recurringBooking, setRecurringBooking] = useState<Booking | null>(null);
-  const [recurringMonths, setRecurringMonths] = useState(1);
   
   const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
   const [availabilityDuration, setAvailabilityDuration] = useState(1);
@@ -569,17 +568,15 @@ export default function AdminPage() {
     };
 
     const handleConfirmRecurring = async () => {
-        if (!recurringBooking || recurringMonths <= 0) return;
+        if (!recurringBooking) return;
         try {
-            await createRecurringBookings(recurringBooking, recurringMonths);
+            await createRecurringBookings(recurringBooking);
             toast({
                 title: t.adminPage.recurringBookingSuccessTitle,
                 description: t.adminPage.recurringBookingSuccessDesc
-                    .replace('{months}', recurringMonths.toString())
                     .replace('{name}', recurringBooking.name || ''),
             });
             setRecurringBooking(null);
-            setRecurringMonths(1);
         } catch (err) {
              toast({
                 title: t.adminPage.errorTitle,
@@ -1346,21 +1343,10 @@ export default function AdminPage() {
                         t.adminPage.recurringBookingDesc
                             .replace('{name}', recurringBooking.name || '')
                             .replace('{time}', recurringBooking.time)
-                            .replace('{date}', format(new Date(recurringBooking.date), 'do'))
+                            .replace('{day}', format(new Date(recurringBooking.date), 'EEEE', { locale: lang === 'ar' ? arSA : undefined }))
                     }
                   </AlertDialogDescription>
               </AlertDialogHeader>
-              <div className="grid gap-2">
-                  <Label htmlFor="recurring-months">{t.adminPage.recurringBookingMonthsLabel}</Label>
-                  <Input 
-                      id="recurring-months" 
-                      type="number" 
-                      value={recurringMonths} 
-                      onChange={e => setRecurringMonths(parseInt(e.target.value, 10) || 1)} 
-                      min="1"
-                      max="12"
-                  />
-              </div>
               <AlertDialogFooter>
                   <AlertDialogCancel>{t.adminPage.cancel}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleConfirmRecurring}>{t.adminPage.confirmButton}</AlertDialogAction>
@@ -1370,5 +1356,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, type ReactNode } from "react";
 import type { Booking } from "@/lib/types";
-import { addMonths, setDate, lastDayOfMonth } from 'date-fns';
+import { addDays, format } from 'date-fns';
 
 
 interface BookingContextType {
@@ -15,7 +15,7 @@ interface BookingContextType {
   acceptBooking: (booking: Booking, isTrusted: boolean) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
   confirmBooking: (bookingToConfirm: Booking) => Promise<'confirmed' | 'slot-taken'>;
   createConfirmedBooking: (bookingData: Omit<Booking, "id" | "status" | "userId">) => Promise<'confirmed' | 'slot-taken'>;
-  createRecurringBookings: (booking: Booking, months: number) => Promise<void>;
+  createRecurringBookings: (booking: Booking) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -137,25 +137,17 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       return 'confirmed';
   };
 
-    const createRecurringBookings = async (originalBooking: Booking, months: number): Promise<void> => {
+    const createRecurringBookings = async (originalBooking: Booking): Promise<void> => {
         const newBookings: Booking[] = [];
         const originalDate = new Date(originalBooking.date);
-        const dayOfMonth = originalDate.getDate();
 
-        for (let i = 1; i <= months; i++) {
-            let nextDate = addMonths(originalDate, i);
-            const lastDayOfNextMonth = lastDayOfMonth(nextDate).getDate();
-
-            // If the original day is greater than the last day of the next month, use the last day.
-            if (dayOfMonth > lastDayOfNextMonth) {
-                nextDate = setDate(nextDate, lastDayOfNextMonth);
-            } else {
-                nextDate = setDate(nextDate, dayOfMonth);
-            }
+        // Create 4 weekly bookings for the next month
+        for (let i = 1; i <= 4; i++) {
+            const nextDate = addDays(originalDate, i * 7);
 
             const newBooking: Booking = {
                 ...originalBooking,
-                id: `${originalBooking.id}-recur-${i}`,
+                id: `${originalBooking.id}-recur-week-${i}`,
                 date: nextDate,
                 status: 'confirmed', // Recurring bookings are always confirmed
                 isRecurring: true,
