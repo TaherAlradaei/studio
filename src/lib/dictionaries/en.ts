@@ -148,8 +148,8 @@ export const enStrings = {
     twoMonths: "2 Months",
     bookingDetailsTitle: "Booking Details",
     bookingDetailsDescription: "Details for the booking at {time}.",
-    bookingDetailsName: "Name",
-    bookingDetailsPhone: "Phone",
+    bookingDetailsName: "Name:",
+    bookingDetailsPhone: "Phone:",
     academyRegistrationsTitle: "Academy Registrations",
     academyRegistrationsDesc: "Review and manage applications for the youth academy.",
     talentName: "Talent Name",
@@ -269,3 +269,5 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
+
+    

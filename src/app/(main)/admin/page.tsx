@@ -742,7 +742,7 @@ export default function AdminPage() {
                         <TableCell>{booking.time}</TableCell>
                         <TableCell>{booking.name}<br/><span className="text-sm text-muted-foreground">{booking.phone}</span></TableCell>
                         <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
-                        <TableCell>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</TableCell>
+                        <TableCell>{booking.price ? `${booking.toLocaleString()} YR` : '-'}</TableCell>
                         <TableCell>{getStatusBadge(booking.status)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
@@ -1488,3 +1488,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

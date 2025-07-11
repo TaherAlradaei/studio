@@ -150,8 +150,8 @@ export const arStrings: Dictionary = {
     twoMonths: "شهران",
     bookingDetailsTitle: "تفاصيل الحجز",
     bookingDetailsDescription: "تفاصيل الحجز في الساعة {time}.",
-    bookingDetailsName: "الاسم",
-    bookingDetailsPhone: "الهاتف",
+    bookingDetailsName: "الاسم:",
+    bookingDetailsPhone: "الهاتف:",
     academyRegistrationsTitle: "طلبات تسجيل الأكاديمية",
     academyRegistrationsDesc: "مراجعة وإدارة طلبات الالتحاق بأكاديمية الناشئين.",
     talentName: "اسم الموهبة",
@@ -269,3 +269,5 @@ export const arStrings: Dictionary = {
       ok: "موافق",
   }
 };
+
+    
