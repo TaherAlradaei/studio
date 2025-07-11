@@ -47,9 +47,9 @@ export function Header() {
   const pendingRegistrationsCount = registrations.filter(r => r.status === 'pending').length;
   const totalPendingCount = pendingBookingsCount + pendingRegistrationsCount;
 
-  // Admin link should only be visible for a specific user, for now we will hardcode a phone number.
+  // Admin link should only be visible for a specific user.
   // In a real app, this would be based on user roles from a database.
-  const isAdmin = user?.phone === '+967736333328';
+  const isAdmin = user?.phone === '+967736333328' && user?.displayName === 'Admin';
 
   const navLinks = [
     { href: "/booking", label: t.header.bookField },
