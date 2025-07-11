@@ -49,7 +49,7 @@ export function Header() {
 
   // Admin link should only be visible for a specific user.
   // In a real app, this would be based on user roles from a database.
-  const isAdmin = user?.phone === '+967736333328' && user?.displayName === 'Admin';
+  const isAdmin = user?.phone === '+967736333328' && user?.displayName === 'Waheeb';
 
   const navLinks = [
     { href: "/booking", label: t.header.bookField },
