@@ -24,8 +24,8 @@ export const WelcomePageProvider = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState<WelcomePageContent>({
     title: t.welcomePage.defaultTitle,
     message: t.welcomePage.defaultMessage,
-    fieldImageUrl: "https://images.unsplash.com/photo-1556056504-5c7696c4c28d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmb290YmFsbCUyMGZpZWxkfGVufDB8fHx8MTc1MjI2NjI3OHww&ixlib=rb-4.1.0&q=80&w=1080",
-    coachImageUrl: "https://images.unsplash.com/photo-1693683223469-e3da9e2a723d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxmb290YmFsbCUyMGNvYWNofGVufDB8fHx8MTc1MjI2NjI3OXww&ixlib=rb-4.1.0&q=80&w=1080",
+    fieldImageUrl: "https://images.unsplash.com/photo-1557174949-3b1f5b2e8fac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmb290YmFsbCUyMGZpZWxkfGVufDB8fHx8MTc1MjI2NjI3OHww&ixlib=rb-4.1.0&q=80&w=1080",
+    coachImageUrl: "https://images.unsplash.com/photo-1603683180670-89e591ecf86a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmb290YmFsbCUyMGNvYWNofGVufDB8fHx8MTc1MjI2NjI3OXww&ixlib=rb-4.1.0&q=80&w=1080",
   });
 
   const updateWelcomePageContent = (updates: Partial<WelcomePageContent>) => {

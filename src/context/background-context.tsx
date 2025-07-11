@@ -1,12 +1,13 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, type ReactNode, useCallback, useMemo } from "react";
 
 const initialBackgrounds = [
-  { url: "https://placehold.co/1920x1080.png", hint: "football player kicking" },
-  { url: "https://placehold.co/1920x1080.png", hint: "goalkeeper diving save" },
-  { url: "https://placehold.co/1920x1080.png", hint: "football player heading" },
-  { url: "https://placehold.co/1920x1080.png", hint: "stadium evening lights" },
+  { url: "https://images.unsplash.com/photo-1652190416284-10debef71bfa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmb290YmFsbCUyMHBsYXllciUyMGtpY2tpbmd8ZW58MHx8fHwxNzUyMjY3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080", hint: "football player kicking" },
+  { url: "https://images.unsplash.com/photo-1659188903747-7af9b849bdf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxnb2Fsa2VlcGVyJTIwZGl2aW5nJTIwc2F2ZXxlbnwwfHx8fDE3NTIyNjc0MDB8MA&ixlib=rb-4.1.0&q=80&w=1080", hint: "goalkeeper diving save" },
+  { url: "https://images.unsplash.com/photo-1631233143542-c7097a332932?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmb290YmFsbCUyMHBsYXllciUyMGhlYWRpbmd8ZW58MHx8fHwxNzUyMjY3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080", hint: "football player heading" },
+  { url: "https://images.unsplash.com/photo-1611587475814-cec57a649bce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdGFkaXVtJTIwZXZlbmluZyUyMGxpZ2h0c3xlbnwwfHx8fDE3NTIyNjc0MDB8MA&ixlib=rb-4.1.0&q=80&w=1080", hint: "stadium evening lights" },
 ];
 
 interface Background {
