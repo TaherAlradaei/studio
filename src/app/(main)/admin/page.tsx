@@ -917,7 +917,7 @@ export default function AdminPage() {
                                 const [hours, minutes] = time.split(':').map(Number);
                                 slotDateTime.setHours(hours, minutes, 0, 0);
 
-                                const booking = bookings.find(b => {
+                                const occupyingBooking = bookings.find(b => {
                                   if (b.status === 'cancelled') return false;
                                   const bookingDate = new Date(b.date);
                                   if (bookingDate.toDateString() !== slotDateTime.toDateString()) return false;
@@ -935,11 +935,11 @@ export default function AdminPage() {
                                 let buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" = "outline";
                                 let buttonClassName = "w-full";
                                 let badgeContent = null;
-                                let isDisabled = isPast || (isBookedForManual && !booking);
+                                let isDisabled = isPast || (isBookedForManual && !occupyingBooking);
 
-                                if (booking) {
+                                if (occupyingBooking) {
                                     isDisabled = true;
-                                    switch (booking.status) {
+                                    switch (occupyingBooking.status) {
                                         case 'blocked':
                                             buttonVariant = 'destructive';
                                             badgeContent = <Badge variant="destructive">{t.adminPage.blocked}</Badge>;
@@ -969,11 +969,11 @@ export default function AdminPage() {
                                         onClick={async () => {
                                             if (!availabilityDate) return;
                                             try {
-                                                if (booking?.status === 'blocked') {
-                                                    await unblockSlot(booking.id!);
-                                                } else if (booking?.status === 'confirmed') {
-                                                    setInfoBooking(booking);
-                                                } else if (!booking) {
+                                                if (occupyingBooking?.status === 'blocked') {
+                                                    await unblockSlot(occupyingBooking.id!);
+                                                } else if (occupyingBooking?.status === 'confirmed') {
+                                                    setInfoBooking(occupyingBooking);
+                                                } else if (!occupyingBooking) {
                                                     setManualBookingDuration(availabilityDuration);
                                                     setNewManualBooking({date: availabilityDate, time, duration: availabilityDuration});
                                                 }
