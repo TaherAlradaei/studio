@@ -1,14 +1,31 @@
+
+"use client";
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { Providers } from './providers';
 import { AppBackground } from '@/components/app-background';
+import { usePathname } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+import { useBackground } from '@/context/background-context';
 
-export const metadata: Metadata = {
-  title: 'Al Maidan Football Academy',
-  description: 'Book your football field at Al Maidan Football Academy',
-};
+function BackgroundCycler() {
+  const { cycleBackground } = useBackground();
+  const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    if (pathnameRef.current !== pathname) {
+      cycleBackground();
+      pathnameRef.current = pathname;
+    }
+  }, [pathname, cycleBackground]);
+
+  return null; // This component doesn't render anything
+}
+
 
 export default function RootLayout({
   children,
@@ -31,6 +48,7 @@ export default function RootLayout({
       </head>
       <body className={cn('antialiased min-h-screen flex flex-col font-body bg-background')}>
         <Providers>
+          <BackgroundCycler />
           <AppBackground />
           {children}
           <Toaster />
