@@ -11,10 +11,17 @@ export interface Booking {
   price?: number;
 }
 
+export interface PostComment {
+  author: string;
+  text: string;
+}
+
 export interface MemberPost {
   id: string;
+  author: string;
   photoUrl: string;
   story?: string;
+  comments?: PostComment[];
 }
 
 export interface AcademyRegistration {

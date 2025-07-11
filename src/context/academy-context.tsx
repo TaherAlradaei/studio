@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, type ReactNode } from "react";
-import type { AcademyRegistration, MemberPost } from "@/lib/types";
+import type { AcademyRegistration, MemberPost, PostComment } from "@/lib/types";
 
 interface AcademyContextType {
   registrations: AcademyRegistration[];
@@ -10,7 +10,9 @@ interface AcademyContextType {
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
   validateAccessCode: (code: string) => AcademyRegistration | null;
   addPost: (memberId: string, post: Omit<MemberPost, 'id'>) => void;
-  getPosts: (memberId: string) => MemberPost[];
+  getPosts: (memberId?: string) => MemberPost[];
+  addComment: (postId: string, comment: PostComment) => void;
+  deletePost: (postId: string) => void;
 }
 
 const AcademyContext = createContext<AcademyContextType | undefined>(undefined);
@@ -74,13 +76,39 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const getPosts = (memberId: string): MemberPost[] => {
-    const member = registrations.find(r => r.id === memberId);
-    return member ? member.posts : [];
+  const getPosts = (memberId?: string): MemberPost[] => {
+    if (memberId) {
+        const member = registrations.find(r => r.id === memberId);
+        return member ? member.posts : [];
+    }
+    // If no memberId, return all posts from all members
+    return registrations.flatMap(r => r.posts).sort((a,b) => b.id.localeCompare(a.id)); // sort vaguely by time
+  };
+
+  const addComment = (postId: string, comment: PostComment) => {
+     setRegistrations(prev => prev.map(r => ({
+        ...r,
+        posts: r.posts.map(p => {
+            if (p.id === postId) {
+                return {
+                    ...p,
+                    comments: [...(p.comments || []), comment]
+                }
+            }
+            return p;
+        })
+     })));
+  };
+
+  const deletePost = (postId: string) => {
+      setRegistrations(prev => prev.map(r => ({
+        ...r,
+        posts: r.posts.filter(p => p.id !== postId)
+      })));
   };
 
   return (
-    <AcademyContext.Provider value={{ registrations, addRegistration, updateRegistrationStatus, validateAccessCode, addPost, getPosts }}>
+    <AcademyContext.Provider value={{ registrations, addRegistration, updateRegistrationStatus, validateAccessCode, addPost, getPosts, addComment, deletePost }}>
       {children}
     </AcademyContext.Provider>
   );

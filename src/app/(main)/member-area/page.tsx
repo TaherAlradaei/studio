@@ -4,22 +4,27 @@
 import React, { useState, useRef } from "react";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
-import type { AcademyRegistration } from "@/lib/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { AcademyRegistration, MemberPost } from "@/lib/types";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { KeyRound, Camera, BookOpen } from "lucide-react";
+import { KeyRound, Camera, BookOpen, Trash2, MessageSquare, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { useAuth } from "@/context/auth-context";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-function MemberSpace({ member }: { member: AcademyRegistration }) {
+function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
   const { t } = useLanguage();
-  const { addPost, getPosts } = useAcademy();
+  const { user } = useAuth();
+  const { addPost, getPosts, addComment, deletePost } = useAcademy();
   const { toast } = useToast();
   const [story, setStory] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
 
-  const posts = getPosts(member.id);
+  // Show all posts from all members
+  const allPosts = getPosts();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -27,7 +32,7 @@ function MemberSpace({ member }: { member: AcademyRegistration }) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const photoUrl = e.target?.result as string;
-        addPost(member.id, { photoUrl, story });
+        addPost(member.id, { photoUrl, story, author: member.talentName, comments: [] });
         setStory("");
         toast({ title: t.memberArea.postAddedSuccess });
       };
@@ -42,6 +47,29 @@ function MemberSpace({ member }: { member: AcademyRegistration }) {
     fileInputRef.current?.click();
   };
 
+  const handleCommentChange = (postId: string, text: string) => {
+    setCommentInputs(prev => ({ ...prev, [postId]: text }));
+  };
+
+  const handleAddComment = (postId: string) => {
+    const commentText = commentInputs[postId];
+    if (commentText && user?.displayName) {
+      // In a real app, you'd verify this user is an admin
+      addComment(postId, { author: user.displayName, text: commentText });
+      setCommentInputs(prev => ({ ...prev, [postId]: '' })); // Clear input
+    }
+  };
+  
+  const handleDeletePost = (postId: string) => {
+    // Here you would add checks to ensure only the post author or an admin can delete
+    deletePost(postId);
+    toast({ title: "Post Deleted", description: "The post has been successfully removed.", variant: "destructive" });
+  }
+
+  // A simple check to see if the logged-in user should have admin rights.
+  // In a real app, this would be based on user roles from your auth provider.
+  const isAdmin = user?.uid === 'admin';
+
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -49,6 +77,7 @@ function MemberSpace({ member }: { member: AcademyRegistration }) {
           {t.memberArea.welcome.replace("{name}", member.talentName)}
         </h2>
         <p className="text-muted-foreground">{t.memberArea.welcomeDesc}</p>
+        <Button onClick={onLogout} variant="link" className="mt-2 text-destructive">{t.memberArea.logout}</Button>
       </div>
 
       <Card className="bg-card/80 backdrop-blur-sm">
@@ -83,20 +112,61 @@ function MemberSpace({ member }: { member: AcademyRegistration }) {
             <BookOpen className="w-6 h-6 text-primary" />
             <h3 className="text-2xl font-bold font-headline">{t.memberArea.galleryTitle}</h3>
         </div>
-        {posts.length > 0 ? (
+        {allPosts.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <Card key={post.id} className="overflow-hidden bg-card/80 backdrop-blur-sm">
-                <Image
-                  src={post.photoUrl}
-                  alt={post.story || "Member photo"}
-                  width={400}
-                  height={300}
-                  className="w-full h-48 object-cover"
-                />
-                <CardContent className="p-4">
-                  <p className="text-muted-foreground">{post.story}</p>
+            {allPosts.map((post) => (
+              <Card key={post.id} className="flex flex-col overflow-hidden bg-card/80 backdrop-blur-sm">
+                <div className="relative">
+                    <Image
+                      src={post.photoUrl}
+                      alt={post.story || "Member photo"}
+                      width={400}
+                      height={300}
+                      className="w-full h-48 object-cover"
+                    />
+                    {isAdmin && (
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-8 w-8"
+                            onClick={() => handleDeletePost(post.id)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
+                <CardContent className="p-4 flex-grow">
+                    <p className="text-sm font-semibold">{post.author}</p>
+                    <p className="text-muted-foreground">{post.story}</p>
                 </CardContent>
+                <CardFooter className="flex flex-col items-start gap-4 p-4 border-t">
+                    <div className="w-full space-y-2">
+                        {post.comments && post.comments.map((comment, index) => (
+                             <div key={index} className="flex items-start gap-2 text-sm">
+                                <Avatar className="w-6 h-6">
+                                    <AvatarFallback className="text-xs bg-secondary text-secondary-foreground">{comment.author.substring(0, 1)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-xs">{comment.author}</p>
+                                    <p className="text-muted-foreground">{comment.text}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                     {isAdmin && (
+                        <div className="w-full flex items-center gap-2">
+                            <Input
+                                value={commentInputs[post.id] || ''}
+                                onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                                placeholder={t.memberArea.addCommentPlaceholder}
+                                className="h-9"
+                            />
+                            <Button size="icon" className="h-9 w-9" onClick={() => handleAddComment(post.id)}>
+                                <Send className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </CardFooter>
               </Card>
             ))}
           </div>
@@ -119,6 +189,26 @@ export default function MemberAreaPage() {
 
   const handleLogin = () => {
     setIsLoading(true);
+    // Simulate admin login
+    if (accessCode === 'ADMIN') {
+        const adminMember: AcademyRegistration = {
+            id: 'admin',
+            userId: 'admin',
+            parentName: 'Admin',
+            phone: '',
+            talentName: 'Admin',
+            birthDate: new Date(),
+            ageGroup: 'U14',
+            status: 'accepted',
+            submittedAt: new Date(),
+            accessCode: 'ADMIN',
+            posts: []
+        };
+        setMember(adminMember);
+        setIsLoading(false);
+        return;
+    }
+
     const validatedMember = validateAccessCode(accessCode);
     if (validatedMember) {
       setMember(validatedMember);
@@ -135,7 +225,7 @@ export default function MemberAreaPage() {
   if (member) {
     return (
         <div className="container py-8">
-            <MemberSpace member={member} />
+            <MemberSpace member={member} onLogout={() => setMember(null)} />
         </div>
     )
   }
