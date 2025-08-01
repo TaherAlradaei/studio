@@ -15,9 +15,10 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (userData: Omit<User, 'uid'>, isAdmin?: boolean) => void;
+  login: (userData: Omit<User, 'uid' | 'displayName' | 'phone'> & { displayName?: string | null; phone?: string | null }, isAdmin?: boolean) => void;
   logout: () => void;
   setAdminStatus: (isAdmin: boolean) => void;
+  updateUserDetails: (details: { name: string; phone: string }) => void;
   adminAccessCode: string;
   isAdminAccessCode: (code: string) => boolean;
   updateAdminAccessCode: (newCode: string) => void;
@@ -52,10 +53,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = (userData: Omit<User, 'uid'>, isAdmin = false) => {
+  const login = (userData: Omit<User, 'uid' | 'displayName' | 'phone'> & { displayName?: string | null; phone?: string | null }, isAdmin = false) => {
       const newUser: User = {
           uid: `user-${Date.now()}`,
-          ...userData,
+          displayName: userData.displayName || "Guest User",
+          phone: userData.phone || null,
           isAdmin,
       };
       localStorage.setItem('user', JSON.stringify(newUser));
@@ -66,6 +68,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(currentUser => {
         if (!currentUser) return null;
         const updatedUser = { ...currentUser, isAdmin };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        return updatedUser;
+    });
+  };
+
+  const updateUserDetails = (details: { name: string; phone: string }) => {
+    setUser(currentUser => {
+        if (!currentUser) return null;
+        const updatedUser = { 
+            ...currentUser, 
+            displayName: details.name,
+            phone: details.phone 
+        };
         localStorage.setItem('user', JSON.stringify(updatedUser));
         return updatedUser;
     });
@@ -94,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, setAdminStatus, adminAccessCode, isAdminAccessCode, updateAdminAccessCode }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, setAdminStatus, updateUserDetails, adminAccessCode, isAdminAccessCode, updateAdminAccessCode }}>
       {children}
     </AuthContext.Provider>
   );

@@ -280,7 +280,11 @@ export const arStrings: Dictionary = {
       login: "تسجيل الدخول",
       logout: "تسجيل الخروج",
       continue: "متابعة",
-      continueWithGoogle: "المتابعة باستخدام جوجل"
+      continueWithGoogle: "المتابعة باستخدام جوجل",
+      completeProfileTitle: "أكمل ملفك الشخصي",
+      completeProfileDesc: "يرجى تقديم اسمك ورقم هاتفك للمتابعة.",
+      detailsUpdatedTitle: "تم تحديث الملف الشخصي",
+      detailsUpdatedDesc: "تم حفظ بياناتك بنجاح."
   },
   actions: {
       accept: "قبول",

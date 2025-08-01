@@ -11,18 +11,26 @@ import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const { t } = useLanguage();
 
   const handleGoogleLogin = () => {
     // This is a simulated login.
     // In a real app, you would integrate with a Google Sign-In library.
     const simulatedUser = {
-      name: "Guest User",
-      phone: "000-000-0000",
+      name: "Guest User", // This is a temporary name
+      phone: null, // Phone is unknown at this point
     };
     login(simulatedUser);
-    router.push('/booking');
+
+    // After login, check if user needs to complete their profile
+    // We check against the newly set user from the login function.
+    // A better way in a real app would be to check the user object returned from login.
+    if (!simulatedUser.phone) {
+      router.push('/register-details');
+    } else {
+      router.push('/booking');
+    }
   };
 
   return (

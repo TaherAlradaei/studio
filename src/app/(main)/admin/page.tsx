@@ -827,7 +827,7 @@ export default function AdminPage() {
                                 <TableHead>{t.adminPage.parentContact}</TableHead>
                                 <TableHead>{t.adminPage.accessCode}</TableHead>
                                 <TableHead>{t.adminPage.status}</TableHead>
-                                <TableHead className="text-right">{t.adminPage.actions}</TableHead>
+                                <TableHead className="text-right min-w-[150px]">{t.adminPage.actions}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1405,7 +1405,7 @@ export default function AdminPage() {
       </div>
 
        <Tabs defaultValue="dashboard" className="max-w-6xl mx-auto">
-        <TabsList className="mb-6 grid w-full grid-cols-2">
+        <TabsList className="mb-6 grid w-full grid-cols-1 sm:grid-cols-2">
           <TabsTrigger value="dashboard">
             <LayoutDashboard className="mr-2 h-4 w-4" />
             {t.adminPage.dashboardTab}

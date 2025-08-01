@@ -280,7 +280,11 @@ export const enStrings = {
       login: "Login",
       logout: "Logout",
       continue: "Continue",
-      continueWithGoogle: "Continue with Google"
+      continueWithGoogle: "Continue with Google",
+      completeProfileTitle: "Complete Your Profile",
+      completeProfileDesc: "Please provide your name and phone number to continue.",
+      detailsUpdatedTitle: "Profile Updated",
+      detailsUpdatedDesc: "Your details have been saved successfully."
   },
   actions: {
       accept: "Accept",
