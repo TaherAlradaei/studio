@@ -198,6 +198,15 @@ export const arStrings: Dictionary = {
     welcomePageContentUpdatedTitle: "تم تحديث المحتوى",
     welcomePageTextUpdatedDesc: "تم تحديث نصوص صفحة الترحيب بنجاح.",
     welcomePageImageUpdatedDesc: "تم تحديث صورة صفحة الترحيب بنجاح.",
+    securitySettingsCardTitle: "إعدادات الأمان",
+    securitySettingsCardDesc: "إدارة رمز الدخول الخاص بالمسؤول للوصول إلى لوحة التحكم.",
+    securityCurrentCodeLabel: "رمز الدخول الحالي للمسؤول",
+    securityNewCodeLabel: "رمز الدخول الجديد للمسؤول",
+    securityNewCodePlaceholder: "أدخل الرمز الجديد هنا",
+    securityChangeCodeButton: "تغيير الرمز",
+    securityCodeUpdatedTitle: "تم تحديث الرمز",
+    securityCodeUpdatedDesc: "تم تحديث رمز الدخول الخاص بالمسؤول بنجاح.",
+    securityCodeEmpty: "لا يمكن أن يكون رمز الدخول الجديد فارغًا.",
   },
   academyPage: {
     title: "انضم إلى الأكاديمية",
@@ -264,13 +273,14 @@ export const arStrings: Dictionary = {
       notLoggedInTitle: "غير مسجل الدخول",
       notLoggedInDesc: "يجب عليك تسجيل الدخول لتنفيذ هذا الإجراء.",
       createAccountTitle: "إنشاء حساب / تسجيل الدخول",
-      createAccountDesc: "أدخل بياناتك للمتابعة. إذا كان لديك حساب، فسيتم تسجيل دخولك.",
+      createAccountDesc: "سجل الدخول للمتابعة. يمكن للمسؤولين الدخول من منطقة الأعضاء.",
       getStartedTitle: "ابدأ الآن",
       getStartedDesc: "أنشئ حسابك لبدء حجز الملاعب والانضمام إلى مجتمعنا.",
       createAccountAction: "إنشاء حساب",
       login: "تسجيل الدخول",
       logout: "تسجيل الخروج",
       continue: "متابعة",
+      continueWithGoogle: "المتابعة باستخدام جوجل"
   },
   actions: {
       accept: "قبول",
@@ -278,5 +288,3 @@ export const arStrings: Dictionary = {
       ok: "موافق",
   }
 };
-
-    

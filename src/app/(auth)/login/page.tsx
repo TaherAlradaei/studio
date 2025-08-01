@@ -1,28 +1,28 @@
 
 "use client";
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/context/language-context';
 import { useAuth } from '@/context/auth-context';
 import { KeyRound } from 'lucide-react';
+import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const { t } = useLanguage();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
 
-  const handleLogin = () => {
-    if (name.trim() && phone.trim()) {
-      login({ name, phone });
-      router.push('/booking');
-    }
+  const handleGoogleLogin = () => {
+    // This is a simulated login.
+    // In a real app, you would integrate with a Google Sign-In library.
+    const simulatedUser = {
+      name: "Guest User",
+      phone: "000-000-0000",
+    };
+    login(simulatedUser);
+    router.push('/booking');
   };
 
   return (
@@ -35,29 +35,10 @@ export default function LoginPage() {
         <CardDescription>{t.auth.createAccountDesc}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="name">{t.bookingForm.nameLabel}</Label>
-            <Input 
-              id="name" 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              placeholder={t.bookingForm.namePlaceholder} 
-            />
-          </div>
-          <div>
-            <Label htmlFor="phone">{t.bookingForm.phoneLabel}</Label>
-            <Input 
-              id="phone" 
-              value={phone} 
-              onChange={(e) => setPhone(e.target.value)} 
-              placeholder={t.bookingForm.phonePlaceholder} 
-            />
-          </div>
-          <Button onClick={handleLogin} className="w-full">
-            {t.auth.continue}
-          </Button>
-        </div>
+        <Button onClick={handleGoogleLogin} className="w-full" variant="outline">
+          <FcGoogle className="mr-2 h-5 w-5" />
+          {t.auth.continueWithGoogle}
+        </Button>
       </CardContent>
     </Card>
   );

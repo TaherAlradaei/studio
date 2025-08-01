@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/context/auth-context";
+import { useRouter } from "next/navigation";
 
 function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
   const { t } = useLanguage();
@@ -181,8 +182,9 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
 export default function MemberAreaPage() {
   const { t } = useLanguage();
   const { validateAccessCode } = useAcademy();
-  const { user, login, setAdminStatus } = useAuth();
+  const { user, login, setAdminStatus, isAdminAccessCode } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [accessCode, setAccessCode] = useState("");
   const [member, setMember] = useState<AcademyRegistration | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -190,7 +192,7 @@ export default function MemberAreaPage() {
   const handleLogin = () => {
     setIsLoading(true);
     
-    if (accessCode.toUpperCase() === 'ADMIN') {
+    if (isAdminAccessCode(accessCode)) {
         const adminMember: AcademyRegistration = {
             id: 'admin',
             userId: 'admin_user_id',
@@ -201,7 +203,7 @@ export default function MemberAreaPage() {
             ageGroup: 'U14',
             status: 'accepted',
             submittedAt: new Date(),
-            accessCode: 'ADMIN',
+            accessCode: 'ADMIN_CODE_HIDDEN',
             posts: []
         };
         // If there's no logged-in user, create a temporary admin user
@@ -212,6 +214,7 @@ export default function MemberAreaPage() {
             setAdminStatus(true);
         }
         setMember(adminMember);
+        router.push('/admin');
         setIsLoading(false);
         return;
     }

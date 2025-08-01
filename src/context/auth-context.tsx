@@ -18,15 +18,21 @@ interface AuthContextType {
   login: (userData: Omit<User, 'uid'>, isAdmin?: boolean) => void;
   logout: () => void;
   setAdminStatus: (isAdmin: boolean) => void;
+  adminAccessCode: string;
+  isAdminAccessCode: (code: string) => boolean;
+  updateAdminAccessCode: (newCode: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const GUEST_USER_ID = 'guest-user-session';
+const ADMIN_CODE_STORAGE_KEY = 'admin_access_code';
+const DEFAULT_ADMIN_CODE = 'almaidan';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [adminAccessCode, setAdminAccessCode] = useState(DEFAULT_ADMIN_CODE);
 
   useEffect(() => {
     try {
@@ -34,9 +40,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
+        const storedAdminCode = localStorage.getItem(ADMIN_CODE_STORAGE_KEY);
+        if (storedAdminCode) {
+            setAdminAccessCode(storedAdminCode);
+        }
     } catch (error) {
-        console.error("Failed to parse user from localStorage", error);
+        console.error("Failed to parse data from localStorage", error);
         localStorage.removeItem('user');
+        localStorage.removeItem(ADMIN_CODE_STORAGE_KEY);
     }
     setIsLoading(false);
   }, []);
@@ -63,10 +74,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
       localStorage.removeItem('user');
       setUser(null);
-      // Optional: redirect to home or login page after logout
-      // window.location.href = '/login'; 
   };
 
+  const isAdminAccessCode = (code: string) => {
+    return code === adminAccessCode;
+  };
+
+  const updateAdminAccessCode = (newCode: string) => {
+    localStorage.setItem(ADMIN_CODE_STORAGE_KEY, newCode);
+    setAdminAccessCode(newCode);
+  };
 
   if (isLoading) {
     return (
@@ -77,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, setAdminStatus }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, setAdminStatus, adminAccessCode, isAdminAccessCode, updateAdminAccessCode }}>
       {children}
     </AuthContext.Provider>
   );

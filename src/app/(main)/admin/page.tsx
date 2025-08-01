@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock } from "lucide-react";
 import { getSchedulingRecommendations } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
@@ -52,7 +52,7 @@ const generateAvailableTimes = () => {
 const availableTimes = generateAvailableTimes();
 
 
-type SectionId = 'bookingManagement' | 'academyRegistrations' | 'addAcademyMember' | 'manageAvailability' | 'trustedCustomers' | 'manageWelcomePage' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'schedulingAssistant';
+type SectionId = 'bookingManagement' | 'academyRegistrations' | 'addAcademyMember' | 'manageAvailability' | 'trustedCustomers' | 'manageWelcomePage' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'securitySettings' | 'schedulingAssistant';
 
 interface AdminSection {
   id: SectionId;
@@ -218,6 +218,7 @@ export default function AdminPage() {
   const { registrations, updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
   const { welcomePageContent, updateWelcomePageContent } = useWelcomePage();
+  const { adminAccessCode, updateAdminAccessCode } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState("");
@@ -258,6 +259,8 @@ export default function AdminPage() {
   const [welcomeTitle, setWelcomeTitle] = useState(welcomePageContent.title);
   const [welcomeMessage, setWelcomeMessage] = useState(welcomePageContent.message);
 
+  const [newAdminCode, setNewAdminCode] = useState("");
+
   const [sectionsOrder, setSectionsOrder] = useState<SectionId[]>([
     'bookingManagement', 
     'manageAvailability',
@@ -268,6 +271,7 @@ export default function AdminPage() {
     'manageLogo', 
     'manageBackgrounds', 
     'paymentInstructions', 
+    'securitySettings',
     'schedulingAssistant'
   ]);
 
@@ -623,6 +627,23 @@ export default function AdminPage() {
              toast({
                 title: t.adminPage.errorTitle,
                 description: err instanceof Error ? err.message : "Failed to create recurring bookings.",
+                variant: "destructive",
+            });
+        }
+    };
+    
+    const handleChangeAdminCode = () => {
+        if (newAdminCode.trim().length > 0) {
+            updateAdminAccessCode(newAdminCode.trim());
+            toast({
+                title: t.adminPage.securityCodeUpdatedTitle,
+                description: t.adminPage.securityCodeUpdatedDesc,
+            });
+            setNewAdminCode("");
+        } else {
+             toast({
+                title: t.adminPage.errorTitle,
+                description: t.adminPage.securityCodeEmpty,
                 variant: "destructive",
             });
         }
@@ -1259,6 +1280,46 @@ export default function AdminPage() {
         </Card>
       ),
     },
+    securitySettings: {
+        id: 'securitySettings',
+        title: t.adminPage.securitySettingsCardTitle,
+        component: (
+            <Card className="bg-card/80 backdrop-blur-sm">
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Lock className="w-6 h-6 text-primary" />
+                        <CardTitle>{t.adminPage.securitySettingsCardTitle}</CardTitle>
+                    </div>
+                    <CardDescription>{t.adminPage.securitySettingsCardDesc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <Label htmlFor="current-admin-code">{t.adminPage.securityCurrentCodeLabel}</Label>
+                        <Input
+                            id="current-admin-code"
+                            value={adminAccessCode}
+                            readOnly
+                            className="font-mono mt-1"
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="new-admin-code">{t.adminPage.securityNewCodeLabel}</Label>
+                         <div className="flex flex-col sm:flex-row gap-2 mt-1">
+                            <Input
+                                id="new-admin-code"
+                                value={newAdminCode}
+                                onChange={(e) => setNewAdminCode(e.target.value)}
+                                placeholder={t.adminPage.securityNewCodePlaceholder}
+                            />
+                            <Button onClick={handleChangeAdminCode} className="w-full sm:w-auto">
+                                {t.adminPage.securityChangeCodeButton}
+                            </Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    },
     schedulingAssistant: {
       id: 'schedulingAssistant',
       title: t.adminPage.title,
@@ -1488,7 +1549,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
-
-    
