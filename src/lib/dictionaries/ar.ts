@@ -207,6 +207,8 @@ export const arStrings: Dictionary = {
     securityCodeUpdatedTitle: "تم تحديث الرمز",
     securityCodeUpdatedDesc: "تم تحديث رمز الدخول الخاص بالمسؤول بنجاح.",
     securityCodeEmpty: "لا يمكن أن يكون رمز الدخول الجديد فارغًا.",
+    welcomePageFieldImageLabel: "صورة الملعب",
+    welcomePageCoachImageLabel: "صورة المدرب",
   },
   academyPage: {
     title: "انضم إلى الأكاديمية",
