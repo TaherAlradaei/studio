@@ -13,7 +13,7 @@ import { useAcademy } from "@/context/academy-context";
 import { Badge } from "@/components/ui/badge";
 import { User, LogOut, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const LanguageSwitcher = () => {
   const { lang, setLang } = useLanguage();
@@ -38,20 +38,51 @@ const LanguageSwitcher = () => {
   );
 };
 
+const AdminNavWithNotifications = () => {
+    const { t } = useLanguage();
+    const { bookings } = useBookings();
+    const { registrations } = useAcademy();
+
+    const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
+    const pendingRegistrationsCount = registrations.filter(r => r.status === 'pending').length;
+    const totalPendingCount = pendingBookingsCount + pendingRegistrationsCount;
+
+    return (
+        <Link
+          href="/admin"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            usePathname() === "/admin" ? "text-foreground" : "text-foreground/60"
+          )}
+        >
+          <div className="relative flex items-center">
+            {t.header.admin}
+            {totalPendingCount > 0 && (
+              <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center rounded-full p-0">
+                {totalPendingCount}
+              </Badge>
+            )}
+          </div>
+        </Link>
+    );
+};
+
+
 export function Header() {
   const pathname = usePathname();
   const { t, lang } = useLanguage();
   const { user, logout } = useAuth();
-  const { bookings } = useBookings();
-  const { registrations } = useAcademy();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
-  const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
-  const pendingRegistrationsCount = registrations.filter(r => r.status === 'pending').length;
-  const totalPendingCount = pendingBookingsCount + pendingRegistrationsCount;
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  // Admin link is now shown based on the isAdmin flag from AuthContext.
   const isAdmin = user?.isAdmin;
+  
+  // Conditionally render AdminNavWithNotifications only on admin page to avoid context errors
+  const onAdminPage = pathname === '/admin';
 
   const navLinks = [
     { href: "/booking", label: t.header.bookField },
@@ -59,10 +90,9 @@ export function Header() {
     { href: "/bookings", label: t.header.myBookings },
   ];
   
-  if (isAdmin) {
-    navLinks.push({ href: "/admin", label: t.header.admin, notificationCount: totalPendingCount });
+  if (isAdmin && !onAdminPage) {
+    navLinks.push({ href: "/admin", label: t.header.admin });
   }
-
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -83,16 +113,10 @@ export function Header() {
                 (pathname === link.href || (link.href === '/booking' && pathname === '/')) ? "text-foreground" : "text-foreground/60"
               )}
             >
-              <div className="relative flex items-center">
-                {link.label}
-                {link.notificationCount > 0 && link.href === '/admin' && (
-                  <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center rounded-full p-0">
-                    {link.notificationCount}
-                  </Badge>
-                )}
-              </div>
+              {link.label}
             </Link>
           ))}
+          {isAdmin && onAdminPage && isClient && <AdminNavWithNotifications />}
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <div className="hidden sm:block">
@@ -142,13 +166,9 @@ export function Header() {
                               )}
                             >
                                 {link.label}
-                                {link.notificationCount > 0 && link.href === '/admin' && (
-                                  <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center rounded-full p-0">
-                                    {link.notificationCount}
-                                  </Badge>
-                                )}
                             </Link>
                           ))}
+                           {isAdmin && onAdminPage && isClient && <AdminNavWithNotifications />}
                         </nav>
                         <div className="mt-auto space-y-4">
                            {user ? (
