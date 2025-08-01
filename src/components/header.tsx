@@ -12,7 +12,7 @@ import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { Badge } from "@/components/ui/badge";
 import { User, LogOut, Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle } from "@/components/ui/sheet";
 import { useState } from "react";
 
 const LanguageSwitcher = () => {
@@ -123,6 +123,7 @@ export function Header() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side={lang === 'ar' ? 'right' : 'left'}>
+                    <SheetTitle className="sr-only">{t.header.menu}</SheetTitle>
                     <div className="flex flex-col gap-6 pt-8">
                        <Link href="/" className="flex items-center space-x-2" onClick={() => setIsSheetOpen(false)}>
                           <Logo />
