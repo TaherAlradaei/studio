@@ -3,7 +3,7 @@ import type { Dictionary } from "./en";
 
 export const arStrings: Dictionary = {
   header: {
-    title: "أكاديمية الميدان لكرة القدم",
+    title: "نادي الميدان الرياضي (أكاديمية الميدان)",
     bookField: "احجز ملعب",
     academy: "انضم للأكاديمية",
     myBookings: "حجوزاتي",
@@ -11,12 +11,12 @@ export const arStrings: Dictionary = {
     menu: "القائمة",
   },
   footer: {
-    copyright: "© {year} أكاديمية الميدان لكرة القدم. جميع الحقوق محفوظة.",
+    copyright: "© {year} نادي الميدان الرياضي. جميع الحقوق محفوظة.",
     address: "شارع صفر، حدة مدينة، صنعاء، اليمن",
     phone: "الهاتف: +967 736 333 328",
   },
   welcomePage: {
-    defaultTitle: "أهلاً بكم في أكاديمية الميدان لكرة القدم",
+    defaultTitle: "أهلاً بكم في نادي الميدان الرياضي",
     defaultMessage: "وجهتكم الأولى لكرة القدم في صنعاء. احجزوا ملعبًا، انضموا إلى أكاديميتنا، وكونوا جزءًا من مجتمعنا.",
     fieldTitle: "ملاعب عالية الجودة",
     fieldDesc: "ملاعبنا مجهزة بأفضل المعايير لضمان أفضل تجربة لعب.",
@@ -278,3 +278,5 @@ export const arStrings: Dictionary = {
       ok: "موافق",
   }
 };
+
+    
