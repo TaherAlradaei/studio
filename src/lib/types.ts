@@ -43,4 +43,5 @@ export interface User {
     uid: string;
     displayName: string | null;
     phone: string | null;
+    isAdmin?: boolean;
 }

@@ -12,17 +12,19 @@ import { KeyRound, Camera, BookOpen, Trash2, MessageSquare, Send } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/context/auth-context";
 
 function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
   const { t } = useLanguage();
   const { addPost, getPosts, addComment, deletePost } = useAcademy();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [story, setStory] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
 
   const allPosts = getPosts();
-  const isAdmin = member.id === 'admin';
+  const isAdmin = user?.isAdmin || false;
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -70,7 +72,7 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
         <h2 className="text-3xl font-bold font-headline text-primary">
           {isAdmin ? t.header.title : t.memberArea.welcome.replace("{name}", member.talentName)}
         </h2>
-        <p className="text-muted-foreground">{isAdmin ? t.academyRegistrationsTitle : t.memberArea.welcomeDesc}</p>
+        <p className="text-muted-foreground">{isAdmin ? t.adminPage.academyRegistrationsTitle : t.memberArea.welcomeDesc}</p>
         <Button onClick={onLogout} variant="link" className="mt-2 text-destructive">{t.memberArea.logout}</Button>
       </div>
 
@@ -179,6 +181,7 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
 export default function MemberAreaPage() {
   const { t } = useLanguage();
   const { validateAccessCode } = useAcademy();
+  const { user, login, setAdminStatus } = useAuth();
   const { toast } = useToast();
   const [accessCode, setAccessCode] = useState("");
   const [member, setMember] = useState<AcademyRegistration | null>(null);
@@ -201,6 +204,13 @@ export default function MemberAreaPage() {
             accessCode: 'ADMIN',
             posts: []
         };
+        // If there's no logged-in user, create a temporary admin user
+        if (!user) {
+            login({ name: t.header.title, phone: 'admin' }, true);
+        } else {
+            // If a user is logged in, just elevate their status
+            setAdminStatus(true);
+        }
         setMember(adminMember);
         setIsLoading(false);
         return;
@@ -209,6 +219,11 @@ export default function MemberAreaPage() {
     const validatedMember = validateAccessCode(accessCode);
     if (validatedMember) {
       setMember(validatedMember);
+      // If the validated member is not the current user, log them in.
+      // This handles cases where an admin might be logged in, but a member wants to view their space.
+      if (user?.uid !== validatedMember.userId) {
+          login({ name: validatedMember.talentName, phone: validatedMember.phone });
+      }
     } else {
       toast({
         title: t.memberArea.invalidCodeTitle,
@@ -218,11 +233,26 @@ export default function MemberAreaPage() {
     }
     setIsLoading(false);
   };
+  
+  const handleLogout = () => {
+    if(user?.isAdmin && member?.id !== 'admin'){
+        // If an admin is viewing a member's page, just go back to the admin view
+        setMember(null);
+        setAccessCode("");
+    } else {
+        // Full logout
+        setMember(null);
+        setAccessCode("");
+        if(user?.isAdmin) {
+          setAdminStatus(false);
+        }
+    }
+  };
 
   if (member) {
     return (
         <div className="container py-8">
-            <MemberSpace member={member} onLogout={() => setMember(null)} />
+            <MemberSpace member={member} onLogout={handleLogout} />
         </div>
     )
   }

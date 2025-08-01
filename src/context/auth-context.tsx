@@ -9,13 +9,15 @@ export interface User {
     uid: string;
     displayName: string | null;
     phone: string | null;
+    isAdmin?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (userData: Omit<User, 'uid'>) => void;
+  login: (userData: Omit<User, 'uid'>, isAdmin?: boolean) => void;
   logout: () => void;
+  setAdminStatus: (isAdmin: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,13 +41,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = (userData: Omit<User, 'uid'>) => {
-      const newUser = {
+  const login = (userData: Omit<User, 'uid'>, isAdmin = false) => {
+      const newUser: User = {
           uid: `user-${Date.now()}`,
           ...userData,
+          isAdmin,
       };
       localStorage.setItem('user', JSON.stringify(newUser));
       setUser(newUser);
+  };
+  
+  const setAdminStatus = (isAdmin: boolean) => {
+    setUser(currentUser => {
+        if (!currentUser) return null;
+        const updatedUser = { ...currentUser, isAdmin };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        return updatedUser;
+    });
   };
 
   const logout = () => {
@@ -65,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, setAdminStatus }}>
       {children}
     </AuthContext.Provider>
   );
