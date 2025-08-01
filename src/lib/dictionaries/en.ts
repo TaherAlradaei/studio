@@ -6,6 +6,7 @@ export const enStrings = {
     academy: "Join Academy",
     myBookings: "My Bookings",
     admin: "Admin",
+    menu: "Menu",
   },
   footer: {
     copyright: "© {year} Al Maidan Football Academy. All rights reserved.",

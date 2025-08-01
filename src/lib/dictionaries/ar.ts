@@ -8,6 +8,7 @@ export const arStrings: Dictionary = {
     academy: "انضم للأكاديمية",
     myBookings: "حجوزاتي",
     admin: "الإدارة",
+    menu: "القائمة",
   },
   footer: {
     copyright: "© {year} أكاديمية الميدان لكرة القدم. جميع الحقوق محفوظة.",
@@ -194,8 +195,6 @@ export const arStrings: Dictionary = {
     manageWelcomePageCardDescription: "تحرير المحتوى المعروض على صفحة الترحيب العامة.",
     welcomePageTitleLabel: "عنوان الترحيب",
     welcomePageMessageLabel: "رسالة الترحيب",
-    welcomePageFieldImageLabel: "صورة الملعب",
-    welcomePageCoachImageLabel: "صورة المدرب",
     welcomePageContentUpdatedTitle: "تم تحديث المحتوى",
     welcomePageTextUpdatedDesc: "تم تحديث نصوص صفحة الترحيب بنجاح.",
     welcomePageImageUpdatedDesc: "تم تحديث صورة صفحة الترحيب بنجاح.",

@@ -721,7 +721,7 @@ export default function AdminPage() {
               </div>
             </div>
             
-            <div className="border rounded-lg">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -731,7 +731,7 @@ export default function AdminPage() {
                     <TableHead>{t.adminPage.duration}</TableHead>
                     <TableHead>{t.adminPage.price}</TableHead>
                     <TableHead>{t.adminPage.status}</TableHead>
-                    <TableHead className="text-right">{t.adminPage.actions}</TableHead>
+                    <TableHead className="text-right min-w-[200px]">{t.adminPage.actions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -745,7 +745,7 @@ export default function AdminPage() {
                         <TableCell>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</TableCell>
                         <TableCell>{getStatusBadge(booking.status)}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end">
+                          <div className="flex gap-2 justify-end flex-wrap">
                              {booking.status === 'pending' && (
                               <Button size="sm" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.setPriceButton}</Button>
                             )}
@@ -796,7 +796,7 @@ export default function AdminPage() {
                 <CardDescription>{t.adminPage.academyRegistrationsDesc}</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="border rounded-lg">
+                <div className="border rounded-lg overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -1017,14 +1017,14 @@ export default function AdminPage() {
             <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="new-trusted-customer">{t.adminPage.addTrustedCustomerLabel}</Label>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col sm:flex-row gap-2 mt-2">
                       <Input 
                           id="new-trusted-customer"
                           value={newTrustedCustomer}
                           onChange={(e) => setNewTrustedCustomer(e.target.value)}
                           placeholder={t.adminPage.trustedCustomerNamePlaceholder}
                       />
-                      <Button onClick={handleAddTrustedCustomer}>{t.adminPage.addCustomerButton}</Button>
+                      <Button onClick={handleAddTrustedCustomer} className="w-full sm:w-auto">{t.adminPage.addCustomerButton}</Button>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -1344,7 +1344,7 @@ export default function AdminPage() {
       </div>
 
        <Tabs defaultValue="dashboard" className="max-w-6xl mx-auto">
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 grid w-full grid-cols-2">
           <TabsTrigger value="dashboard">
             <LayoutDashboard className="mr-2 h-4 w-4" />
             {t.adminPage.dashboardTab}

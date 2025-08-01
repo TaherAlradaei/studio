@@ -16,7 +16,7 @@ export default function WelcomePage() {
   const { welcomePageContent } = useWelcomePage();
 
   return (
-    <div className="container py-12">
+    <div className="container py-8 md:py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-6xl font-bold font-headline text-primary mb-4">
           {welcomePageContent.title}

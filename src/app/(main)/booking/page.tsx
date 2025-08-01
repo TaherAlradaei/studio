@@ -109,22 +109,24 @@ export default function BookingPage() {
                 <CardDescription>{t.bookingPage.pricingDesc}</CardDescription>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>{t.bookingPage.pricingTimeSlot}</TableHead>
-                            <TableHead className="text-right">{t.bookingPage.pricingPriceYER}</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {pricingData.map((item) => (
-                            <TableRow key={item.slot}>
-                                <TableCell className="font-medium">{item.slot}</TableCell>
-                                <TableCell className="text-right">{item.price}</TableCell>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{t.bookingPage.pricingTimeSlot}</TableHead>
+                                <TableHead className="text-right">{t.bookingPage.pricingPriceYER}</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {pricingData.map((item) => (
+                                <TableRow key={item.slot}>
+                                    <TableCell className="font-medium">{item.slot}</TableCell>
+                                    <TableCell className="text-right">{item.price}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
           </Card>
         </div>
