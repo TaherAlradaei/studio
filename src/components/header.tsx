@@ -40,7 +40,7 @@ const LanguageSwitcher = () => {
 
 export function Header() {
   const pathname = usePathname();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user, logout } = useAuth();
   const { bookings } = useBookings();
   const { registrations } = useAcademy();
