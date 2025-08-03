@@ -3,8 +3,8 @@
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
-import { auth, db, googleProvider } from "@/lib/firebase";
-import { onAuthStateChanged, signInWithPopup, signOut, type User as FirebaseUser } from "firebase/auth";
+import { auth, db, googleProvider, getRedirectResult, signInWithRedirect } from "@/lib/firebase";
+import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getAdminAccessCode } from "@/app/(main)/admin/actions";
 
@@ -70,8 +70,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsUserRegistered(false);
         }
       } else {
-        setUser(null);
-        setIsUserRegistered(null);
+        // Handle redirect result on initial load if no user is signed in
+        try {
+            const result = await getRedirectResult(auth);
+            if (result) {
+                 // This will trigger onAuthStateChanged again with the user
+                 // so no need to set user state here.
+            } else {
+                setUser(null);
+                setIsUserRegistered(null);
+            }
+        } catch (error) {
+            console.error("Error getting redirect result:", error);
+            setUser(null);
+            setIsUserRegistered(null);
+        }
       }
       setIsLoading(false);
     });
@@ -92,8 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGoogle = async () => {
     try {
       setIsLoading(true);
-      await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle the rest, including setting isLoading to false
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       console.error("Error during Google sign-in:", error);
       setIsLoading(false);
