@@ -22,6 +22,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isUserRegistered: boolean | null;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   updateUserDetails: (details: { name: string; phone: string }) => Promise<void>;
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUserRegistered, setIsUserRegistered] = useState<boolean | null>(null);
   const [adminAccessCode, setAdminAccessCode] = useState('almaidan');
 
   useEffect(() => {
@@ -45,11 +47,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchAdminCode();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setIsLoading(true);
       if (firebaseUser) {
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
-          setUser({ ...userDoc.data() as User });
+          const userData = userDoc.data() as User;
+          setUser(userData);
+          setIsUserRegistered(!!userData.phone);
         } else {
           // New user, create a doc
           const newUser: User = {
@@ -62,9 +67,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           };
           await setDoc(userDocRef, newUser);
           setUser(newUser);
+          setIsUserRegistered(false);
         }
       } else {
         setUser(null);
+        setIsUserRegistered(null);
       }
       setIsLoading(false);
     });
@@ -84,10 +91,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginWithGoogle = async () => {
     try {
+      setIsLoading(true);
       await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle the rest
+      // onAuthStateChanged will handle the rest, including setting isLoading to false
     } catch (error) {
       console.error("Error during Google sign-in:", error);
+      setIsLoading(false);
     }
   };
   
@@ -99,6 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         phone: details.phone 
       }, { merge: true });
       setUser(currentUser => currentUser ? { ...currentUser, displayName: details.name, phone: details.phone } : null);
+      setIsUserRegistered(true);
     }
   };
   
@@ -112,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signOut(auth);
   };
 
-  if (isLoading) {
+  if (isLoading && !user) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -121,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, loginWithGoogle, logout, updateUserDetails, checkAdminStatus, adminAccessCode, updateAdminAccessCode }}>
+    <AuthContext.Provider value={{ user, isLoading, isUserRegistered, loginWithGoogle, logout, updateUserDetails, checkAdminStatus, adminAccessCode, updateAdminAccessCode }}>
       {children}
     </AuthContext.Provider>
   );

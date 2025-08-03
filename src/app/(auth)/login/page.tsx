@@ -8,26 +8,34 @@ import { useLanguage } from '@/context/language-context';
 import { useAuth } from '@/context/auth-context';
 import { KeyRound } from 'lucide-react';
 import { FcGoogle } from "react-icons/fc";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loginWithGoogle } = useAuth();
+  const { user, loginWithGoogle, isUserRegistered, isLoading } = useAuth();
   const { t } = useLanguage();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
-    if(user) {
-        if(user.phone) {
-            router.push('/booking');
-        } else {
-            router.push('/register-details');
-        }
+    // Only redirect if login process is complete and user object is available
+    if (!isLoggingIn && user) {
+      if (isUserRegistered) {
+        router.push('/booking');
+      } else {
+        router.push('/register-details');
+      }
     }
-  }, [user, router]);
+  }, [user, isUserRegistered, isLoggingIn, router]);
 
   const handleGoogleLogin = async () => {
-    await loginWithGoogle();
-    // useEffect will handle redirection
+    setIsLoggingIn(true);
+    try {
+      await loginWithGoogle();
+      // The useEffect will handle redirection once user state is updated.
+    } catch (error) {
+      console.error("Login failed:", error);
+      setIsLoggingIn(false);
+    }
   };
 
   return (
@@ -40,9 +48,9 @@ export default function LoginPage() {
         <CardDescription>{t.auth.createAccountDesc}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button onClick={handleGoogleLogin} className="w-full" variant="outline">
+        <Button onClick={handleGoogleLogin} className="w-full" variant="outline" disabled={isLoading || isLoggingIn}>
           <FcGoogle className="mr-2 h-5 w-5" />
-          {t.auth.continueWithGoogle}
+          {isLoading || isLoggingIn ? t.adminPage.analyzingButton : t.auth.continueWithGoogle}
         </Button>
       </CardContent>
     </Card>

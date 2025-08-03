@@ -20,13 +20,14 @@ import { UserPlus } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function RegisterDetailsPage() {
   const { t } = useLanguage();
-  const { user, updateUserDetails } = useAuth();
+  const { user, updateUserDetails, isUserRegistered, isLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formSchema = z.object({
     name: z.string().min(2, { message: t.bookingForm.validation.nameMin }),
@@ -36,28 +37,44 @@ export default function RegisterDetailsPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      name: user?.displayName || "",
       phone: "",
     },
   });
+  
+  useEffect(() => {
+    if(user?.displayName){
+        form.setValue('name', user.displayName);
+    }
+  }, [user?.displayName, form])
 
   // Redirect if user is not logged in or already has details
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    } else if (user.phone) {
-      // If user somehow lands here but already has details, send them away
-      router.push('/booking');
+    if (!isLoading) {
+      if (!user) {
+        router.push('/login');
+      } else if (isUserRegistered) {
+        // If user somehow lands here but already has details, send them away
+        router.push('/booking');
+      }
     }
-  }, [user, router]);
+  }, [user, isUserRegistered, isLoading, router]);
   
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    updateUserDetails(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    await updateUserDetails(values);
     toast({
       title: t.auth.detailsUpdatedTitle,
       description: t.auth.detailsUpdatedDesc,
     });
+    // The main redirect is handled by the useEffect, but we push here as a fallback.
     router.push('/booking');
+    setIsSubmitting(false);
+  }
+
+  if (isLoading || !user || isUserRegistered) {
+    // Show a loader or null while redirecting
+    return null;
   }
 
   return (
@@ -103,8 +120,8 @@ export default function RegisterDetailsPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
-                  {t.auth.continue}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? t.adminPage.savingButton : t.auth.continue}
                 </Button>
               </form>
             </Form>
