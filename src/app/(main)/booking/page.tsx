@@ -15,6 +15,8 @@ import { useAuth } from "@/context/auth-context";
 import { arSA } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
+import type { Booking } from "@/lib/types";
+import { Timestamp } from "firebase/firestore";
 
 const pricingData = [
     { slot: "07:00 - 11:00", price: "6,000" },
@@ -38,14 +40,6 @@ export default function BookingPage() {
     }
   }, [user, isAuthLoading, router]);
 
-  if (isAuthLoading || !user) {
-    return (
-       <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     setSelectedTime(null);
@@ -59,6 +53,20 @@ export default function BookingPage() {
   const handleBookingComplete = () => {
     setSelectedTime(null);
   };
+
+  if (isAuthLoading || !user) {
+    return (
+       <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Convert Firestore Timestamps to JS Dates for the calendar components
+  const bookingsWithDates = bookings.map(b => ({
+      ...b,
+      date: (b.date as Timestamp).toDate()
+  }));
 
   return (
     <div className="container py-8">
@@ -135,7 +143,7 @@ export default function BookingPage() {
           {selectedDate && (
             <TimeSlotPicker
               selectedDate={selectedDate}
-              bookings={bookings}
+              bookings={bookingsWithDates}
               onTimeSelect={handleTimeSelect}
               selectedTime={selectedTime}
             />

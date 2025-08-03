@@ -1,20 +1,33 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, type ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { Booking } from "@/lib/types";
-import { addDays, format } from 'date-fns';
-
+import { addDays } from 'date-fns';
+import { db } from "@/lib/firebase";
+import { 
+    collection, 
+    query, 
+    onSnapshot, 
+    addDoc, 
+    updateDoc, 
+    doc, 
+    writeBatch, 
+    Timestamp,
+    where,
+    getDocs,
+    deleteDoc
+} from "firebase/firestore";
 
 interface BookingContextType {
   bookings: Booking[];
-  addBooking: (booking: Omit<Booking, "id" | "status" | "price">) => Promise<void>;
+  addBooking: (booking: Omit<Booking, "id" | "status" | "price" | "date" | "isRecurring"> & {date: Date}) => Promise<void>;
   updateBooking: (id: string, updates: Partial<Omit<Booking, 'id'>>) => Promise<void>;
-  blockSlot: (date: Date, time: string) => Promise<void>;
+  blockSlot: (date: Date, time: string, duration: number) => Promise<void>;
   unblockSlot: (id: string) => Promise<void>;
   acceptBooking: (booking: Booking, isTrusted: boolean) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
   confirmBooking: (bookingToConfirm: Booking) => Promise<'confirmed' | 'slot-taken'>;
-  createConfirmedBooking: (bookingData: Omit<Booking, "id" | "status" | "userId">) => Promise<'confirmed' | 'slot-taken'>;
+  createConfirmedBooking: (bookingData: Omit<Booking, "id" | "status" | "userId" | "date"> & { date: Date }) => Promise<'confirmed' | 'slot-taken'>;
   createRecurringBookings: (booking: Booking) => Promise<void>;
 }
 
@@ -28,170 +41,151 @@ const timeToMinutes = (time: string) => {
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
-  const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price">) => {
-    const newBooking: Booking = {
+  useEffect(() => {
+    const q = query(collection(db, "bookings"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const bookingsData: Booking[] = [];
+      querySnapshot.forEach((doc) => {
+        bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
+      });
+      setBookings(bookingsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price" | "date" | "isRecurring"> & {date: Date}) => {
+    await addDoc(collection(db, "bookings"), {
       ...newBookingData,
-      id: Math.random().toString(36).substr(2, 9),
+      date: Timestamp.fromDate(newBookingData.date),
       status: 'pending',
-    };
-    setBookings(prev => [...prev, newBooking].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+    });
   };
   
-  const updateBooking = async (id: string, updates: Partial<Omit<Booking, 'id'>>) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+  const updateBooking = async (id: string, updates: Partial<Omit<Booking, 'id' | 'date'>>) => {
+    const bookingDocRef = doc(db, "bookings", id);
+    const updateData: any = { ...updates };
+    if (updates.date) {
+        updateData.date = Timestamp.fromDate(updates.date as Date);
+    }
+    await updateDoc(bookingDocRef, updateData);
   };
 
-  const blockSlot = async (date: Date, time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const bookingDate = new Date(date);
-    bookingDate.setHours(hours, minutes, 0, 0);
-    
-    const newBlockedBooking: Booking = {
-      id: Math.random().toString(36).substr(2, 9),
+  const blockSlot = async (date: Date, time: string, duration: number) => {
+    await addDoc(collection(db, "bookings"), {
       userId: 'admin_blocked',
       name: 'Blocked Slot',
       phone: null,
-      date: bookingDate,
+      date: Timestamp.fromDate(date),
       time,
-      duration: 1,
+      duration,
       status: 'blocked',
-    };
-    setBookings(prev => [...prev, newBlockedBooking].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+    });
   };
 
   const unblockSlot = async (id: string) => {
-    setBookings(prev => prev.filter(b => b.id !== id));
+    await deleteDoc(doc(db, "bookings", id));
   };
 
   const confirmBooking = async (bookingToConfirm: Booking): Promise<'confirmed' | 'slot-taken'> => {
       const newBookingStartMinutes = timeToMinutes(bookingToConfirm.time);
       const newBookingEndMinutes = newBookingStartMinutes + bookingToConfirm.duration * 60;
-      const newBookingDateStr = new Date(bookingToConfirm.date).toDateString();
+      const newBookingDate = (bookingToConfirm.date as Timestamp).toDate();
+      
+      const q = query(collection(db, "bookings"), 
+        where("date", "==", Timestamp.fromDate(new Date(newBookingDate.setHours(0,0,0,0)))),
+        where("status", "in", ["confirmed", "blocked"])
+      );
+      const querySnapshot = await getDocs(q);
+      
+      const isSlotTakenByOther = querySnapshot.docs.some(bDoc => {
+          const b = bDoc.data() as Booking;
+          if (bDoc.id === bookingToConfirm.id) return false;
 
-      const isSlotTakenByOther = bookings.some(b => {
-          if (b.id !== bookingToConfirm.id && (b.status === 'confirmed' || b.status === 'blocked')) {
-              const existingBookingDateStr = new Date(b.date).toDateString();
-              if (existingBookingDateStr !== newBookingDateStr) return false;
+          const existingBookingStartMinutes = timeToMinutes(b.time);
+          const existingBookingEndMinutes = existingBookingStartMinutes + b.duration * 60;
 
-              const existingBookingStartMinutes = timeToMinutes(b.time);
-              const existingBookingEndMinutes = existingBookingStartMinutes + b.duration * 60;
-
-              return Math.max(newBookingStartMinutes, existingBookingStartMinutes) < Math.min(newBookingEndMinutes, existingBookingEndMinutes);
-          }
-          return false;
+          return Math.max(newBookingStartMinutes, existingBookingStartMinutes) < Math.min(newBookingEndMinutes, existingBookingEndMinutes);
       });
-
 
       if (isSlotTakenByOther) {
           return 'slot-taken';
       }
 
-      // If slot is not taken, confirm booking and cancel conflicting requests
-      let newBookings = bookings.map(b => {
-          // Confirm the target booking
-          if (b.id === bookingToConfirm.id) {
-              return { ...b, status: 'confirmed' };
-          }
-          
-          // Cancel other pending or awaiting-confirmation requests for the same slot
-          const bookingDateStr = new Date(b.date).toDateString();
-          if ((b.status === 'pending' || b.status === 'awaiting-confirmation') && bookingDateStr === newBookingDateStr) {
-              const bookingStartMinutes = timeToMinutes(b.time);
-              const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
-              const conflict = Math.max(newBookingStartMinutes, bookingStartMinutes) < Math.min(newBookingEndMinutes, bookingEndMinutes);
-              if (conflict) {
-                  return { ...b, status: 'cancelled' };
-              }
-          }
-          
-          return b;
-      });
+      const batch = writeBatch(db);
+      
+      // Confirm the target booking
+      const bookingToConfirmRef = doc(db, "bookings", bookingToConfirm.id);
+      batch.update(bookingToConfirmRef, { status: 'confirmed' });
 
-      setBookings(newBookings);
+      // Cancel conflicting requests
+      const conflictQ = query(collection(db, "bookings"),
+        where("date", "==", Timestamp.fromDate(new Date(newBookingDate.setHours(0,0,0,0)))),
+        where("status", "in", ["pending", "awaiting-confirmation"])
+      );
+      const conflictSnapshot = await getDocs(conflictQ);
+
+      conflictSnapshot.forEach(docSnap => {
+          const b = docSnap.data() as Booking;
+          const bookingStartMinutes = timeToMinutes(b.time);
+          const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
+          const conflict = Math.max(newBookingStartMinutes, bookingStartMinutes) < Math.min(newBookingEndMinutes, bookingEndMinutes);
+          if (conflict) {
+              batch.update(docSnap.ref, { status: 'cancelled' });
+          }
+      });
+      
+      await batch.commit();
       return 'confirmed';
   };
 
-  const createConfirmedBooking = async (bookingData: Omit<Booking, "id" | "status" | "userId">): Promise<'confirmed' | 'slot-taken'> => {
+  const createConfirmedBooking = async (bookingData: Omit<Booking, "id" | "status" | "userId" | "date"> & { date: Date }): Promise<'confirmed' | 'slot-taken'> => {
+      const newBookingRef = doc(collection(db, "bookings"));
       const newBooking: Booking = {
         ...bookingData,
-        id: Math.random().toString(36).substr(2, 9),
+        id: newBookingRef.id,
         userId: 'admin_manual',
-        status: 'pending', // Temporarily set as pending to run through confirmBooking logic
+        date: Timestamp.fromDate(bookingData.date),
+        status: 'pending', 
       };
 
+      await setDoc(newBookingRef, { ...newBooking });
+      
       const result = await confirmBooking(newBooking);
-
       if (result === 'slot-taken') {
+          await deleteDoc(newBookingRef); // Clean up the temporary booking
           return 'slot-taken';
       }
-      
-      // Manually add the booking as confirmed if it wasn't already in the list
-      setBookings(prev => {
-          const bookingExists = prev.some(b => b.id === newBooking.id);
-          if (bookingExists) {
-              return prev.map(b => b.id === newBooking.id ? {...b, status: 'confirmed'} : b);
-          }
-          return [...prev, {...newBooking, status: 'confirmed'}].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      });
 
       return 'confirmed';
   };
 
     const createRecurringBookings = async (originalBooking: Booking): Promise<void> => {
-        const newBookings: Booking[] = [];
-        const originalDate = new Date(originalBooking.date);
+        const batch = writeBatch(db);
+        const originalDate = (originalBooking.date as Timestamp).toDate();
 
-        // Create 4 weekly bookings for the next month
         for (let i = 1; i <= 4; i++) {
             const nextDate = addDays(originalDate, i * 7);
-
-            const newBooking: Booking = {
+            const newBooking: Omit<Booking, 'id'> = {
                 ...originalBooking,
-                id: `${originalBooking.id}-recur-week-${i}`,
-                date: nextDate,
-                status: 'confirmed', // Recurring bookings are always confirmed
+                date: Timestamp.fromDate(nextDate),
+                status: 'confirmed',
                 isRecurring: true,
             };
-            newBookings.push(newBooking);
+            const newBookingRef = doc(collection(db, "bookings"));
+            batch.set(newBookingRef, newBooking);
         }
-
-        // Check for conflicts before adding
-        for (const booking of newBookings) {
-            const isSlotTaken = bookings.some(b => {
-                if (b.status === 'confirmed' || b.status === 'blocked') {
-                    const existingBookingDateStr = new Date(b.date).toDateString();
-                    const newBookingDateStr = new Date(booking.date).toDateString();
-                    if (existingBookingDateStr !== newBookingDateStr) return false;
-
-                    const existingBookingStartMinutes = timeToMinutes(b.time);
-                    const existingBookingEndMinutes = existingBookingStartMinutes + b.duration * 60;
-                    const newBookingStartMinutes = timeToMinutes(booking.time);
-                    const newBookingEndMinutes = newBookingStartMinutes + booking.duration * 60;
-
-                    return Math.max(newBookingStartMinutes, existingBookingStartMinutes) < Math.min(newBookingEndMinutes, existingBookingEndMinutes);
-                }
-                return false;
-            });
-
-            if (isSlotTaken) {
-                throw new Error(`A booking conflict exists for ${format(booking.date, 'PPP')}. Recurring booking creation failed.`);
-            }
-        }
-        
-        setBookings(prev => [...prev, ...newBookings].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+        await batch.commit();
     };
 
   const acceptBooking = async (bookingToAccept: Booking, isTrusted: boolean): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
       if (!isTrusted) {
-        // For non-trusted users, just show instructions. Admin must confirm.
         return 'requires-admin';
       }
     
-      // For trusted users, proceed with confirmation logic.
       const result = await confirmBooking(bookingToAccept);
       
       if (result === 'slot-taken') {
-          await updateBooking(bookingToAccept.id, { status: 'cancelled' });
+          await updateDoc(doc(db, "bookings", bookingToAccept.id), { status: 'cancelled' });
           return 'slot-taken';
       }
 

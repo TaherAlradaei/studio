@@ -20,6 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getDefaultPrice } from "@/lib/pricing";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Timestamp } from "firebase/firestore";
 
 export function BookingHistoryTable() {
   const { bookings, updateBooking, acceptBooking } = useBookings();
@@ -33,20 +36,18 @@ export function BookingHistoryTable() {
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
-      try {
-        const storedInstructions = localStorage.getItem('paymentInstructions');
-        if (storedInstructions) {
-            setPaymentInstructions(storedInstructions);
+    const fetchSettings = async () => {
+        const paymentDoc = await getDoc(doc(db, "settings", "payment"));
+        if(paymentDoc.exists()) {
+            setPaymentInstructions(paymentDoc.data().instructions);
         } else {
             setPaymentInstructions("Please contact us at +967 736 333 328 to finalize payment.");
         }
-      } catch (err) {
-          // Error handling can be added here if needed
-          console.error("Failed to load payment instructions from local storage:", err);
-      }
+    };
+    fetchSettings();
   }, []);
 
-  const userBookings = bookings.filter(b => b.userId === user?.uid && new Date(b.date) >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled');
+  const userBookings = bookings.filter(b => b.userId === user?.uid && (b.date as Timestamp).toDate() >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled');
 
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
@@ -56,16 +57,9 @@ export function BookingHistoryTable() {
 
   const handleAccept = async (booking: Booking) => {
     try {
-      let isTrusted = false;
-      try {
-        const storedCustomers = localStorage.getItem('trustedCustomers');
-        if (storedCustomers) {
-            const trustedCustomers: string[] = JSON.parse(storedCustomers);
-            isTrusted = trustedCustomers.includes(booking.name || "");
-        }
-      } catch (err) {
-        console.error("Failed to load trusted customers from local storage:", err);
-      }
+      const trustedCustomersDoc = await getDoc(doc(db, "settings", "trustedCustomers"));
+      const trustedCustomers = trustedCustomersDoc.exists() ? trustedCustomersDoc.data().names : [];
+      const isTrusted = trustedCustomers.includes(booking.name || "");
         
       const result = await acceptBooking(booking, isTrusted);
       
@@ -79,14 +73,12 @@ export function BookingHistoryTable() {
           });
           router.push('/');
       } else if (result === 'requires-admin') {
-          // Non-trusted user accepted, show payment instructions.
           setShowPaymentDialog(true);
       } else if (result === 'accepted') {
-          // Trusted user accepted, show simple confirmation.
           toast({
               title: t.toasts.bookingConfirmedTitle,
               description: t.toasts.bookingConfirmedDesc
-                  .replace('{date}', new Date(booking.date).toLocaleDateString(lang))
+                  .replace('{date}', (booking.date as Timestamp).toDate().toLocaleDateString(lang))
                   .replace('{time}', booking.time),
           });
       }
@@ -162,7 +154,7 @@ export function BookingHistoryTable() {
               userBookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium">
-                    {new Date(booking.date).toLocaleDateString(lang, dateOptions)}
+                    {(booking.date as Timestamp).toDate().toLocaleDateString(lang, dateOptions)}
                   </TableCell>
                   <TableCell>{booking.time}</TableCell>
                   <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
@@ -198,7 +190,7 @@ export function BookingHistoryTable() {
                 <AlertDialogDescription asChild>
                   <div>
                     {currentBooking && t.bookingHistoryTable.paymentDialogDescription
-                        .replace('{date}', new Date(currentBooking.date).toLocaleDateString(lang))
+                        .replace('{date}', (currentBooking.date as Timestamp).toDate().toLocaleDateString(lang))
                         .replace('{time}', currentBooking.time)}
                     <div className="mt-4 p-4 bg-muted/50 rounded-md border text-sm text-foreground">
                         <p className="whitespace-pre-wrap font-sans">{paymentInstructions}</p>
@@ -214,5 +206,3 @@ export function BookingHistoryTable() {
     </>
   );
 }
-
-    

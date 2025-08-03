@@ -1,48 +1,54 @@
+
 "use server";
 
 import { analyzeBookingPatterns, type AnalyzeBookingPatternsInput } from "@/ai/flows/scheduling-recommendations";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export async function getSchedulingRecommendations(input: AnalyzeBookingPatternsInput) {
     return await analyzeBookingPatterns(input);
 }
 
-// In-memory stores have been moved to client-side localStorage in AdminPage to ensure persistence.
-// These server actions are no longer used but are kept for reference or future server-side implementation.
-
-// let paymentInstructions = "Please contact us at +967 736 333 328 to finalize payment.";
+// Admin settings are now managed in Firestore.
 
 export async function getPaymentInstructions(): Promise<string> {
-  // This is a placeholder. The value is now managed client-side.
+  const docRef = doc(db, 'settings', 'payment');
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data().instructions || "Please contact us at +967 736 333 328 to finalize payment.";
+  }
   return "Please contact us at +967 736 333 328 to finalize payment.";
 }
 
 export async function updatePaymentInstructions(instructions: string): Promise<void> {
-    // This is a placeholder. The value is now managed client-side.
-    // paymentInstructions = instructions;
+    const docRef = doc(db, 'settings', 'payment');
+    await setDoc(docRef, { instructions });
 }
-
-// let trustedCustomers: string[] = ["Waheeb Hameed"];
 
 export async function getTrustedCustomers(): Promise<string[]> {
-  // This is a placeholder. The value is now managed client-side.
-  return ["Waheeb Hameed"];
+    const docRef = doc(db, 'settings', 'trustedCustomers');
+    const docSnap = await getDoc(docRef);
+    if(docSnap.exists()){
+        return docSnap.data().names || [];
+    }
+    return [];
 }
 
-export async function addTrustedCustomer(name: string): Promise<void> {
-    // This is a placeholder. The value is now managed client-side.
-    // if (name && !trustedCustomers.includes(name)) {
-    //     trustedCustomers.push(name);
-    // }
+export async function updateTrustedCustomers(customers: string[]): Promise<void> {
+    const docRef = doc(db, 'settings', 'trustedCustomers');
+    await setDoc(docRef, { names: customers });
 }
 
-export async function removeTrustedCustomer(name: string): Promise<void> {
-    // This is a placeholder. The value is now managed client-side.
-    // trustedCustomers = trustedCustomers.filter(customer => customer !== name);
+export async function getAdminAccessCode(): Promise<string> {
+    const docRef = doc(db, 'settings', 'admin');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().accessCode) {
+        return docSnap.data().accessCode;
+    }
+    return 'almaidan'; // Default
 }
 
-export async function isTrustedCustomer(name: string | null): Promise<boolean> {
-    // This is a placeholder. The value is now managed client-side.
-    if (!name) return false;
-    // return trustedCustomers.includes(name);
-    return name === "Waheeb Hameed"; // Default fallback
+export async function updateAdminAccessCode(code: string): Promise<void> {
+    const docRef = doc(db, 'settings', 'admin');
+    await setDoc(docRef, { accessCode: code });
 }

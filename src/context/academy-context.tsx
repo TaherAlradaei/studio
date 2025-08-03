@@ -1,18 +1,30 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, type ReactNode } from "react";
+import React, { createContext, useContext, useState, type ReactNode, useEffect } from "react";
 import type { AcademyRegistration, MemberPost, PostComment } from "@/lib/types";
+import { db } from "@/lib/firebase";
+import { 
+    collection, 
+    query, 
+    onSnapshot, 
+    addDoc, 
+    updateDoc, 
+    doc,
+    Timestamp,
+    arrayUnion,
+    arrayRemove
+} from "firebase/firestore";
 
 interface AcademyContextType {
   registrations: AcademyRegistration[];
-  addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts">, status?: AcademyRegistration['status']) => Promise<void>;
+  addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate" | "submittedAt"> & {birthDate: Date}, status?: AcademyRegistration['status']) => Promise<void>;
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
   validateAccessCode: (code: string) => AcademyRegistration | null;
-  addPost: (memberId: string, post: Omit<MemberPost, 'id'>) => void;
+  addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt'>) => Promise<void>;
   getPosts: (memberId?: string) => MemberPost[];
-  addComment: (postId: string, comment: PostComment) => void;
-  deletePost: (postId: string) => void;
+  addComment: (postId: string, comment: Omit<PostComment, 'createdAt'>) => Promise<void>;
+  deletePost: (postId: string) => Promise<void>;
 }
 
 const AcademyContext = createContext<AcademyContextType | undefined>(undefined);
@@ -30,29 +42,41 @@ const generateAccessCode = (length = 6) => {
 export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
 
-  const addRegistration = async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts">, status: AcademyRegistration['status'] = 'pending') => {
-    const newRegistration: AcademyRegistration = {
+  useEffect(() => {
+    const q = query(collection(db, "academyRegistrations"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const registrationsData: AcademyRegistration[] = [];
+      querySnapshot.forEach((doc) => {
+        registrationsData.push({ id: doc.id, ...doc.data() } as AcademyRegistration);
+      });
+      setRegistrations(registrationsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const addRegistration = async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status: AcademyRegistration['status'] = 'pending') => {
+    const accessCode = status === 'accepted' ? generateAccessCode() : undefined;
+    
+    await addDoc(collection(db, "academyRegistrations"), {
       ...newRegistrationData,
-      id: Math.random().toString(36).substr(2, 9),
+      birthDate: Timestamp.fromDate(newRegistrationData.birthDate),
       status: status,
-      submittedAt: new Date(),
+      submittedAt: Timestamp.now(),
       posts: [],
-      accessCode: status === 'accepted' ? generateAccessCode() : undefined,
-    };
-    setRegistrations(prev => [...prev, newRegistration]);
+      accessCode: accessCode,
+    });
   };
   
   const updateRegistrationStatus = async (id: string, status: AcademyRegistration['status']) => {
-    setRegistrations(prev => prev.map(r => {
-      if (r.id === id) {
-        const updatedRegistration = { ...r, status };
-        if (status === 'accepted' && !r.accessCode) {
-          updatedRegistration.accessCode = generateAccessCode();
-        }
-        return updatedRegistration;
-      }
-      return r;
-    }));
+    const registrationDocRef = doc(db, "academyRegistrations", id);
+    const updates: Partial<AcademyRegistration> = { status };
+
+    const currentReg = registrations.find(r => r.id === id);
+    if (status === 'accepted' && currentReg && !currentReg.accessCode) {
+        updates.accessCode = generateAccessCode();
+    }
+    
+    await updateDoc(registrationDocRef, updates);
   };
 
   const validateAccessCode = (code: string): AcademyRegistration | null => {
@@ -60,52 +84,57 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     return registrations.find(r => r.accessCode === code && r.status === 'accepted') || null;
   };
 
-  const addPost = (memberId: string, post: Omit<MemberPost, 'id'>) => {
+  const addPost = async (memberId: string, postData: Omit<MemberPost, 'id' | 'createdAt'>) => {
+    const memberDocRef = doc(db, "academyRegistrations", memberId);
     const newPost: MemberPost = {
-      ...post,
-      id: Math.random().toString(36).substr(2, 9),
+      ...postData,
+      id: doc(collection(db, 'dummy')).id, // Generate a random ID
+      createdAt: Timestamp.now(),
+      comments: [],
     };
-
-    setRegistrations(prev => prev.map(r => {
-      if (r.id === memberId) {
-        return {
-          ...r,
-          posts: [newPost, ...r.posts],
-        };
-      }
-      return r;
-    }));
+    await updateDoc(memberDocRef, {
+      posts: arrayUnion(newPost)
+    });
   };
 
   const getPosts = (memberId?: string): MemberPost[] => {
+    const allPosts = registrations.flatMap(r => r.posts || []);
     if (memberId) {
         const member = registrations.find(r => r.id === memberId);
-        return member ? member.posts : [];
+        return member?.posts || [];
     }
-    // If no memberId, return all posts from all members
-    return registrations.flatMap(r => r.posts).sort((a,b) => b.id.localeCompare(a.id)); // sort vaguely by time
+    return allPosts.sort((a,b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
   };
 
-  const addComment = (postId: string, comment: PostComment) => {
-     setRegistrations(prev => prev.map(r => ({
-        ...r,
-        posts: r.posts.map(p => {
-            if (p.id === postId) {
-                return {
-                    ...p,
-                    comments: [...(p.comments || []), comment]
-                }
-            }
-            return p;
-        })
-     })));
+  const addComment = async (postId: string, commentData: Omit<PostComment, 'createdAt'>) => {
+     const newComment: PostComment = {
+        ...commentData,
+        createdAt: Timestamp.now()
+     };
+     for (const reg of registrations) {
+        const post = (reg.posts || []).find(p => p.id === postId);
+        if (post) {
+            const memberDocRef = doc(db, "academyRegistrations", reg.id);
+            const updatedPosts = (reg.posts || []).map(p => 
+                p.id === postId ? {...p, comments: [...(p.comments || []), newComment]} : p
+            );
+            await updateDoc(memberDocRef, { posts: updatedPosts });
+            break;
+        }
+     }
   };
 
-  const deletePost = (postId: string) => {
-      setRegistrations(prev => prev.map(r => ({
-        ...r,
-        posts: r.posts.filter(p => p.id !== postId)
-      })));
+  const deletePost = async (postId: string) => {
+      for (const reg of registrations) {
+        const postToDelete = (reg.posts || []).find(p => p.id === postId);
+        if (postToDelete) {
+            const memberDocRef = doc(db, "academyRegistrations", reg.id);
+            await updateDoc(memberDocRef, {
+                posts: arrayRemove(postToDelete)
+            });
+            break;
+        }
+      }
   };
 
   return (

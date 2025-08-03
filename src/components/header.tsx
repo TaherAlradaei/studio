@@ -12,8 +12,9 @@ import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { Badge } from "@/components/ui/badge";
 import { User, LogOut, Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const LanguageSwitcher = () => {
   const { lang, setLang } = useLanguage();
@@ -88,6 +89,7 @@ export function Header() {
     { href: "/booking", label: t.header.bookField },
     { href: "/academy", label: t.header.academy },
     { href: "/bookings", label: t.header.myBookings },
+    { href: "/member-area", label: t.welcomePage.memberAreaButton },
   ];
   
   if (isAdmin && !onAdminPage) {
@@ -124,6 +126,10 @@ export function Header() {
           </div>
            {user ? (
              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8 hidden sm:flex">
+                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                    <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+                </Avatar>
                <span className="text-sm font-medium hidden sm:inline">{user.displayName}</span>
                 <Button onClick={logout} variant="outline" size="sm" className="hidden sm:flex">
                   <LogOut className="mr-2 h-4 w-4" />
@@ -180,13 +186,11 @@ export function Header() {
                                 </Button>
                              </div>
                            ) : (
-                            <SheetClose asChild>
-                                <Button asChild variant="default" size="sm">
+                                <Button asChild variant="default" size="sm" onClick={() => setIsSheetOpen(false)}>
                                     <Link href="/login">
                                         {t.auth.login}
                                     </Link>
                                 </Button>
-                            </SheetClose>
                            )}
                           <LanguageSwitcher />
                         </div>

@@ -3,11 +3,16 @@
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+import { auth, db, googleProvider } from "@/lib/firebase";
+import { onAuthStateChanged, signInWithPopup, signOut, type User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
-// Local User type definition
+// Custom User type definition
 export interface User {
     uid: string;
     displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
     phone: string | null;
     isAdmin?: boolean;
 }
@@ -15,89 +20,81 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (userData: Omit<User, 'uid' | 'displayName' | 'phone'> & { displayName?: string | null; phone?: string | null }, isAdmin?: boolean) => void;
-  logout: () => void;
-  setAdminStatus: (isAdmin: boolean) => void;
-  updateUserDetails: (details: { name: string; phone: string }) => void;
-  adminAccessCode: string;
-  isAdminAccessCode: (code: string) => boolean;
-  updateAdminAccessCode: (newCode: string) => void;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
+  updateUserDetails: (details: { name: string; phone: string }) => Promise<void>;
+  checkAdminStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const GUEST_USER_ID = 'guest-user-session';
-const ADMIN_CODE_STORAGE_KEY = 'admin_access_code';
-const DEFAULT_ADMIN_CODE = 'almaidan';
+const ADMIN_ACCESS_CODE = 'almaidan'; // Default admin code
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [adminAccessCode, setAdminAccessCode] = useState(DEFAULT_ADMIN_CODE);
 
   useEffect(() => {
-    try {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setUser({ ...userDoc.data() as User });
+        } else {
+          // New user, create a doc
+          const newUser: User = {
+            uid: firebaseUser.uid,
+            displayName: firebaseUser.displayName,
+            email: firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+            phone: null, // Phone will be added later
+            isAdmin: false,
+          };
+          await setDoc(userDocRef, newUser);
+          setUser(newUser);
         }
-        const storedAdminCode = localStorage.getItem(ADMIN_CODE_STORAGE_KEY);
-        if (storedAdminCode) {
-            setAdminAccessCode(storedAdminCode);
-        }
-    } catch (error) {
-        console.error("Failed to parse data from localStorage", error);
-        localStorage.removeItem('user');
-        localStorage.removeItem(ADMIN_CODE_STORAGE_KEY);
-    }
-    setIsLoading(false);
-  }, []);
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
 
-  const login = (userData: Omit<User, 'uid' | 'displayName' | 'phone'> & { displayName?: string | null; phone?: string | null }, isAdmin = false) => {
-      const newUser: User = {
-          uid: `user-${Date.now()}`,
-          displayName: userData.displayName || "Guest User",
-          phone: userData.phone || null,
-          isAdmin,
-      };
-      localStorage.setItem('user', JSON.stringify(newUser));
-      setUser(newUser);
+    return () => unsubscribe();
+  }, []);
+  
+  const checkAdminStatus = async () => {
+    if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            setUser({ ...userDoc.data() as User });
+        }
+    }
+  }
+
+  const loginWithGoogle = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      // onAuthStateChanged will handle the rest
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+    }
   };
   
-  const setAdminStatus = (isAdmin: boolean) => {
-    setUser(currentUser => {
-        if (!currentUser) return null;
-        const updatedUser = { ...currentUser, isAdmin };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        return updatedUser;
-    });
+  const updateUserDetails = async (details: { name: string; phone: string }) => {
+    if (user) {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, { 
+        displayName: details.name, 
+        phone: details.phone 
+      }, { merge: true });
+      setUser(currentUser => currentUser ? { ...currentUser, displayName: details.name, phone: details.phone } : null);
+    }
   };
 
-  const updateUserDetails = (details: { name: string; phone: string }) => {
-    setUser(currentUser => {
-        if (!currentUser) return null;
-        const updatedUser = { 
-            ...currentUser, 
-            displayName: details.name,
-            phone: details.phone 
-        };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        return updatedUser;
-    });
-  };
-
-  const logout = () => {
-      localStorage.removeItem('user');
-      setUser(null);
-  };
-
-  const isAdminAccessCode = (code: string) => {
-    return code === adminAccessCode;
-  };
-
-  const updateAdminAccessCode = (newCode: string) => {
-    localStorage.setItem(ADMIN_CODE_STORAGE_KEY, newCode);
-    setAdminAccessCode(newCode);
+  const logout = async () => {
+    await signOut(auth);
   };
 
   if (isLoading) {
@@ -109,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, setAdminStatus, updateUserDetails, adminAccessCode, isAdminAccessCode, updateAdminAccessCode }}>
+    <AuthContext.Provider value={{ user, isLoading, loginWithGoogle, logout, updateUserDetails, checkAdminStatus }}>
       {children}
     </AuthContext.Provider>
   );

@@ -13,8 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Booking } from "@/lib/types";
 import { useLanguage } from "@/context/language-context";
+
+// This interface is needed because the Booking type in types.ts now has a Timestamp
+// but this component receives a JS Date from its parent.
+interface BookingWithDate extends Omit<import("@/lib/types").Booking, 'date'> {
+    date: Date;
+}
 
 const generateAvailableTimes = () => {
     const times = [];
@@ -35,7 +40,7 @@ const availableTimes = generateAvailableTimes();
 
 interface TimeSlotPickerProps {
   selectedDate: Date;
-  bookings: Booking[];
+  bookings: BookingWithDate[];
   onTimeSelect: (time: string, duration: number) => void;
   selectedTime: string | null;
 }

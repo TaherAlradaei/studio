@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
 import type { AcademyRegistration, MemberPost } from "@/lib/types";
@@ -14,6 +14,8 @@ import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
   const { t } = useLanguage();
@@ -31,9 +33,9 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const photoUrl = e.target?.result as string;
-        addPost(member.id, { photoUrl, story, author: member.talentName, comments: [] });
+        await addPost(member.id, { photoUrl, story, author: member.talentName, comments: [] });
         setStory("");
         toast({ title: t.memberArea.postAddedSuccess });
       };
@@ -52,17 +54,17 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
     setCommentInputs(prev => ({ ...prev, [postId]: text }));
   };
 
-  const handleAddComment = (postId: string) => {
+  const handleAddComment = async (postId: string) => {
     const commentText = commentInputs[postId];
-    if (commentText && isAdmin) {
-      addComment(postId, { author: t.header.title, text: commentText });
+    if (commentText && user) {
+      await addComment(postId, { author: user.displayName || 'Admin', text: commentText });
       setCommentInputs(prev => ({ ...prev, [postId]: '' }));
     }
   };
   
-  const handleDeletePost = (postId: string) => {
+  const handleDeletePost = async (postId: string) => {
     if (isAdmin) {
-        deletePost(postId);
+        await deletePost(postId);
         toast({ title: "Post Deleted", description: "The post has been successfully removed.", variant: "destructive" });
     }
   }
@@ -181,39 +183,36 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
 
 export default function MemberAreaPage() {
   const { t } = useLanguage();
-  const { validateAccessCode } = useAcademy();
-  const { user, login, setAdminStatus, isAdminAccessCode } = useAuth();
+  const { registrations, validateAccessCode } = useAcademy();
+  const { user, checkAdminStatus } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [accessCode, setAccessCode] = useState("");
   const [member, setMember] = useState<AcademyRegistration | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [adminAccessCode, setAdminAccessCode] = useState('');
 
-  const handleLogin = () => {
-    setIsLoading(true);
-    
-    if (isAdminAccessCode(accessCode)) {
-        const adminMember: AcademyRegistration = {
-            id: 'admin',
-            userId: 'admin_user_id',
-            parentName: 'Admin',
-            phone: '',
-            talentName: t.header.title,
-            birthDate: new Date(),
-            ageGroup: 'U14',
-            status: 'accepted',
-            submittedAt: new Date(),
-            accessCode: 'ADMIN_CODE_HIDDEN',
-            posts: []
-        };
-        // If there's no logged-in user, create a temporary admin user
-        if (!user) {
-            login({ name: t.header.title, phone: 'admin' }, true);
+  useEffect(() => {
+    // Fetch admin code from Firestore on component mount
+    const fetchAdminCode = async () => {
+        const settingsDocRef = doc(db, 'settings', 'admin');
+        const docSnap = await getDoc(settingsDocRef);
+        if(docSnap.exists() && docSnap.data().accessCode) {
+            setAdminAccessCode(docSnap.data().accessCode);
         } else {
-            // If a user is logged in, just elevate their status
-            setAdminStatus(true);
+            setAdminAccessCode('almaidan'); // Fallback to default
         }
-        setMember(adminMember);
+    }
+    fetchAdminCode();
+  }, []);
+
+  const handleLogin = async () => {
+    setIsLoading(true);
+
+    if (user && accessCode === adminAccessCode) {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, {isAdmin: true}, {merge: true});
+        await checkAdminStatus(); // Re-fetch user data to get admin status
         router.push('/admin');
         setIsLoading(false);
         return;
@@ -222,11 +221,6 @@ export default function MemberAreaPage() {
     const validatedMember = validateAccessCode(accessCode);
     if (validatedMember) {
       setMember(validatedMember);
-      // If the validated member is not the current user, log them in.
-      // This handles cases where an admin might be logged in, but a member wants to view their space.
-      if (user?.uid !== validatedMember.userId) {
-          login({ name: validatedMember.talentName, phone: validatedMember.phone });
-      }
     } else {
       toast({
         title: t.memberArea.invalidCodeTitle,
@@ -238,18 +232,8 @@ export default function MemberAreaPage() {
   };
   
   const handleLogout = () => {
-    if(user?.isAdmin && member?.id !== 'admin'){
-        // If an admin is viewing a member's page, just go back to the admin view
-        setMember(null);
-        setAccessCode("");
-    } else {
-        // Full logout
-        setMember(null);
-        setAccessCode("");
-        if(user?.isAdmin) {
-          setAdminStatus(false);
-        }
-    }
+    setMember(null);
+    setAccessCode("");
   };
 
   if (member) {
@@ -268,7 +252,7 @@ export default function MemberAreaPage() {
                     <KeyRound className="w-12 h-12 text-primary"/>
                 </div>
                 <CardTitle className="text-3xl font-bold font-headline text-primary">{t.memberArea.title}</CardTitle>
-                <CardDescription>{t.memberArea.description}</CardDescription>
+                <CardDescription>{!user ? t.auth.notLoggedInDesc : t.memberArea.description}</CardDescription>
             </CardHeader>
             <CardContent>
                  <div className="space-y-4">
@@ -278,7 +262,7 @@ export default function MemberAreaPage() {
                         placeholder={t.memberArea.accessCodePlaceholder}
                         className="text-center tracking-widest font-mono text-lg h-12"
                     />
-                    <Button onClick={handleLogin} disabled={isLoading} className="w-full">
+                    <Button onClick={handleLogin} disabled={isLoading || !user} className="w-full">
                          {isLoading ? t.adminPage.analyzingButton : t.memberArea.enterButton}
                     </Button>
                 </div>

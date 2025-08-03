@@ -30,7 +30,7 @@ export function BookingForm({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   async function handleSubmit() {
-    if (!user) {
+    if (!user || !user.phone) {
         toast({
             title: t.auth.notLoggedInTitle,
             description: t.auth.notLoggedInDesc,

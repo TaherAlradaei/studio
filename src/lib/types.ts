@@ -1,10 +1,12 @@
 
+import type { Timestamp } from "firebase/firestore";
+
 export interface Booking {
   id: string;
   userId: string | null;
   name: string | null;
   phone: string | null;
-  date: Date;
+  date: Timestamp; // Changed to Firestore Timestamp
   time: string;
   duration: number; // in hours
   status: 'pending' | 'awaiting-confirmation' | 'confirmed' | 'cancelled' | 'blocked';
@@ -15,6 +17,7 @@ export interface Booking {
 export interface PostComment {
   author: string;
   text: string;
+  createdAt: Timestamp;
 }
 
 export interface MemberPost {
@@ -23,6 +26,7 @@ export interface MemberPost {
   photoUrl: string;
   story?: string;
   comments?: PostComment[];
+  createdAt: Timestamp;
 }
 
 export interface AcademyRegistration {
@@ -31,17 +35,19 @@ export interface AcademyRegistration {
   parentName: string;
   phone: string;
   talentName: string;
-  birthDate: Date;
+  birthDate: Timestamp; // Changed to Firestore Timestamp
   ageGroup: "U10" | "U14";
   status: 'pending' | 'accepted' | 'rejected';
-  submittedAt: Date;
+  submittedAt: Timestamp; // Changed to Firestore Timestamp
   accessCode?: string;
-  posts: MemberPost[];
+  posts?: MemberPost[];
 }
 
 export interface User {
     uid: string;
     displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
     phone: string | null;
     isAdmin?: boolean;
 }

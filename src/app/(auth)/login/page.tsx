@@ -8,21 +8,26 @@ import { useLanguage } from '@/context/language-context';
 import { useAuth } from '@/context/auth-context';
 import { KeyRound } from 'lucide-react';
 import { FcGoogle } from "react-icons/fc";
+import { useEffect } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { user, loginWithGoogle } = useAuth();
   const { t } = useLanguage();
 
-  const handleGoogleLogin = () => {
-    // This is a simulated login.
-    // In a real app, you would integrate with a Google Sign-In library.
-    const simulatedUser = {
-      name: "Guest User", // This is a temporary name
-      phone: null, // Phone is unknown at this point
-    };
-    login(simulatedUser);
-    router.push('/register-details');
+  useEffect(() => {
+    if(user) {
+        if(user.phone) {
+            router.push('/booking');
+        } else {
+            router.push('/register-details');
+        }
+    }
+  }, [user, router]);
+
+  const handleGoogleLogin = async () => {
+    await loginWithGoogle();
+    // useEffect will handle redirection
   };
 
   return (
