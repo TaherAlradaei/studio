@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { onAuthStateChanged, signInWithPopup, signOut, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { getAdminAccessCode } from "@/app/(main)/admin/actions";
+
 
 // Custom User type definition
 export interface User {
@@ -24,17 +26,24 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUserDetails: (details: { name: string; phone: string }) => Promise<void>;
   checkAdminStatus: () => Promise<void>;
+  adminAccessCode: string;
+  updateAdminAccessCode: (code: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ADMIN_ACCESS_CODE = 'almaidan'; // Default admin code
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [adminAccessCode, setAdminAccessCode] = useState('almaidan');
 
   useEffect(() => {
+    const fetchAdminCode = async () => {
+        const code = await getAdminAccessCode();
+        setAdminAccessCode(code);
+    };
+    fetchAdminCode();
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const userDocRef = doc(db, "users", firebaseUser.uid);
@@ -92,6 +101,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentUser => currentUser ? { ...currentUser, displayName: details.name, phone: details.phone } : null);
     }
   };
+  
+  const updateAdminAccessCode = async (code: string) => {
+    const adminSettingsRef = doc(db, 'settings', 'admin');
+    await setDoc(adminSettingsRef, { accessCode: code });
+    setAdminAccessCode(code);
+  };
 
   const logout = async () => {
     await signOut(auth);
@@ -106,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, loginWithGoogle, logout, updateUserDetails, checkAdminStatus }}>
+    <AuthContext.Provider value={{ user, isLoading, loginWithGoogle, logout, updateUserDetails, checkAdminStatus, adminAccessCode, updateAdminAccessCode }}>
       {children}
     </AuthContext.Provider>
   );

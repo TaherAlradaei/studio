@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock } from "lucide-react";
-import { getSchedulingRecommendations } from "./actions";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -33,6 +33,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
 import { useWelcomePage } from "@/context/welcome-page-context";
+import { Timestamp } from "firebase/firestore";
 
 
 const generateAvailableTimes = () => {
@@ -218,7 +219,6 @@ export default function AdminPage() {
   const { registrations, updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
   const { welcomePageContent, updateWelcomePageContent } = useWelcomePage();
-  const { adminAccessCode, updateAdminAccessCode } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState("");
@@ -259,6 +259,7 @@ export default function AdminPage() {
   const [welcomeTitle, setWelcomeTitle] = useState(welcomePageContent.title);
   const [welcomeMessage, setWelcomeMessage] = useState(welcomePageContent.message);
 
+  const [adminAccessCode, setAdminAccessCode] = useState("");
   const [newAdminCode, setNewAdminCode] = useState("");
 
   const [sectionsOrder, setSectionsOrder] = useState<SectionId[]>([
@@ -281,28 +282,32 @@ export default function AdminPage() {
   }, [backgrounds]);
 
   useEffect(() => {
-    try {
-        const storedInstructions = localStorage.getItem('paymentInstructions');
-        if (storedInstructions) {
-            setPaymentInstructions(storedInstructions);
-        } else {
-            setPaymentInstructions("Please contact us at +967 736 333 328 to finalize payment.");
+    async function fetchSettings() {
+        try {
+            const instructions = await getPaymentInstructions();
+            setPaymentInstructions(instructions);
+            const customers = await getTrustedCustomers();
+            setTrustedCustomers(customers);
+            const code = await getAdminAccessCode();
+            setAdminAccessCode(code);
+        } catch (err) {
+            toast({
+                title: t.adminPage.errorTitle,
+                description: "Failed to load settings from server.",
+                variant: "destructive",
+            });
         }
-
-        const storedCustomers = localStorage.getItem('trustedCustomers');
-        if (storedCustomers) {
-            setTrustedCustomers(JSON.parse(storedCustomers));
-        } else {
-            setTrustedCustomers(["Waheeb Hameed"]);
-        }
-    } catch (err) {
-        toast({
-            title: t.adminPage.errorTitle,
-            description: "Failed to load settings from local storage.",
-            variant: "destructive",
-        });
     }
+    fetchSettings();
   }, [toast, t]);
+
+
+  const bookingsWithDates = useMemo(() => {
+    return bookings.map(b => ({
+      ...b,
+      date: (b.date as Timestamp).toDate()
+    }));
+  }, [bookings]);
 
   const filteredBookings = useMemo(() => {
     const date = filterDate || new Date();
@@ -320,10 +325,10 @@ export default function AdminPage() {
         break;
     }
 
-    return bookings
-      .filter(booking => isWithinInterval(new Date(booking.date), interval))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.time.localeCompare(b.time));
-  }, [bookings, filterDate, filterType]);
+    return bookingsWithDates
+      .filter(booking => isWithinInterval(booking.date, interval))
+      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.time.localeCompare(b.time));
+  }, [bookingsWithDates, filterDate, filterType]);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -463,7 +468,7 @@ export default function AdminPage() {
   const handleSaveInstructions = async () => {
     setIsSaving(true);
     try {
-        localStorage.setItem('paymentInstructions', paymentInstructions);
+        await updatePaymentInstructions(paymentInstructions);
         toast({
             title: t.adminPage.instructionsSavedToastTitle,
             description: t.adminPage.instructionsSavedToastDesc,
@@ -484,8 +489,8 @@ export default function AdminPage() {
     if (!newTrustedCustomer.trim()) return;
     try {
         const updatedCustomers = [...trustedCustomers, newTrustedCustomer.trim()];
+        await updateTrustedCustomers(updatedCustomers);
         setTrustedCustomers(updatedCustomers);
-        localStorage.setItem('trustedCustomers', JSON.stringify(updatedCustomers));
         setNewTrustedCustomer("");
         toast({
             title: t.adminPage.trustedCustomerAddedToastTitle,
@@ -500,8 +505,8 @@ export default function AdminPage() {
   const handleRemoveTrustedCustomer = async (customerName: string) => {
     try {
         const updatedCustomers = trustedCustomers.filter(customer => customer !== customerName);
+        await updateTrustedCustomers(updatedCustomers);
         setTrustedCustomers(updatedCustomers);
-        localStorage.setItem('trustedCustomers', JSON.stringify(updatedCustomers));
         toast({
             title: t.adminPage.trustedCustomerRemovedToastTitle,
             description: t.adminPage.trustedCustomerRemovedToastDesc.replace('{name}', customerName),
@@ -632,9 +637,10 @@ export default function AdminPage() {
         }
     };
     
-    const handleChangeAdminCode = () => {
+    const handleChangeAdminCode = async () => {
         if (newAdminCode.trim().length > 0) {
-            updateAdminAccessCode(newAdminCode.trim());
+            await updateAdminCodeAction(newAdminCode.trim());
+            setAdminAccessCode(newAdminCode.trim());
             toast({
                 title: t.adminPage.securityCodeUpdatedTitle,
                 description: t.adminPage.securityCodeUpdatedDesc,
@@ -684,7 +690,7 @@ export default function AdminPage() {
     return hours * 60 + minutes;
   };
   
-  const isSlotBooked = (date: Date, time: string, duration: number, bookings: Booking[]): boolean => {
+  const isSlotBooked = (date: Date, time: string, duration: number, bookings: {date: Date, time: string, duration: number, status: string}[]): boolean => {
     const slotStartMinutes = timeToMinutes(time);
     const newBookingStartMinutes = slotStartMinutes;
     const newBookingEndMinutes = newBookingStartMinutes + duration * 60;
@@ -835,7 +841,7 @@ export default function AdminPage() {
                                 registrations.map((reg) => (
                                     <TableRow key={reg.id}>
                                         <TableCell>{reg.talentName}</TableCell>
-                                        <TableCell>{differenceInYears(new Date(), new Date(reg.birthDate))}</TableCell>
+                                        <TableCell>{differenceInYears(new Date(), (reg.birthDate as Timestamp).toDate())}</TableCell>
                                         <TableCell>{reg.ageGroup}</TableCell>
                                         <TableCell>{reg.parentName}<br /><span className="text-sm text-muted-foreground">{reg.phone}</span></TableCell>
                                         <TableCell>
@@ -938,7 +944,7 @@ export default function AdminPage() {
                                 const [hours, minutes] = time.split(':').map(Number);
                                 slotDateTime.setHours(hours, minutes, 0, 0);
 
-                                const occupyingBooking = bookings.find(b => {
+                                const occupyingBooking = bookingsWithDates.find(b => {
                                   if (b.status === 'cancelled') return false;
                                   const bookingDate = new Date(b.date);
                                   if (bookingDate.toDateString() !== slotDateTime.toDateString()) return false;
@@ -951,7 +957,7 @@ export default function AdminPage() {
                                 });
 
                                 const isPast = new Date() > slotDateTime;
-                                const isBookedForManual = isSlotBooked(availabilityDate, time, availabilityDuration, bookings);
+                                const isBookedForManual = isSlotBooked(availabilityDate, time, availabilityDuration, bookingsWithDates);
                                 
                                 let buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" = "outline";
                                 let buttonClassName = "w-full";
@@ -1440,7 +1446,7 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t.adminPage.confirmDialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              {editingBooking && `${editingBooking.name} - ${format(editingBooking.date, 'PPP', { locale: lang === 'ar' ? arSA : undefined })} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
+              {editingBooking && `${editingBooking.name} - ${format((editingBooking.date as Timestamp).toDate(), 'PPP', { locale: lang === 'ar' ? arSA : undefined })} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
               <br />
               {t.adminPage.confirmDialogDescription}
             </AlertDialogDescription>
@@ -1536,7 +1542,7 @@ export default function AdminPage() {
                         t.adminPage.recurringBookingDesc
                             .replace('{name}', recurringBooking.name || '')
                             .replace('{time}', recurringBooking.time)
-                            .replace('{day}', format(new Date(recurringBooking.date), 'EEEE', { locale: lang === 'ar' ? arSA : undefined }))
+                            .replace('{day}', format((recurringBooking.date as Timestamp).toDate(), 'EEEE', { locale: lang === 'ar' ? arSA : undefined }))
                     }
                   </AlertDialogDescription>
               </AlertDialogHeader>

@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getDefaultPrice } from "@/lib/pricing";
+import { getPaymentInstructions } from "@/app/(main)/admin/actions";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Timestamp } from "firebase/firestore";
@@ -37,12 +38,8 @@ export function BookingHistoryTable() {
 
   useEffect(() => {
     const fetchSettings = async () => {
-        const paymentDoc = await getDoc(doc(db, "settings", "payment"));
-        if(paymentDoc.exists()) {
-            setPaymentInstructions(paymentDoc.data().instructions);
-        } else {
-            setPaymentInstructions("Please contact us at +967 736 333 328 to finalize payment.");
-        }
+        const instructions = await getPaymentInstructions();
+        setPaymentInstructions(instructions);
     };
     fetchSettings();
   }, []);

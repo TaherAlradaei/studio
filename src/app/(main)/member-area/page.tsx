@@ -14,7 +14,7 @@ import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
@@ -183,33 +183,22 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
 
 export default function MemberAreaPage() {
   const { t } = useLanguage();
-  const { registrations, validateAccessCode } = useAcademy();
+  const { validateAccessCode } = useAcademy();
   const { user, checkAdminStatus } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [accessCode, setAccessCode] = useState("");
   const [member, setMember] = useState<AcademyRegistration | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [adminAccessCode, setAdminAccessCode] = useState('');
-
-  useEffect(() => {
-    // Fetch admin code from Firestore on component mount
-    const fetchAdminCode = async () => {
-        const settingsDocRef = doc(db, 'settings', 'admin');
-        const docSnap = await getDoc(settingsDocRef);
-        if(docSnap.exists() && docSnap.data().accessCode) {
-            setAdminAccessCode(docSnap.data().accessCode);
-        } else {
-            setAdminAccessCode('almaidan'); // Fallback to default
-        }
-    }
-    fetchAdminCode();
-  }, []);
-
+  
   const handleLogin = async () => {
     setIsLoading(true);
 
-    if (user && accessCode === adminAccessCode) {
+    const settingsDocRef = doc(db, 'settings', 'admin');
+    const docSnap = await getDoc(settingsDocRef);
+    const adminCode = docSnap.exists() ? docSnap.data().accessCode : 'almaidan';
+
+    if (user && accessCode === adminCode) {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, {isAdmin: true}, {merge: true});
         await checkAdminStatus(); // Re-fetch user data to get admin status
