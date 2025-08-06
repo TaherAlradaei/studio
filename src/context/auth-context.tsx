@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
-import { auth, db, googleProvider, getRedirectResult, signInWithRedirect } from "@/lib/firebase";
+import { auth, db, googleProvider, signInWithPopup } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getAdminAccessCode } from "@/app/(main)/admin/actions";
@@ -75,22 +75,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     });
 
-    // Handle redirect result separately on initial load
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          // This will trigger the onAuthStateChanged listener above,
-          // which will handle setting the user and loading state.
-        } else {
-          // If there's no redirect result, we might still be loading the initial user state
-          // onAuthStateChanged will handle setting loading to false.
-        }
-      })
-      .catch((error) => {
-        console.error("Error getting redirect result:", error);
-        setIsLoading(false);
-      });
-
     return () => unsubscribe();
   }, []);
   
@@ -106,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginWithGoogle = async () => {
     try {
-      await signInWithRedirect(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error during Google sign-in:", error);
     }

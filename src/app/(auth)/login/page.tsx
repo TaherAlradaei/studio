@@ -8,6 +8,8 @@ import { useLanguage } from '@/context/language-context';
 import { useAuth } from '@/context/auth-context';
 import { KeyRound, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
 
 // Using a simple SVG for the Google icon to avoid extra dependencies
 const GoogleIcon = () => (
