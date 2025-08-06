@@ -56,7 +56,6 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addRegistration = useCallback(async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status: AcademyRegistration['status'] = 'pending') => {
-    const accessCode = status === 'accepted' ? generateAccessCode() : undefined;
     
     // Ensure birthDate is a valid Date object before converting to Timestamp
     const birthDate = newRegistrationData.birthDate instanceof Date 
@@ -66,15 +65,20 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     if (isNaN(birthDate.getTime())) {
       throw new Error("Invalid birth date provided.");
     }
-
-    await addDoc(collection(db, "academyRegistrations"), {
+    
+    const registrationPayload: any = {
       ...newRegistrationData,
       birthDate: Timestamp.fromDate(birthDate),
       status: status,
       submittedAt: Timestamp.now(),
       posts: [],
-      accessCode: accessCode,
-    });
+    };
+
+    if (status === 'accepted') {
+        registrationPayload.accessCode = generateAccessCode();
+    }
+
+    await addDoc(collection(db, "academyRegistrations"), registrationPayload);
   }, []);
   
   const updateRegistrationStatus = async (id: string, status: AcademyRegistration['status']) => {
