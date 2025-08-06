@@ -29,10 +29,15 @@ export default function BookingPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
   const { bookings } = useBookings();
+  
+  useEffect(() => {
+    // Set initial date only on client to avoid hydration errors
+    setSelectedDate(new Date());
+  }, []);
   
   useEffect(() => {
     if (!isAuthLoading && !user) {

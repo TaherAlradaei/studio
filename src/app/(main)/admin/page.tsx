@@ -237,10 +237,10 @@ export default function AdminPage() {
   const [infoBooking, setInfoBooking] = useState<Booking | null>(null);
   const [recurringBooking, setRecurringBooking] = useState<Booking | null>(null);
   
-  const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(new Date());
+  const [availabilityDate, setAvailabilityDate] = useState<Date | undefined>(undefined);
   const [availabilityDuration, setAvailabilityDuration] = useState(1);
   
-  const [filterDate, setFilterDate] = useState<Date | undefined>(new Date());
+  const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
   const [filterType, setFilterType] = useState<"week" | "day" | "month">("week");
 
   const [paymentInstructions, setPaymentInstructions] = useState("");
@@ -280,6 +280,9 @@ export default function AdminPage() {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
+    // Set initial date only on client to avoid hydration errors
+    setAvailabilityDate(new Date());
+    setFilterDate(new Date());
   }, []);
 
   useEffect(() => {
