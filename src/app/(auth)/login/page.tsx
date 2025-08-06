@@ -8,8 +8,6 @@ import { useLanguage } from '@/context/language-context';
 import { useAuth } from '@/context/auth-context';
 import { KeyRound, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
 
 // Using a simple SVG for the Google icon to avoid extra dependencies
 const GoogleIcon = () => (
@@ -29,14 +27,13 @@ export default function LoginPage() {
   useEffect(() => {
     // Only redirect when auth state is no longer loading
     if (!isLoading && user) {
-      if (isUserRegistered) {
-        router.push('/booking');
-      } else if (isUserRegistered === false) {
-        // Explicitly check for false, as null means it's not yet determined
-        router.push('/register-details');
-      }
+        if (isUserRegistered) {
+            router.push('/booking');
+        } else {
+            router.push('/register-details');
+        }
     }
-  }, [user, isUserRegistered, isLoading, router]);
+  }, [user, isLoading, isUserRegistered, router]);
 
   const handleGoogleLogin = async () => {
     setIsLoggingIn(true);

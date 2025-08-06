@@ -93,6 +93,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error during Google sign-in:", error);
+      // Let the main error handler on the page deal with the UI state.
+      throw error;
     }
   };
   
