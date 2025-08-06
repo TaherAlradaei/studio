@@ -62,13 +62,15 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
   const isSlotBooked = (time: string) => {
     const slotStartMinutes = timeToMinutes(time);
     
+    // Only check current time on the client to avoid hydration mismatch
     if (isClient) {
       const now = new Date();
-      if (selectedDate.toDateString() === now.toDateString()) {
-          const nowInMinutes = now.getHours() * 60 + now.getMinutes();
-          if (slotStartMinutes < nowInMinutes) {
-              return true;
-          }
+      const slotDateTime = new Date(selectedDate);
+      const [hours, minutes] = time.split(':').map(Number);
+      slotDateTime.setHours(hours, minutes, 0, 0);
+
+      if (slotDateTime < now) {
+          return true;
       }
     }
 
@@ -159,7 +161,7 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
                 key={time}
                 variant={selectedTime === time ? "default" : "outline"}
                 onClick={() => onTimeSelect(time, duration)}
-                disabled={isBooked}
+                disabled={!isClient || isBooked}
                 className={cn(
                   "transition-all duration-200 ease-in-out",
                   isBooked ? "bg-muted text-muted-foreground line-through" : "",
@@ -177,3 +179,5 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
     </Card>
   );
 }
+
+    

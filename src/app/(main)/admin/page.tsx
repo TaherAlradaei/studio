@@ -275,6 +275,11 @@ export default function AdminPage() {
     'securitySettings',
     'schedulingAssistant'
   ]);
+  
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     setHintInputs(backgrounds.map(b => b.hint));
@@ -940,6 +945,15 @@ export default function AdminPage() {
                         </div>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                             {availableTimes.map((time) => {
+                                if (!isClient) {
+                                    return (
+                                        <div key={time} className="relative">
+                                             <Button variant="outline" className="w-full" disabled>
+                                                {time}
+                                            </Button>
+                                        </div>
+                                    );
+                                }
                                 const slotDateTime = new Date(availabilityDate);
                                 const [hours, minutes] = time.split(':').map(Number);
                                 slotDateTime.setHours(hours, minutes, 0, 0);
@@ -1555,3 +1569,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
