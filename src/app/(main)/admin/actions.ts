@@ -2,9 +2,42 @@
 "use server";
 
 import { analyzeBookingPatterns, type AnalyzeBookingPatternsInput } from "@/ai/flows/scheduling-recommendations";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import type { Background, WelcomePageContent } from "@/lib/types";
+import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
+import { v4 as uuidv4 } from 'uuid';
+
+
+export async function uploadFile(base64DataUrl: string, folder: string): Promise<{ url: string, path: string }> {
+    const fileType = base64DataUrl.split(';')[0].split('/')[1];
+    const base64Data = base64DataUrl.split(',')[1];
+    
+    const filePath = `${folder}/${uuidv4()}.${fileType}`;
+    const storageRef = ref(storage, filePath);
+
+    await uploadString(storageRef, base64Data, 'base64', {
+        contentType: `image/${fileType}`
+    });
+
+    const downloadURL = await getDownloadURL(storageRef);
+
+    return { url: downloadURL, path: filePath };
+}
+
+export async function deleteFile(filePath: string): Promise<void> {
+    const storageRef = ref(storage, filePath);
+    try {
+        await deleteObject(storageRef);
+    } catch (error: any) {
+        // If the file doesn't exist, Firebase throws an error. We can ignore it.
+        if (error.code !== 'storage/object-not-found') {
+            console.error("Error deleting file from storage:", error);
+            throw error;
+        }
+    }
+}
+
 
 export async function getSchedulingRecommendations(input: AnalyzeBookingPatternsInput) {
     return await analyzeBookingPatterns(input);
@@ -58,16 +91,16 @@ export async function updateAdminAccessCode(code: string): Promise<void> {
 export async function getLogo(): Promise<{ url: string }> {
     const docRef = doc(db, 'settings', 'logo');
     const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
+    if (docSnap.exists() && docSnap.data().url) {
         return docSnap.data() as { url: string };
     }
     // Return a default if not set
     return { url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACuwEE+AAABJUlEQVR42u3bS2nEUBiF0bswkw5eVR2sQqgC3Yk4Qoow4YVkHi+e/4J7QY4LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBvcj7331PI+Xw4Z+c+9Sg+t8fG+8fN+lq/VvyncoL3yQhYJkR4XisYLSso1zQy6m1/M9wghPfhM/VjZ/XJMkIWWYQQnhmY1oqG5ckywltZZKsgwsI7wwsWiYR1sgjRQlZJpPgRS7IIIfCsmbKMEEJ2WUSZEGIJUQYhE4QUaQcKYQoMQgghhBBCiCEU3o9n3G+0wU2UMIYQYghBCGGIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCHkP+Q8/gDAo+N8/H/l/4b8BgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAe/AEnrA0bgaed1gAAAABJRU5ErkJggg==" };
 }
 
-export async function updateLogo(url: string): Promise<void> {
+export async function updateLogo(url: string, path: string): Promise<void> {
     const docRef = doc(db, 'settings', 'logo');
-    await setDoc(docRef, { url });
+    await setDoc(docRef, { url, path });
 }
 
 // Background Settings

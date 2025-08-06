@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, updateWelcomePageContent as updateWelcomeContentAction } from "./actions";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, updateWelcomePageContent as updateWelcomeContentAction, uploadFile } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -549,17 +549,21 @@ export default function AdminPage() {
       if (file) {
           const reader = new FileReader();
           reader.onload = async (e) => {
-              const newUrl = e.target?.result as string;
-              const newHint = hintInputs[index] || '';
-              await updateBackground(index, { url: newUrl, hint: newHint });
-              toast({
-                  title: t.adminPage.backgroundUpdatedToastTitle,
-                  description: t.adminPage.backgroundUpdatedToastDesc,
-              });
+              const dataUrl = e.target?.result as string;
+              try {
+                const { url } = await uploadFile(dataUrl, 'public/backgrounds');
+                const newHint = hintInputs[index] || '';
+                await updateBackground(index, { url, hint: newHint });
+                toast({
+                    title: t.adminPage.backgroundUpdatedToastTitle,
+                    description: t.adminPage.backgroundUpdatedToastDesc,
+                });
+              } catch (err) {
+                toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
+              }
           };
           reader.readAsDataURL(file);
       }
-      // Reset file input value to allow re-uploading the same file
       event.target.value = '';
   };
   
@@ -572,19 +576,24 @@ export default function AdminPage() {
         if (file) {
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const newUrl = e.target?.result as string;
-                await updateLogo(newUrl);
-                toast({
-                    title: t.adminPage.logoUpdatedToastTitle,
-                    description: t.adminPage.logoUpdatedToastDesc,
-                });
+                const dataUrl = e.target?.result as string;
+                try {
+                    const { url, path } = await uploadFile(dataUrl, 'public/logo');
+                    await updateLogo(url, path);
+                    toast({
+                        title: t.adminPage.logoUpdatedToastTitle,
+                        description: t.adminPage.logoUpdatedToastDesc,
+                    });
+                } catch (err) {
+                    toast({ title: "Upload Error", description: "Failed to upload logo.", variant: "destructive" });
+                }
             };
             reader.readAsDataURL(file);
         }
         event.target.value = '';
     };
 
-    const handleWelcomePageImageChange = (
+    const handleWelcomePageImageChange = async (
       event: React.ChangeEvent<HTMLInputElement>,
       imageType: 'fieldImageUrl' | 'coachImageUrl'
     ) => {
@@ -592,13 +601,17 @@ export default function AdminPage() {
       if (file) {
         const reader = new FileReader();
         reader.onload = async (e) => {
-          const newUrl = e.target?.result as string;
-          // Update context and Firestore
-          await updateWelcomePageContent({ [imageType]: newUrl });
-          toast({
-            title: t.adminPage.welcomePageContentUpdatedTitle,
-            description: t.adminPage.welcomePageImageUpdatedDesc,
-          });
+          const dataUrl = e.target?.result as string;
+          try {
+              const { url } = await uploadFile(dataUrl, 'public/welcome');
+              await updateWelcomePageContent({ [imageType]: url });
+              toast({
+                  title: t.adminPage.welcomePageContentUpdatedTitle,
+                  description: t.adminPage.welcomePageImageUpdatedDesc,
+              });
+          } catch(err) {
+              toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
+          }
         };
         reader.readAsDataURL(file);
       }

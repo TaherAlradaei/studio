@@ -2,10 +2,45 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // This rule matches every document in your entire database
-    match /{document=**} {
-      // This allows anyone to read and write to any document.
-      allow read, write: if true;
+
+    // Helper functions
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      // Check if the user has an isAdmin flag in their user document
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // User profiles can be created by anyone, but only the owner or an admin can modify them.
+    match /users/{userId} {
+      allow read;
+      allow create;
+      allow update: if isOwner(userId) || isAdmin();
+    }
+    
+    // Bookings can be created by any authenticated user.
+    // They can only be modified by their owner (e.g., to cancel) or an admin.
+    match /bookings/{bookingId} {
+        allow read;
+        allow create: if request.auth != null;
+        allow update, delete: if isAdmin() || (resource.data.userId == request.auth.uid);
+    }
+    
+    // Academy registrations can be created by any authenticated user.
+    // Only admins can modify or delete them.
+    match /academyRegistrations/{registrationId} {
+        allow read;
+        allow create: if request.auth != null;
+        allow update, delete: if isAdmin();
+    }
+    
+    // Settings can be read by anyone, but only modified by an admin.
+    match /settings/{settingId} {
+      allow read;
+      allow write: if isAdmin();
     }
   }
 }

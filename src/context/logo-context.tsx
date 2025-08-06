@@ -6,15 +6,15 @@ import { getLogo, updateLogo as updateLogoAction } from "@/app/(main)/admin/acti
 import { useToast } from "@/hooks/use-toast";
 
 interface LogoContextType {
-  logo: { url: string };
+  logo: { url: string, path?: string };
   isLogoLoading: boolean;
-  updateLogo: (newUrl: string) => Promise<void>;
+  updateLogo: (newUrl: string, newPath: string) => Promise<void>;
 }
 
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
 export const LogoProvider = ({ children }: { children: ReactNode }) => {
-  const [logo, setLogo] = useState({ url: "" });
+  const [logo, setLogo] = useState<{ url: string, path?: string }>({ url: "" });
   const [isLogoLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -37,10 +37,10 @@ export const LogoProvider = ({ children }: { children: ReactNode }) => {
     fetchLogo();
   }, [toast]);
 
-  const updateLogo = async (newUrl: string) => {
+  const updateLogo = async (newUrl: string, newPath: string) => {
     try {
-      setLogo({ url: newUrl }); // Optimistic update
-      await updateLogoAction(newUrl);
+      setLogo({ url: newUrl, path: newPath }); // Optimistic update
+      await updateLogoAction(newUrl, newPath);
     } catch (error) {
       toast({
         title: "Error",
@@ -57,7 +57,7 @@ export const LogoProvider = ({ children }: { children: ReactNode }) => {
     logo,
     isLogoLoading,
     updateLogo,
-  }), [logo, isLogoLoading, updateLogo]);
+  }), [logo, isLogoLoading]);
 
   return (
     <LogoContext.Provider value={value}>

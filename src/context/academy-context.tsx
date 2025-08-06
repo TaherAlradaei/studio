@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, type ReactNode, useEffect } from "react";
 import type { AcademyRegistration, MemberPost, PostComment } from "@/lib/types";
 import { db } from "@/lib/firebase";
+import { uploadFile, deleteFile } from "@/app/(main)/admin/actions";
 import { 
     collection, 
     query, 
@@ -13,11 +14,7 @@ import {
     doc,
     Timestamp,
     arrayUnion,
-    arrayRemove,
-    where,
-    getDocs,
-    deleteDoc,
-    setDoc
+    arrayRemove
 } from "firebase/firestore";
 
 interface AcademyContextType {
@@ -25,7 +22,7 @@ interface AcademyContextType {
   addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status?: AcademyRegistration['status']) => Promise<void>;
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
   validateAccessCode: (code: string) => AcademyRegistration | null;
-  addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt'>) => Promise<void>;
+  addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>, photoDataUrl: string) => Promise<void>;
   getPosts: (memberId?: string) => MemberPost[];
   addComment: (postId: string, comment: Omit<PostComment, 'createdAt'>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
@@ -88,13 +85,17 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     return registrations.find(r => r.accessCode === code && r.status === 'accepted') || null;
   };
 
-  const addPost = async (memberId: string, postData: Omit<MemberPost, 'id' | 'createdAt'>) => {
+  const addPost = async (memberId: string, postData: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>, photoDataUrl: string) => {
+    const { url: photoUrl, path: storagePath } = await uploadFile(photoDataUrl, 'public/academy-posts');
+    
     const memberDocRef = doc(db, "academyRegistrations", memberId);
     const newPost: MemberPost = {
       ...postData,
       id: doc(collection(db, 'dummy')).id, // Generate a random ID
       createdAt: Timestamp.now(),
       comments: [],
+      photoUrl,
+      storagePath
     };
     await updateDoc(memberDocRef, {
       posts: arrayUnion(newPost)
@@ -132,6 +133,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
       for (const reg of registrations) {
         const postToDelete = (reg.posts || []).find(p => p.id === postId);
         if (postToDelete) {
+            await deleteFile(postToDelete.storagePath);
             const memberDocRef = doc(db, "academyRegistrations", reg.id);
             await updateDoc(memberDocRef, {
                 posts: arrayRemove(postToDelete)

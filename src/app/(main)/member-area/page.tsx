@@ -34,10 +34,14 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
     if (file) {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const photoUrl = e.target?.result as string;
-        await addPost(member.id, { photoUrl, story, author: member.talentName, comments: [] });
-        setStory("");
-        toast({ title: t.memberArea.postAddedSuccess });
+        const photoDataUrl = e.target?.result as string;
+        try {
+            await addPost(member.id, { story, author: member.talentName, comments: [] }, photoDataUrl);
+            setStory("");
+            toast({ title: t.memberArea.postAddedSuccess });
+        } catch (err) {
+            toast({ title: "Upload Error", description: "Failed to upload post image.", variant: "destructive" });
+        }
       };
       reader.readAsDataURL(file);
     }

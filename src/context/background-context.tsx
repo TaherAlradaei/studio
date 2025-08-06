@@ -58,7 +58,7 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
   
   const currentBackground = useMemo(() => {
       if (isBackgroundsLoading || backgrounds.length === 0) {
-          return undefined; // Return a placeholder
+          return undefined;
       }
       return backgrounds[currentIndex];
   }, [backgrounds, currentIndex, isBackgroundsLoading]);
@@ -70,7 +70,7 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
     isBackgroundsLoading,
     cycleBackground,
     updateBackground,
-  }), [backgrounds, currentBackground, isBackgroundsLoading, cycleBackground]);
+  }), [backgrounds, currentBackground, isBackgroundsLoading, cycleBackground, updateBackground]);
 
   return (
     <BackgroundContext.Provider value={value}>

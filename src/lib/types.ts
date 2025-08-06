@@ -24,13 +24,14 @@ export interface MemberPost {
   id: string;
   author: string;
   photoUrl: string;
+  storagePath: string; // To track the file in Firebase Storage for deletion
   story?: string;
   comments?: PostComment[];
   createdAt: Timestamp;
 }
 
 export interface AcademyRegistration {
-  id: string;
+  id:string;
   userId: string;
   parentName: string;
   phone: string;
