@@ -99,13 +99,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-4 flex items-center space-x-2">
+        <Link href="/" className="flex items-center space-x-2 mr-4 flex-1 sm:flex-none">
           <Logo />
-          <span className="hidden sm:inline font-bold text-xl text-primary font-headline">
+          <span className="font-bold text-lg sm:text-xl text-primary font-headline truncate">
             {t.header.title}
           </span>
         </Link>
-        <nav className="hidden md:flex items-center gap-4 text-sm lg:gap-6">
+        <nav className="hidden md:flex items-center gap-4 text-sm lg:gap-6 ml-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -126,7 +126,7 @@ export function Header() {
           </div>
            {user ? (
              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8 hidden sm:flex">
+                <Avatar className="h-8 w-8">
                     <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
                     <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
                 </Avatar>
@@ -137,7 +137,7 @@ export function Header() {
                 </Button>
              </div>
            ) : (
-            <Button asChild variant="default" size="sm" className="hidden sm:flex">
+            <Button asChild variant="default" size="sm">
                 <Link href="/login">
                     {t.auth.login}
                 </Link>
@@ -153,7 +153,7 @@ export function Header() {
                 </SheetTrigger>
                 <SheetContent side={lang === 'ar' ? 'right' : 'left'}>
                     <SheetTitle className="sr-only">{t.header.menu}</SheetTitle>
-                    <div className="flex flex-col gap-6 pt-8">
+                    <div className="flex flex-col gap-6 pt-8 h-full">
                        <Link href="/" className="flex items-center space-x-2" onClick={() => setIsSheetOpen(false)}>
                           <Logo />
                           <span className="font-bold text-lg text-primary font-headline">
@@ -177,20 +177,13 @@ export function Header() {
                            {isAdmin && onAdminPage && isClient && <AdminNavWithNotifications />}
                         </nav>
                         <div className="mt-auto space-y-4">
-                           {user ? (
+                           {user && (
                              <div className="flex flex-col gap-2">
-                               <p className="text-center text-muted-foreground">{user.displayName}</p>
                                 <Button onClick={() => {logout(); setIsSheetOpen(false);}} variant="outline" size="sm">
                                   <LogOut className="mr-2 h-4 w-4" />
                                   {t.auth.logout}
                                 </Button>
                              </div>
-                           ) : (
-                                <Button asChild variant="default" size="sm" onClick={() => setIsSheetOpen(false)}>
-                                    <Link href="/login">
-                                        {t.auth.login}
-                                    </Link>
-                                </Button>
                            )}
                           <LanguageSwitcher />
                         </div>
