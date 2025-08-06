@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -1460,7 +1461,7 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t.adminPage.confirmDialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              {editingBooking && `${editingBooking.name} - ${format((editingBooking.date as Timestamp).toDate(), 'PPP', { locale: lang === 'ar' ? arSA : undefined })} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
+              {editingBooking && `${editingBooking.name} - ${format(editingBooking.date instanceof Timestamp ? editingBooking.date.toDate() : editingBooking.date, 'PPP', { locale: lang === 'ar' ? arSA : undefined })} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
               <br />
               {t.adminPage.confirmDialogDescription}
             </AlertDialogDescription>
@@ -1556,7 +1557,7 @@ export default function AdminPage() {
                         t.adminPage.recurringBookingDesc
                             .replace('{name}', recurringBooking.name || '')
                             .replace('{time}', recurringBooking.time)
-                            .replace('{day}', format((recurringBooking.date as Timestamp).toDate(), 'EEEE', { locale: lang === 'ar' ? arSA : undefined }))
+                            .replace('{day}', format(recurringBooking.date instanceof Timestamp ? recurringBooking.date.toDate() : recurringBooking.date, 'EEEE', { locale: lang === 'ar' ? arSA : undefined }))
                     }
                   </AlertDialogDescription>
               </AlertDialogHeader>
