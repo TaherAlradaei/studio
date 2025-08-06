@@ -435,6 +435,12 @@ export default function AdminPage() {
             title: t.toasts.bookingConfirmedTitle,
             description: t.toasts.bookingConfirmedDescAdmin.replace('{name}', booking.name || 'N/A'),
         });
+      } else if (result === 'slot-taken') {
+        toast({
+          title: t.toasts.slotUnavailableTitle,
+          description: "This slot is now taken by another confirmed booking.",
+          variant: "destructive",
+        });
       }
     } catch (err) {
       toast({

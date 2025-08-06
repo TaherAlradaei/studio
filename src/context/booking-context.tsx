@@ -19,6 +19,7 @@ import {
     deleteDoc,
     setDoc
 } from "firebase/firestore";
+import { getDefaultPrice } from "@/lib/pricing";
 
 interface BookingContextType {
   bookings: Booking[];
@@ -55,10 +56,13 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price" | "date" | "isRecurring"> & {date: Date}) => {
+    const price = getDefaultPrice(newBookingData.time) * newBookingData.duration;
+    
     await addDoc(collection(db, "bookings"), {
       ...newBookingData,
       date: Timestamp.fromDate(newBookingData.date),
-      status: 'pending',
+      status: 'awaiting-confirmation',
+      price,
     });
   };
   
@@ -159,7 +163,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         id: newBookingRef.id,
         userId: 'admin_manual',
         date: Timestamp.fromDate(bookingData.date),
-        status: 'pending', // Will be updated to confirmed by confirmBooking
+        status: 'awaiting-confirmation', // Will be updated to confirmed by confirmBooking
       };
       
       await setDoc(newBookingRef, tempBooking);
