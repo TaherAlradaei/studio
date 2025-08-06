@@ -1,0 +1,11 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // This rule matches every document in your entire database
+    match /{document=**} {
+      // This allows anyone to read and write to any document.
+      allow read, write: if true;
+    }
+  }
+}
