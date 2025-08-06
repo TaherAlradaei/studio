@@ -290,7 +290,7 @@ export default function AdminPage() {
   }, [backgrounds, isBackgroundsLoading]);
   
   useEffect(() => {
-    if (!isWelcomePageLoading) {
+    if (!isWelcomePageLoading && welcomePageContent) {
       setWelcomeTitle(welcomePageContent.title);
       setWelcomeMessage(welcomePageContent.message);
     }
@@ -593,8 +593,8 @@ export default function AdminPage() {
         const reader = new FileReader();
         reader.onload = async (e) => {
           const newUrl = e.target?.result as string;
-          await updateWelcomeContentAction({ [imageType]: newUrl });
-          updateWelcomePageContent({ [imageType]: newUrl }); // Also update local state for immediate feedback
+          // Update context and Firestore
+          await updateWelcomePageContent({ [imageType]: newUrl });
           toast({
             title: t.adminPage.welcomePageContentUpdatedTitle,
             description: t.adminPage.welcomePageImageUpdatedDesc,
@@ -608,8 +608,7 @@ export default function AdminPage() {
     const handleSaveWelcomeText = async () => {
       setIsSaving(true);
       try {
-        await updateWelcomeContentAction({ title: welcomeTitle, message: welcomeMessage });
-        updateWelcomePageContent({ title: welcomeTitle, message: welcomeMessage }); // Update local state
+        await updateWelcomePageContent({ title: welcomeTitle, message: welcomeMessage });
         toast({
           title: t.adminPage.welcomePageContentUpdatedTitle,
           description: t.adminPage.welcomePageTextUpdatedDesc,
@@ -1154,14 +1153,16 @@ export default function AdminPage() {
                 <div className="grid md:grid-cols-2 gap-6 pt-6 border-t">
                     <div className="space-y-4">
                         <Label>{t.adminPage.welcomePageFieldImageLabel}</Label>
-                        <Image
-                            src={welcomePageContent.fieldImageUrl}
-                            alt="Football Field"
-                            width={200}
-                            height={150}
-                            className="w-full h-auto object-cover rounded-md aspect-video border"
-                            data-ai-hint="football field"
-                        />
+                        {welcomePageContent?.fieldImageUrl && (
+                            <Image
+                                src={welcomePageContent.fieldImageUrl}
+                                alt="Football Field"
+                                width={200}
+                                height={150}
+                                className="w-full h-auto object-cover rounded-md aspect-video border"
+                                data-ai-hint="football field"
+                            />
+                        )}
                         <Button onClick={() => welcomePageFieldImageInputRef.current?.click()} className="w-full">
                             {t.adminPage.replaceImageButton}
                         </Button>
@@ -1175,14 +1176,16 @@ export default function AdminPage() {
                     </div>
                      <div className="space-y-4">
                         <Label>{t.adminPage.welcomePageCoachImageLabel}</Label>
-                        <Image
-                            src={welcomePageContent.coachImageUrl}
-                            alt="Academy Coach"
-                            width={200}
-                            height={150}
-                            className="w-full h-auto object-cover rounded-md aspect-video border"
-                            data-ai-hint="football coach"
-                        />
+                        {welcomePageContent?.coachImageUrl && (
+                            <Image
+                                src={welcomePageContent.coachImageUrl}
+                                alt="Academy Coach"
+                                width={200}
+                                height={150}
+                                className="w-full h-auto object-cover rounded-md aspect-video border"
+                                data-ai-hint="football coach"
+                            />
+                        )}
                         <Button onClick={() => welcomePageCoachImageInputRef.current?.click()} className="w-full">
                             {t.adminPage.replaceImageButton}
                         </Button>
@@ -1483,7 +1486,7 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t.adminPage.confirmDialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              {editingBooking && `${editingBooking.name} - ${format(editingBooking.date instanceof Timestamp ? editingBooking.date.toDate() : editingBooking.date, 'PPP', { locale: lang === 'ar' ? arSA : undefined })} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
+              {editingBooking && `${editingBooking.name} - ${format(editingBooking.date instanceof Date ? editingBooking.date : (editingBooking.date as Timestamp).toDate(), 'PPP', { locale: lang === 'ar' ? arSA : undefined })} @ ${editingBooking.time} (${t.bookingHistoryTable.durationValue.replace('{duration}', editingBooking.duration.toString())})`}
               <br />
               {t.adminPage.confirmDialogDescription}
             </AlertDialogDescription>
@@ -1579,7 +1582,7 @@ export default function AdminPage() {
                         t.adminPage.recurringBookingDesc
                             .replace('{name}', recurringBooking.name || '')
                             .replace('{time}', recurringBooking.time)
-                            .replace('{day}', format(recurringBooking.date instanceof Timestamp ? recurringBooking.date.toDate() : recurringBooking.date, 'EEEE', { locale: lang === 'ar' ? arSA : undefined }))
+                            .replace('{day}', format(recurringBooking.date instanceof Date ? recurringBooking.date : (recurringBooking.date as Timestamp).toDate(), 'EEEE', { locale: lang === 'ar' ? arSA : undefined }))
                     }
                   </AlertDialogDescription>
               </AlertDialogHeader>

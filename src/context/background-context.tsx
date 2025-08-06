@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface BackgroundContextType {
   backgrounds: Background[];
-  currentBackground: Background;
+  currentBackground: Background | undefined;
   isBackgroundsLoading: boolean;
   cycleBackground: () => void;
   updateBackground: (index: number, newBackground: Background) => Promise<void>;
@@ -58,7 +58,7 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
   
   const currentBackground = useMemo(() => {
       if (isBackgroundsLoading || backgrounds.length === 0) {
-          return { url: "", hint: "loading placeholder" }; // Return a placeholder
+          return undefined; // Return a placeholder
       }
       return backgrounds[currentIndex];
   }, [backgrounds, currentIndex, isBackgroundsLoading]);

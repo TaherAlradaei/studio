@@ -38,8 +38,8 @@ export const LogoProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const updateLogo = async (newUrl: string) => {
-    setLogo({ url: newUrl }); // Optimistic update
     try {
+      setLogo({ url: newUrl }); // Optimistic update
       await updateLogoAction(newUrl);
     } catch (error) {
       toast({
@@ -47,7 +47,7 @@ export const LogoProvider = ({ children }: { children: ReactNode }) => {
         description: "Failed to update logo.",
         variant: "destructive",
       });
-      // Revert on error if needed by re-fetching
+      // Revert on error by re-fetching
       const fetchedLogo = await getLogo();
       setLogo(fetchedLogo);
     }
@@ -57,7 +57,7 @@ export const LogoProvider = ({ children }: { children: ReactNode }) => {
     logo,
     isLogoLoading,
     updateLogo,
-  }), [logo, isLogoLoading]);
+  }), [logo, isLogoLoading, updateLogo]);
 
   return (
     <LogoContext.Provider value={value}>
