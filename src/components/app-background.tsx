@@ -8,6 +8,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 export function AppBackground() {
   const { currentBackground } = useBackground();
 
+  if (!currentBackground || !currentBackground.url) {
+    return null; // Don't render anything if the background isn't ready
+  }
+
   return (
     <div className="fixed inset-0 -z-50 overflow-hidden">
         <AnimatePresence>

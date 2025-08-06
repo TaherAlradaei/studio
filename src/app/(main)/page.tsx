@@ -7,13 +7,21 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { useWelcomePage } from "@/context/welcome-page-context";
 import { FieldIcon } from "@/components/icons";
-import { Shield, User } from "lucide-react";
+import { Shield, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
 export default function WelcomePage() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { welcomePageContent } = useWelcomePage();
+  const { welcomePageContent, isWelcomePageLoading } = useWelcomePage();
+
+  if (isWelcomePageLoading) {
+    return (
+       <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 md:py-12">
@@ -28,14 +36,14 @@ export default function WelcomePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <div className="relative group overflow-hidden rounded-lg">
-          <Image
+          {welcomePageContent.fieldImageUrl && <Image
             src={welcomePageContent.fieldImageUrl}
             alt="Football Field"
             width={600}
             height={400}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             data-ai-hint="football field"
-          />
+          />}
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6">
             <h2 className="text-2xl font-bold text-white font-headline">{t.welcomePage.fieldTitle}</h2>
@@ -46,14 +54,14 @@ export default function WelcomePage() {
           </div>
         </div>
         <div className="relative group overflow-hidden rounded-lg">
-          <Image
+          {welcomePageContent.coachImageUrl && <Image
             src={welcomePageContent.coachImageUrl}
             alt="Academy Coach"
             width={600}
             height={400}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             data-ai-hint="football coach"
-          />
+          />}
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
            <div className="absolute bottom-0 left-0 p-6">
             <h2 className="text-2xl font-bold text-white font-headline">{t.welcomePage.coachTitle}</h2>

@@ -7,6 +7,10 @@ import { useLogo } from '@/context/logo-context';
 export function Logo() {
   const { logo } = useLogo();
 
+  if (!logo.url) {
+    return <div className="h-11 w-11" />; // Return a placeholder or null to avoid rendering Image with empty src
+  }
+
   return (
     <Image
       src={logo.url}
