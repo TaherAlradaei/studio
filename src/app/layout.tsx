@@ -10,6 +10,7 @@ import { AppBackground } from '@/components/app-background';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { useBackground } from '@/context/background-context';
+import { useLogo } from '@/context/logo-context';
 
 function BackgroundCycler() {
   const { cycleBackground } = useBackground();
@@ -26,6 +27,19 @@ function BackgroundCycler() {
   return null; // This component doesn't render anything
 }
 
+function DynamicFavicon() {
+  const { logo } = useLogo();
+
+  useEffect(() => {
+    const favicon = document.querySelector("link[rel='icon']");
+    if (favicon && logo.url) {
+      favicon.setAttribute("href", logo.url);
+    }
+  }, [logo.url]);
+
+  return null;
+}
+
 
 export default function RootLayout({
   children,
@@ -35,6 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.ico" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -49,6 +64,7 @@ export default function RootLayout({
       <body className={cn('antialiased min-h-screen flex flex-col font-body bg-background')}>
         <Providers>
           <BackgroundCycler />
+          <DynamicFavicon />
           <AppBackground />
           {children}
           <Toaster />
