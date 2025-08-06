@@ -51,3 +51,15 @@ export interface User {
     phone: string | null;
     isAdmin?: boolean;
 }
+
+export interface Background {
+  url: string;
+  hint: string;
+}
+
+export interface WelcomePageContent {
+  title: string;
+  message: string;
+  fieldImageUrl: string;
+  coachImageUrl: string;
+}

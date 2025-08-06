@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction } from "./actions";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, updateWelcomePageContent as updateWelcomeContentAction } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -219,7 +219,7 @@ export default function AdminPage() {
   const { bookings, updateBooking, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
   const { registrations, updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
-  const { welcomePageContent, updateWelcomePageContent } = useWelcomePage();
+  const { welcomePageContent, updateWelcomePageContent, isWelcomePageLoading } = useWelcomePage();
 
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState("");
@@ -249,16 +249,16 @@ export default function AdminPage() {
   const [trustedCustomers, setTrustedCustomers] = useState<string[]>([]);
   const [newTrustedCustomer, setNewTrustedCustomer] = useState("");
 
-  const { backgrounds, updateBackground } = useBackground();
-  const { logo, updateLogo } = useLogo();
+  const { backgrounds, updateBackground, isBackgroundsLoading } = useBackground();
+  const { logo, updateLogo, isLogoLoading } = useLogo();
   const [hintInputs, setHintInputs] = useState<string[]>([]);
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const logoFileInputRef = useRef<HTMLInputElement | null>(null);
   
   const welcomePageFieldImageInputRef = useRef<HTMLInputElement | null>(null);
   const welcomePageCoachImageInputRef = useRef<HTMLInputElement | null>(null);
-  const [welcomeTitle, setWelcomeTitle] = useState(welcomePageContent.title);
-  const [welcomeMessage, setWelcomeMessage] = useState(welcomePageContent.message);
+  const [welcomeTitle, setWelcomeTitle] = useState("");
+  const [welcomeMessage, setWelcomeMessage] = useState("");
 
   const [adminAccessCode, setAdminAccessCode] = useState("");
   const [newAdminCode, setNewAdminCode] = useState("");
@@ -283,9 +283,19 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    setHintInputs(backgrounds.map(b => b.hint));
-    fileInputRefs.current = backgrounds.map(() => null);
-  }, [backgrounds]);
+    if (!isBackgroundsLoading) {
+        setHintInputs(backgrounds.map(b => b.hint));
+        fileInputRefs.current = backgrounds.map(() => null);
+    }
+  }, [backgrounds, isBackgroundsLoading]);
+  
+  useEffect(() => {
+    if (!isWelcomePageLoading) {
+      setWelcomeTitle(welcomePageContent.title);
+      setWelcomeMessage(welcomePageContent.message);
+    }
+  }, [welcomePageContent, isWelcomePageLoading]);
+
 
   useEffect(() => {
     async function fetchSettings() {
@@ -534,14 +544,14 @@ export default function AdminPage() {
       fileInputRefs.current[index]?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
       const file = event.target.files?.[0];
       if (file) {
           const reader = new FileReader();
-          reader.onload = (e) => {
+          reader.onload = async (e) => {
               const newUrl = e.target?.result as string;
               const newHint = hintInputs[index] || '';
-              updateBackground(index, { url: newUrl, hint: newHint });
+              await updateBackground(index, { url: newUrl, hint: newHint });
               toast({
                   title: t.adminPage.backgroundUpdatedToastTitle,
                   description: t.adminPage.backgroundUpdatedToastDesc,
@@ -561,9 +571,9 @@ export default function AdminPage() {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 const newUrl = e.target?.result as string;
-                updateLogo(newUrl);
+                await updateLogo(newUrl);
                 toast({
                     title: t.adminPage.logoUpdatedToastTitle,
                     description: t.adminPage.logoUpdatedToastDesc,
@@ -581,9 +591,10 @@ export default function AdminPage() {
       const file = event.target.files?.[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           const newUrl = e.target?.result as string;
-          updateWelcomePageContent({ [imageType]: newUrl });
+          await updateWelcomeContentAction({ [imageType]: newUrl });
+          updateWelcomePageContent({ [imageType]: newUrl }); // Also update local state for immediate feedback
           toast({
             title: t.adminPage.welcomePageContentUpdatedTitle,
             description: t.adminPage.welcomePageImageUpdatedDesc,
@@ -594,12 +605,20 @@ export default function AdminPage() {
       event.target.value = '';
     };
 
-    const handleSaveWelcomeText = () => {
-      updateWelcomePageContent({ title: welcomeTitle, message: welcomeMessage });
-      toast({
-        title: t.adminPage.welcomePageContentUpdatedTitle,
-        description: t.adminPage.welcomePageTextUpdatedDesc,
-      });
+    const handleSaveWelcomeText = async () => {
+      setIsSaving(true);
+      try {
+        await updateWelcomeContentAction({ title: welcomeTitle, message: welcomeMessage });
+        updateWelcomePageContent({ title: welcomeTitle, message: welcomeMessage }); // Update local state
+        toast({
+          title: t.adminPage.welcomePageContentUpdatedTitle,
+          description: t.adminPage.welcomePageTextUpdatedDesc,
+        });
+      } catch (error) {
+         toast({ title: t.adminPage.errorTitle, description: "Failed to save welcome content.", variant: "destructive" });
+      } finally {
+        setIsSaving(false);
+      }
     };
 
     const handleRegistrationStatusUpdate = async (registration: AcademyRegistration, status: 'accepted' | 'rejected') => {
@@ -1103,6 +1122,7 @@ export default function AdminPage() {
                 <CardDescription>{t.adminPage.manageWelcomePageCardDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                {isWelcomePageLoading ? <p>Loading...</p> : <>
                 <div className="space-y-2">
                   <Label htmlFor="welcome-title">{t.adminPage.welcomePageTitleLabel}</Label>
                   <Input 
@@ -1175,7 +1195,7 @@ export default function AdminPage() {
                         />
                     </div>
                 </div>
-
+                </>}
             </CardContent>
         </Card>
       ),
@@ -1193,13 +1213,15 @@ export default function AdminPage() {
                 <CardDescription>{t.adminPage.manageLogoCardDescription}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-center gap-4">
-                <Image
-                    src={logo.url}
-                    alt="Current Logo"
-                    width={80}
-                    height={88}
-                    className="h-20 w-auto object-contain rounded-md bg-white/80 p-2"
-                />
+                 {isLogoLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
+                    <Image
+                        src={logo.url}
+                        alt="Current Logo"
+                        width={80}
+                        height={88}
+                        className="h-20 w-auto object-contain rounded-md bg-white/80 p-2"
+                    />
+                )}
                 <div className="flex-1 w-full">
                      <Button onClick={handleLogoReplaceClick} className="w-full sm:w-auto">
                         {t.adminPage.replaceLogoButton}
@@ -1229,7 +1251,7 @@ export default function AdminPage() {
                 <CardDescription>{t.adminPage.manageBackgroundsCardDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                {backgrounds.map((bg, index) => (
+                {isBackgroundsLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : backgrounds.map((bg, index) => (
                     <div key={index} className="flex flex-col sm:flex-row items-center gap-4 p-4 border rounded-lg bg-background/50">
                         <Image
                             src={bg.url}
@@ -1570,5 +1592,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

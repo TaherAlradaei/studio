@@ -1,53 +1,76 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, type ReactNode, useCallback, useMemo } from "react";
-
-const initialBackgrounds = [
-  { url: "https://images.unsplash.com/photo-1652190416284-10debef71bfa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmb290YmFsbCUyMHBsYXllciUyMGtpY2tpbmd8ZW58MHx8fHwxNzUyMjY3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080", hint: "football player kicking" },
-  { url: "https://images.unsplash.com/photo-1659188903747-7af9b849bdf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxnb2Fsa2VlcGVyJTIwZGl2aW5nJTIwc2F2ZXxlbnwwfHx8fDE3NTIyNjc0MDB8MA&ixlib=rb-4.1.0&q=80&w=1080", hint: "goalkeeper diving save" },
-  { url: "https://images.unsplash.com/photo-1631233143542-c7097a332932?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmb290YmFsbCUyMHBsYXllciUyMGhlYWRpbmd8ZW58MHx8fHwxNzUyMjY3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080", hint: "football player heading" },
-  { url: "https://images.unsplash.com/photo-1611587475814-cec57a649bce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdGFkaXVtJTIwZXZlbmluZyUyMGxpZ2h0c3xlbnwwfHx8fDE3NTIyNjc0MDB8MA&ixlib=rb-4.1.0&q=80&w=1080", hint: "stadium evening lights" },
-];
-
-interface Background {
-  url: string;
-  hint: string;
-}
+import React, { createContext, useContext, useState, type ReactNode, useCallback, useMemo, useEffect } from "react";
+import { getBackgrounds, updateBackgrounds } from "@/app/(main)/admin/actions";
+import type { Background } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface BackgroundContextType {
   backgrounds: Background[];
   currentBackground: Background;
+  isBackgroundsLoading: boolean;
   cycleBackground: () => void;
-  updateBackground: (index: number, newBackground: Background) => void;
+  updateBackground: (index: number, newBackground: Background) => Promise<void>;
 }
 
 const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
 
 export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
-  const [backgrounds, setBackgrounds] = useState<Background[]>(initialBackgrounds);
+  const [backgrounds, setBackgrounds] = useState<Background[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isBackgroundsLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchBackgrounds = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedBackgrounds = await getBackgrounds();
+        setBackgrounds(fetchedBackgrounds);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load background images.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBackgrounds();
+  }, [toast]);
 
   const cycleBackground = useCallback(() => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % backgrounds.length);
+    if (backgrounds.length > 0) {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % backgrounds.length);
+    }
   }, [backgrounds.length]);
 
-  const updateBackground = (index: number, newBackground: Background) => {
-    setBackgrounds(currentBackgrounds => {
-        const newBackgrounds = [...currentBackgrounds];
-        if (index >= 0 && index < newBackgrounds.length) {
-            newBackgrounds[index] = newBackground;
-        }
-        return newBackgrounds;
-    });
+  const updateBackground = async (index: number, newBackground: Background) => {
+    const newBackgrounds = [...backgrounds];
+    if (index >= 0 && index < newBackgrounds.length) {
+        newBackgrounds[index] = newBackground;
+        await updateBackgrounds(newBackgrounds);
+        setBackgrounds(newBackgrounds);
+    }
   };
+  
+  const currentBackground = useMemo(() => {
+      if (isBackgroundsLoading || backgrounds.length === 0) {
+          return { url: "", hint: "loading placeholder" }; // Return a placeholder
+      }
+      return backgrounds[currentIndex];
+  }, [backgrounds, currentIndex, isBackgroundsLoading]);
+
 
   const value = useMemo(() => ({
     backgrounds,
-    currentBackground: backgrounds[currentIndex],
+    currentBackground,
+    isBackgroundsLoading,
     cycleBackground,
     updateBackground,
-  }), [backgrounds, currentIndex, cycleBackground]);
+  }), [backgrounds, currentBackground, isBackgroundsLoading, cycleBackground]);
 
   return (
     <BackgroundContext.Provider value={value}>

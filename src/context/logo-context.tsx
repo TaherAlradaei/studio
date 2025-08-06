@@ -1,29 +1,63 @@
+
 "use client";
 
-import React, { createContext, useContext, useState, type ReactNode, useMemo } from "react";
-
-const initialLogo = {
-  url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUAAAIwAAACMCAYAAACuwEE+AAABJUlEQVR42u3bS2nEUBiF0bswkw5eVR2sQqgC3Yk4Qoow4YVkHi+e/4J7QY4LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBvcj7331PI+Xw4Z+c+9Sg+t8fG+8fN+lq/VvyncoL3yQhYJkR4XisYLSso1zQy6m1/M9wghPfhM/VjZ/XJMkIWWYQQnhmY1oqG5ckywltZZKsgwsI7wwsWiYR1sgjRQlZJpPgRS7IIIfCsmbKMEEJ2WUSZEGIJUQYhE4QUaQcKYQoMQgghhBBCiCEU3o9n3G+0wU2UMIYQYghBCGGIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCHkP+Q8/gDAo+N8/H/l/4b8BgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAe/AEnrA0bgaed1gAAAABJRU5ErkJggg==", style: { width: "auto" }
-};
+import React, { createContext, useContext, useState, type ReactNode, useMemo, useEffect } from "react";
+import { getLogo, updateLogo as updateLogoAction } from "@/app/(main)/admin/actions";
+import { useToast } from "@/hooks/use-toast";
 
 interface LogoContextType {
   logo: { url: string };
-  updateLogo: (newUrl: string) => void;
+  isLogoLoading: boolean;
+  updateLogo: (newUrl: string) => Promise<void>;
 }
 
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
 export const LogoProvider = ({ children }: { children: ReactNode }) => {
-  const [logo, setLogo] = useState(initialLogo);
+  const [logo, setLogo] = useState({ url: "" });
+  const [isLogoLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  const updateLogo = (newUrl: string) => {
-    setLogo({ url: newUrl, style: { width: "auto" } });
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedLogo = await getLogo();
+        setLogo(fetchedLogo);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load logo.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchLogo();
+  }, [toast]);
+
+  const updateLogo = async (newUrl: string) => {
+    setLogo({ url: newUrl }); // Optimistic update
+    try {
+      await updateLogoAction(newUrl);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update logo.",
+        variant: "destructive",
+      });
+      // Revert on error if needed by re-fetching
+      const fetchedLogo = await getLogo();
+      setLogo(fetchedLogo);
+    }
   };
 
   const value = useMemo(() => ({
     logo,
+    isLogoLoading,
     updateLogo,
-  }), [logo]);
+  }), [logo, isLogoLoading]);
 
   return (
     <LogoContext.Provider value={value}>
