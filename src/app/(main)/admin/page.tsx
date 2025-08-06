@@ -860,7 +860,8 @@ export default function AdminPage() {
               </div>
             </div>
             
-            <div className="border rounded-lg overflow-x-auto">
+             {/* Desktop Table View */}
+            <div className="hidden md:block border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -918,6 +919,71 @@ export default function AdminPage() {
                 </TableBody>
               </Table>
             </div>
+            
+            {/* Mobile Card View */}
+            <div className="grid md:hidden gap-4">
+               {filteredBookings.length > 0 ? (
+                    filteredBookings.map((booking) => (
+                        <Card key={booking.id} className="bg-background/50">
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <CardTitle className="text-lg">{booking.name}</CardTitle>
+                                        <CardDescription>{booking.phone}</CardDescription>
+                                    </div>
+                                    {getStatusBadge(booking.status)}
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">{t.bookingHistoryTable.date}</span>
+                                    <span>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</span>
+                                </div>
+                                 <div className="flex justify-between">
+                                    <span className="text-muted-foreground">{t.bookingHistoryTable.time}</span>
+                                    <span>{booking.time}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">{t.adminPage.duration}</span>
+                                    <span>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">{t.adminPage.price}</span>
+                                    <span>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</span>
+                                </div>
+                                <div className="pt-3 border-t">
+                                     <div className="flex gap-2 justify-end flex-wrap">
+                                         {booking.status === 'pending' && (
+                                          <Button size="sm" onClick={() => handleSetPriceClick(booking)} className="flex-1">{t.adminPage.setPriceButton}</Button>
+                                        )}
+                                        {booking.status === 'awaiting-confirmation' && (
+                                            <>
+                                                <Button size="sm" variant="default" onClick={() => handleAdminConfirmBooking(booking)} className="flex-1">{t.adminPage.confirmButton}</Button>
+                                                <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                            </>
+                                        )}
+                                        {booking.status === 'confirmed' && (
+                                            <>
+                                              <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                              <Button size="sm" variant="outline" onClick={() => handleMakeRecurring(booking)} className="flex-1">
+                                                  <Repeat className="mr-2 h-4 w-4" />
+                                                  {t.adminPage.makeRecurringButton}
+                                              </Button>
+                                            </>
+                                        )}
+                                        {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
+                                            <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
+                                        )}
+                                      </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
+               ) : (
+                 <div className="text-center text-muted-foreground py-12">{t.adminPage.noBookingsInView}</div>
+               )}
+            </div>
+
           </CardContent>
         </Card>
       ),
@@ -1001,7 +1067,7 @@ export default function AdminPage() {
                 <CardTitle>{t.adminPage.manageAvailabilityCardTitle}</CardTitle>
                 <CardDescription>{t.adminPage.manageAvailabilityCardDescription}</CardDescription>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-8 items-start">
+            <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 <div>
                      <CardHeader className="p-0 mb-4">
                         <div className="flex items-center gap-2">
@@ -1558,7 +1624,7 @@ export default function AdminPage() {
             {t.adminPage.layoutTab}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="dashboard" className="grid gap-8">
+        <TabsContent value="dashboard" className="grid grid-cols-1 gap-8">
             {sectionsOrder.map(id => (
               <div key={id}>
                 {sections[id].component}
