@@ -33,6 +33,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { arSA } from 'date-fns/locale';
+import { useState, useEffect } from "react";
 
 
 export default function AcademyRegistrationPage() {
@@ -40,6 +41,11 @@ export default function AcademyRegistrationPage() {
   const { toast } = useToast();
   const { addRegistration } = useAcademy();
   const { user } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const formSchema = z.object({
     parentName: z.string().min(2, { message: t.academyPage.validation.parentNameMin }),
@@ -185,7 +191,7 @@ export default function AcademyRegistrationPage() {
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
+                              isClient && (date > new Date() || date < new Date("1900-01-01"))
                             }
                             initialFocus
                           />

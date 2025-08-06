@@ -953,7 +953,7 @@ export default function AdminPage() {
                                 registrations.map((reg) => (
                                     <TableRow key={reg.id}>
                                         <TableCell>{reg.talentName}</TableCell>
-                                        <TableCell>{differenceInYears(new Date(), (reg.birthDate as Timestamp).toDate())}</TableCell>
+                                        <TableCell>{isClient ? differenceInYears(new Date(), (reg.birthDate as Timestamp).toDate()) : '-'}</TableCell>
                                         <TableCell>{reg.ageGroup}</TableCell>
                                         <TableCell>{reg.parentName}<br /><span className="text-sm text-muted-foreground">{reg.phone}</span></TableCell>
                                         <TableCell>
@@ -1015,7 +1015,7 @@ export default function AdminPage() {
                             selected={availabilityDate}
                             onSelect={setAvailabilityDate}
                             className="rounded-md"
-                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                            disabled={(date) => isClient && date < new Date(new Date().setHours(0, 0, 0, 0))}
                             locale={lang === 'ar' ? arSA : undefined}
                             dir={lang === 'ar' ? 'rtl' : 'ltr'}
                             weekStartsOn={6}

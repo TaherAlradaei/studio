@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, type ReactNode, useCallback, useMemo, useEffect } from "react";
-import { getBackgrounds, updateBackgrounds } from "@/app/(main)/admin/actions";
+import { getBackgrounds, updateBackgrounds, deleteFile as deleteFileAction } from "@/app/(main)/admin/actions";
 import type { Background } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +12,7 @@ interface BackgroundContextType {
   isBackgroundsLoading: boolean;
   cycleBackground: () => void;
   updateBackground: (index: number, newBackground: Background) => Promise<void>;
+  deleteBackground: (index: number) => Promise<void>;
 }
 
 const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
@@ -49,10 +50,23 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
 
   const updateBackground = async (index: number, newBackground: Background) => {
     const newBackgrounds = [...backgrounds];
-    if (index >= 0 && index < newBackgrounds.length) {
-        newBackgrounds[index] = newBackground;
+    if (index >= 0 && index <= newBackgrounds.length) {
+        if(index === newBackgrounds.length) {
+             newBackgrounds.push(newBackground);
+        } else {
+            newBackgrounds[index] = newBackground;
+        }
         await updateBackgrounds(newBackgrounds);
         setBackgrounds(newBackgrounds);
+    }
+  };
+
+  const deleteBackground = async (index: number) => {
+    const newBackgrounds = backgrounds.filter((_, i) => i !== index);
+    await updateBackgrounds(newBackgrounds);
+    setBackgrounds(newBackgrounds);
+    if(currentIndex >= newBackgrounds.length && newBackgrounds.length > 0){
+        setCurrentIndex(newBackgrounds.length - 1);
     }
   };
   
@@ -70,7 +84,8 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
     isBackgroundsLoading,
     cycleBackground,
     updateBackground,
-  }), [backgrounds, currentBackground, isBackgroundsLoading, cycleBackground, updateBackground]);
+    deleteBackground,
+  }), [backgrounds, currentBackground, isBackgroundsLoading, cycleBackground, deleteBackground]);
 
   return (
     <BackgroundContext.Provider value={value}>

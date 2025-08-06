@@ -100,19 +100,16 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
     const endHour = Math.floor(newBookingEndMinutes / 60);
     const endMinute = newBookingEndMinutes % 60;
     
-    // Check break time
-    if ( (newBookingStartMinutes < 12 * 60 && newBookingEndMinutes > 12 * 60) || (newBookingStartMinutes < 14*60 && newBookingEndMinutes > 12*60 && newBookingStartMinutes >= 12*60)) {
-        if(newBookingStartMinutes < 12 * 60 && newBookingEndMinutes > 12*60){
-            return true;
-        }
+    // Check break time (12:00 to 14:00)
+    const breakStartMinutes = 12 * 60;
+    const breakEndMinutes = 14 * 60;
+    if (Math.max(newBookingStartMinutes, breakStartMinutes) < Math.min(newBookingEndMinutes, breakEndMinutes)) {
+      return true;
     }
-     if (newBookingStartMinutes >= 12*60 && newBookingStartMinutes < 14*60) {
-        return true;
-     }
 
 
-    // Check closing time
-    if (endHour > 24 || (endHour === 24 && endMinute > 0)) {
+    // Check closing time (midnight)
+    if (endHour >= 24) {
         return true;
     }
 

@@ -145,8 +145,10 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const deletePost = async (postId: string) => {
       for (const reg of registrations) {
         const postToDelete = (reg.posts || []).find(p => p.id === postId);
-        if (postToDelete && postToDelete.storagePath) {
-            await deleteFile(postToDelete.storagePath);
+        if (postToDelete) {
+            if (postToDelete.storagePath) {
+                await deleteFile(postToDelete.storagePath);
+            }
             const memberDocRef = doc(db, "academyRegistrations", reg.id);
             await updateDoc(memberDocRef, {
                 posts: arrayRemove(postToDelete)
