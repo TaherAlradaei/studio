@@ -1509,7 +1509,7 @@ export default function AdminPage() {
                         <Label htmlFor="current-admin-code">{t.adminPage.securityCurrentCodeLabel}</Label>
                         <Input
                             id="current-admin-code"
-                            value={adminAccessCode}
+                            value={adminAccessCode || ''}
                             readOnly
                             className="font-mono mt-1"
                         />
