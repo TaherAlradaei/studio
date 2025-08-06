@@ -92,7 +92,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const confirmBooking = async (bookingToConfirm: Booking): Promise<'confirmed' | 'slot-taken'> => {
-      const bookingDate = (bookingToConfirm.date as Timestamp).toDate();
+      // Handle both Timestamp and Date objects
+      const bookingDate = bookingToConfirm.date instanceof Timestamp
+        ? bookingToConfirm.date.toDate()
+        : bookingToConfirm.date;
+
       const bookingStart = new Date(bookingDate.getTime());
       const [startHours, startMinutes] = bookingToConfirm.time.split(':').map(Number);
       bookingStart.setHours(startHours, startMinutes, 0, 0);
@@ -179,7 +183,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
     const createRecurringBookings = async (originalBooking: Booking): Promise<void> => {
         const batch = writeBatch(db);
-        const originalDate = (originalBooking.date as Timestamp).toDate();
+        const originalDate = originalBooking.date instanceof Timestamp ? originalBooking.date.toDate() : originalBooking.date;
 
         for (let i = 1; i <= 4; i++) {
             const nextDate = addDays(originalDate, i * 7);
