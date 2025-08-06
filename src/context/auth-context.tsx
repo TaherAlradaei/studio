@@ -47,7 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchAdminCode();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setIsLoading(true);
       if (firebaseUser) {
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
@@ -70,24 +69,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsUserRegistered(false);
         }
       } else {
-        // Handle redirect result on initial load if no user is signed in
-        try {
-            const result = await getRedirectResult(auth);
-            if (result) {
-                 // This will trigger onAuthStateChanged again with the user
-                 // so no need to set user state here.
-            } else {
-                setUser(null);
-                setIsUserRegistered(null);
-            }
-        } catch (error) {
-            console.error("Error getting redirect result:", error);
-            setUser(null);
-            setIsUserRegistered(null);
-        }
+        setUser(null);
+        setIsUserRegistered(null);
       }
       setIsLoading(false);
     });
+
+    // Handle redirect result separately on initial load
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // This will trigger the onAuthStateChanged listener above,
+          // which will handle setting the user and loading state.
+        } else {
+          // If there's no redirect result, we might still be loading the initial user state
+          // onAuthStateChanged will handle setting loading to false.
+        }
+      })
+      .catch((error) => {
+        console.error("Error getting redirect result:", error);
+        setIsLoading(false);
+      });
 
     return () => unsubscribe();
   }, []);
@@ -104,11 +106,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginWithGoogle = async () => {
     try {
-      setIsLoading(true);
       await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       console.error("Error during Google sign-in:", error);
-      setIsLoading(false);
     }
   };
   
@@ -133,14 +133,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await signOut(auth);
   };
-
-  if (isLoading && !user) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider value={{ user, isLoading, isUserRegistered, loginWithGoogle, logout, updateUserDetails, checkAdminStatus, adminAccessCode, updateAdminAccessCode }}>

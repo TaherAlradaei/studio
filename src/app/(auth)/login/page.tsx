@@ -25,15 +25,16 @@ export default function LoginPage() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
-    // Only redirect if login process is complete and user object is available
-    if (!isLoggingIn && user) {
+    // Only redirect when auth state is no longer loading
+    if (!isLoading && user) {
       if (isUserRegistered) {
         router.push('/booking');
-      } else {
+      } else if (isUserRegistered === false) {
+        // Explicitly check for false, as null means it's not yet determined
         router.push('/register-details');
       }
     }
-  }, [user, isUserRegistered, isLoggingIn, router]);
+  }, [user, isUserRegistered, isLoading, router]);
 
   const handleGoogleLogin = async () => {
     setIsLoggingIn(true);
@@ -46,13 +47,20 @@ export default function LoginPage() {
     }
   };
   
-  // If we are loading auth state from server, show a full page loader.
-  if (isLoading) {
+  // If we are loading auth state from server, or if the login button has been clicked,
+  // show a full page loader.
+  if (isLoading || isLoggingIn) {
     return (
        <div className="flex min-h-screen items-center justify-center bg-background p-4">
           <Loader2 className="h-8 w-8 animate-spin" />
        </div>
     );
+  }
+  
+  // If user is already logged in, the useEffect will handle redirection,
+  // so we can render nothing to prevent a flash of the login page.
+  if (user) {
+    return null;
   }
 
   return (
