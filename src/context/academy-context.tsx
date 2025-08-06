@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, type ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from "react";
 import type { AcademyRegistration, MemberPost, PostComment } from "@/lib/types";
 import { db } from "@/lib/firebase";
 import { uploadFile, deleteFile } from "@/app/(main)/admin/actions";
@@ -55,18 +55,27 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const addRegistration = async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status: AcademyRegistration['status'] = 'pending') => {
+  const addRegistration = useCallback(async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status: AcademyRegistration['status'] = 'pending') => {
     const accessCode = status === 'accepted' ? generateAccessCode() : undefined;
     
+    // Ensure birthDate is a valid Date object before converting to Timestamp
+    const birthDate = newRegistrationData.birthDate instanceof Date 
+      ? newRegistrationData.birthDate 
+      : new Date(newRegistrationData.birthDate);
+
+    if (isNaN(birthDate.getTime())) {
+      throw new Error("Invalid birth date provided.");
+    }
+
     await addDoc(collection(db, "academyRegistrations"), {
       ...newRegistrationData,
-      birthDate: Timestamp.fromDate(newRegistrationData.birthDate),
+      birthDate: Timestamp.fromDate(birthDate),
       status: status,
       submittedAt: Timestamp.now(),
       posts: [],
       accessCode: accessCode,
     });
-  };
+  }, []);
   
   const updateRegistrationStatus = async (id: string, status: AcademyRegistration['status']) => {
     const registrationDocRef = doc(db, "academyRegistrations", id);
@@ -132,7 +141,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const deletePost = async (postId: string) => {
       for (const reg of registrations) {
         const postToDelete = (reg.posts || []).find(p => p.id === postId);
-        if (postToDelete) {
+        if (postToDelete && postToDelete.storagePath) {
             await deleteFile(postToDelete.storagePath);
             const memberDocRef = doc(db, "academyRegistrations", reg.id);
             await updateDoc(memberDocRef, {

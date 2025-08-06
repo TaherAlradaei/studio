@@ -16,7 +16,8 @@ import {
     Timestamp,
     where,
     getDocs,
-    deleteDoc
+    deleteDoc,
+    setDoc
 } from "firebase/firestore";
 
 interface BookingContextType {
@@ -27,7 +28,7 @@ interface BookingContextType {
   unblockSlot: (id: string) => Promise<void>;
   acceptBooking: (booking: Booking, isTrusted: boolean) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
   confirmBooking: (bookingToConfirm: Booking) => Promise<'confirmed' | 'slot-taken'>;
-  createConfirmedBooking: (bookingData: Omit<Booking, "id" | "status" | "userId" | "date"> & { date: Date }) => Promise<'confirmed' | 'slot-taken'>;
+  createConfirmedBooking: (bookingData: Omit<Booking, "id" | "status" | "userId" | "isRecurring" | "date"> & { date: Date }) => Promise<'confirmed' | 'slot-taken'>;
   createRecurringBookings: (booking: Booking) => Promise<void>;
 }
 
@@ -89,10 +90,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const confirmBooking = async (bookingToConfirm: Booking): Promise<'confirmed' | 'slot-taken'> => {
       const newBookingStartMinutes = timeToMinutes(bookingToConfirm.time);
       const newBookingEndMinutes = newBookingStartMinutes + bookingToConfirm.duration * 60;
-      const newBookingDate = (bookingToConfirm.date as Timestamp).toDate();
+      const bookingDate = (bookingToConfirm.date as Timestamp).toDate();
       
       const q = query(collection(db, "bookings"), 
-        where("date", "==", Timestamp.fromDate(new Date(newBookingDate.setHours(0,0,0,0)))),
+        where("date", "==", Timestamp.fromDate(new Date(bookingDate.setHours(0,0,0,0)))),
         where("status", "in", ["confirmed", "blocked"])
       );
       const querySnapshot = await getDocs(q);
@@ -119,12 +120,13 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
       // Cancel conflicting requests
       const conflictQ = query(collection(db, "bookings"),
-        where("date", "==", Timestamp.fromDate(new Date(newBookingDate.setHours(0,0,0,0)))),
+        where("date", "==", Timestamp.fromDate(new Date(bookingDate.setHours(0,0,0,0)))),
         where("status", "in", ["pending", "awaiting-confirmation"])
       );
       const conflictSnapshot = await getDocs(conflictQ);
 
       conflictSnapshot.forEach(docSnap => {
+          if (docSnap.id === bookingToConfirm.id) return;
           const b = docSnap.data() as Booking;
           const bookingStartMinutes = timeToMinutes(b.time);
           const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
@@ -138,24 +140,30 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       return 'confirmed';
   };
 
-  const createConfirmedBooking = async (bookingData: Omit<Booking, "id" | "status" | "userId" | "date"> & { date: Date }): Promise<'confirmed' | 'slot-taken'> => {
+  const createConfirmedBooking = async (bookingData: Omit<Booking, "id" | "status" | "userId" | "isRecurring" | "date"> & { date: Date }): Promise<'confirmed' | 'slot-taken'> => {
       const newBookingRef = doc(collection(db, "bookings"));
-      const newBooking: Booking = {
+      // Create a temporary booking object with a pending status to run through the confirmation logic
+      const tempBooking: Booking = {
         ...bookingData,
         id: newBookingRef.id,
         userId: 'admin_manual',
         date: Timestamp.fromDate(bookingData.date),
-        status: 'pending', 
+        status: 'pending', // Temporarily pending
       };
-
-      await setDoc(newBookingRef, { ...newBooking });
       
-      const result = await confirmBooking(newBooking);
+      // Set the document in Firestore so it exists for the confirmation logic
+      await setDoc(newBookingRef, tempBooking);
+
+      // Run the confirmation logic
+      const result = await confirmBooking(tempBooking);
+      
       if (result === 'slot-taken') {
-          await deleteDoc(newBookingRef); // Clean up the temporary booking
+          // If the slot is taken, delete the temporary booking we created
+          await deleteDoc(newBookingRef);
           return 'slot-taken';
       }
 
+      // The confirmBooking function already sets the status to 'confirmed'
       return 'confirmed';
   };
 
@@ -171,8 +179,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
                 status: 'confirmed',
                 isRecurring: true,
             };
+            // remove id from object before saving
+            const { id, ...bookingData } = newBooking;
             const newBookingRef = doc(collection(db, "bookings"));
-            batch.set(newBookingRef, newBooking);
+            batch.set(newBookingRef, bookingData);
         }
         await batch.commit();
     };

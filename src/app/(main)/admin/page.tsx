@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, updateWelcomePageContent as updateWelcomeContentAction, uploadFile } from "./actions";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -249,7 +249,7 @@ export default function AdminPage() {
   const [trustedCustomers, setTrustedCustomers] = useState<string[]>([]);
   const [newTrustedCustomer, setNewTrustedCustomer] = useState("");
 
-  const { backgrounds, updateBackground, isBackgroundsLoading } = useBackground();
+  const { backgrounds, updateBackground, isBackgroundsLoading, deleteBackground } = useBackground();
   const { logo, updateLogo, isLogoLoading } = useLogo();
   const [hintInputs, setHintInputs] = useState<string[]>([]);
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -455,7 +455,7 @@ export default function AdminPage() {
         return;
     }
     try {
-        await createConfirmedBooking({
+        const result = await createConfirmedBooking({
             name: manualBookingName,
             phone: manualBookingPhone,
             date: newManualBooking.date,
@@ -463,6 +463,16 @@ export default function AdminPage() {
             duration: manualBookingDuration,
             price: getDefaultPrice(newManualBooking.time) * manualBookingDuration,
         });
+
+        if (result === 'slot-taken') {
+            toast({
+              title: t.toasts.slotUnavailableTitle,
+              description: t.toasts.slotUnavailableDesc,
+              variant: "destructive",
+            });
+            return;
+        }
+
         toast({
             title: t.toasts.bookingConfirmedTitle,
             description: t.toasts.bookingConfirmedDescAdmin.replace('{name}', manualBookingName),
@@ -543,6 +553,48 @@ export default function AdminPage() {
   const handleReplaceClick = (index: number) => {
       fileInputRefs.current[index]?.click();
   };
+  
+    const handleAddBackground = () => {
+        const newFileInput = document.createElement('input');
+        newFileInput.type = 'file';
+        newFileInput.accept = 'image/*';
+        newFileInput.onchange = async (event) => {
+            const file = (event.target as HTMLInputElement).files?.[0];
+            if(file){
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const dataUrl = e.target?.result as string;
+                    try {
+                        const { url, path } = await uploadFile(dataUrl, 'public/backgrounds');
+                        await updateBackground(backgrounds.length, { url, path, hint: 'new image' });
+                         toast({
+                            title: "Background Added",
+                            description: "New background image has been added.",
+                        });
+                    } catch(err){
+                         toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        };
+        newFileInput.click();
+    };
+
+    const handleDeleteBackground = async (index: number, path: string | undefined) => {
+        if (!path) {
+            toast({ title: "Error", description: "Image path not found, cannot delete.", variant: "destructive" });
+            return;
+        }
+        try {
+            await deleteFile(path);
+            await deleteBackground(index);
+            toast({ title: "Background Deleted", description: "Background image has been removed.", variant: 'destructive' });
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to delete background.", variant: "destructive" });
+        }
+    };
+
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
       const file = event.target.files?.[0];
@@ -551,9 +603,9 @@ export default function AdminPage() {
           reader.onload = async (e) => {
               const dataUrl = e.target?.result as string;
               try {
-                const { url } = await uploadFile(dataUrl, 'public/backgrounds');
+                const { url, path } = await uploadFile(dataUrl, 'public/backgrounds');
                 const newHint = hintInputs[index] || '';
-                await updateBackground(index, { url, hint: newHint });
+                await updateBackground(index, { url, path, hint: newHint });
                 toast({
                     title: t.adminPage.backgroundUpdatedToastTitle,
                     description: t.adminPage.backgroundUpdatedToastDesc,
@@ -564,7 +616,10 @@ export default function AdminPage() {
           };
           reader.readAsDataURL(file);
       }
-      event.target.value = '';
+      // Reset file input to allow re-uploading the same file
+      if (event.target) {
+        event.target.value = '';
+      }
   };
   
     const handleLogoReplaceClick = () => {
@@ -578,6 +633,10 @@ export default function AdminPage() {
             reader.onload = async (e) => {
                 const dataUrl = e.target?.result as string;
                 try {
+                    // If a logo already exists, delete the old one from storage
+                    if (logo.path) {
+                       await deleteFile(logo.path);
+                    }
                     const { url, path } = await uploadFile(dataUrl, 'public/logo');
                     await updateLogo(url, path);
                     toast({
@@ -590,7 +649,9 @@ export default function AdminPage() {
             };
             reader.readAsDataURL(file);
         }
-        event.target.value = '';
+        if (event.target) {
+            event.target.value = '';
+        }
     };
 
     const handleWelcomePageImageChange = async (
@@ -603,8 +664,14 @@ export default function AdminPage() {
         reader.onload = async (e) => {
           const dataUrl = e.target?.result as string;
           try {
-              const { url } = await uploadFile(dataUrl, 'public/welcome');
-              await updateWelcomePageContent({ [imageType]: url });
+              if (welcomePageContent && welcomePageContent[imageType]) {
+                // This assumes the URL is a Firebase Storage URL. A more robust solution would parse the path.
+                // For now, we'll assume it's a simple path based on the upload folder.
+                // This part is tricky and might need a better way to get the storage path.
+                // We're not storing the path for these images yet. Let's add that.
+              }
+              const { url, path } = await uploadFile(dataUrl, 'public/welcome');
+              await updateWelcomePageContent({ [imageType]: url, [`${imageType}Path`]: path });
               toast({
                   title: t.adminPage.welcomePageContentUpdatedTitle,
                   description: t.adminPage.welcomePageImageUpdatedDesc,
@@ -615,7 +682,9 @@ export default function AdminPage() {
         };
         reader.readAsDataURL(file);
       }
-      event.target.value = '';
+      if(event.target){
+        event.target.value = '';
+      }
     };
 
     const handleSaveWelcomeText = async () => {
@@ -1260,15 +1329,20 @@ export default function AdminPage() {
       component: (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
-                <div className="flex items-center gap-2">
-                    <ImageUp className="w-6 h-6 text-primary" />
-                    <CardTitle>{t.adminPage.manageBackgroundsCardTitle}</CardTitle>
+                 <div className="flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <ImageUp className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.manageBackgroundsCardTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.manageBackgroundsCardDescription}</CardDescription>
+                    </div>
+                    <Button onClick={handleAddBackground}>{t.adminPage.addCustomerButton}</Button>
                 </div>
-                <CardDescription>{t.adminPage.manageBackgroundsCardDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 {isBackgroundsLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : backgrounds.map((bg, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row items-center gap-4 p-4 border rounded-lg bg-background/50">
+                    <div key={index} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-background/50">
                         <Image
                             src={bg.url}
                             alt={`Background ${index + 1}`}
@@ -1286,9 +1360,13 @@ export default function AdminPage() {
                                 placeholder={t.adminPage.imageHintPlaceholder}
                             />
                         </div>
-                        <div className="w-full sm:w-auto">
+                        <div className="w-full sm:w-auto flex flex-col gap-2">
                             <Button onClick={() => handleReplaceClick(index)} className="w-full">
                                 {t.adminPage.replaceImageButton}
+                            </Button>
+                             <Button onClick={() => handleDeleteBackground(index, bg.path)} className="w-full" variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                {t.adminPage.cancel}
                             </Button>
                             <input
                                 type="file"

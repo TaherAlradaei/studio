@@ -6,7 +6,7 @@ export interface Booking {
   userId: string | null;
   name: string | null;
   phone: string | null;
-  date: Timestamp; // Changed to Firestore Timestamp
+  date: Timestamp | Date; // Allow both for easier handling
   time: string;
   duration: number; // in hours
   status: 'pending' | 'awaiting-confirmation' | 'confirmed' | 'cancelled' | 'blocked';
@@ -24,7 +24,7 @@ export interface MemberPost {
   id: string;
   author: string;
   photoUrl: string;
-  storagePath: string; // To track the file in Firebase Storage for deletion
+  storagePath?: string; // To track the file in Firebase Storage for deletion
   story?: string;
   comments?: PostComment[];
   createdAt: Timestamp;
@@ -36,7 +36,7 @@ export interface AcademyRegistration {
   parentName: string;
   phone: string;
   talentName: string;
-  birthDate: Timestamp; // Changed to Firestore Timestamp
+  birthDate: Timestamp | Date; // Allow both
   ageGroup: "U10" | "U14";
   status: 'pending' | 'accepted' | 'rejected';
   submittedAt: Timestamp;
@@ -56,11 +56,14 @@ export interface User {
 export interface Background {
   url: string;
   hint: string;
+  path?: string;
 }
 
 export interface WelcomePageContent {
   title: string;
   message: string;
   fieldImageUrl: string;
+  fieldImageUrlPath?: string;
   coachImageUrl: string;
+  coachImageUrlPath?: string;
 }
