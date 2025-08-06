@@ -1,7 +1,7 @@
 
 export const enStrings = {
   header: {
-    title: "Al Maidan Football Academy",
+    title: "Al Maidan Sporting Club (Al Maidan Academy)",
     bookField: "Book a Field",
     academy: "Join Academy",
     myBookings: "My Bookings",
@@ -9,12 +9,12 @@ export const enStrings = {
     menu: "Menu",
   },
   footer: {
-    copyright: "© {year} Al Maidan Football Academy. All rights reserved.",
+    copyright: "© {year} Al Maidan Sporting Club. All rights reserved.",
     address: "Zero street, Hadda Madina, Sanaa, Yemen",
     phone: "Phone: +967 736 333 328",
   },
   welcomePage: {
-    defaultTitle: "Welcome to Al Maidan Football Academy",
+    defaultTitle: "Welcome to Al Maidan Sporting Club",
     defaultMessage: "Your premier destination for football in Sana'a. Book a field, join our academy, and become part of our community.",
     fieldTitle: "Quality Pitches",
     fieldDesc: "Our fields are equipped to the highest standards for the best playing experience.",
@@ -26,7 +26,7 @@ export const enStrings = {
   },
   bookingPage: {
     title: "Book Your Field",
-    description: "Follow the simple steps below to reserve your football field at Al Maidan Football Academy.",
+    description: "Follow the simple steps below to reserve your football field at Al Maidan Sporting Club.",
     selectDate: "Select a Date",
     selectDateDesc: "Click on a date to see available time slots.",
     pricingTitle: "Default Pricing",
@@ -62,7 +62,7 @@ export const enStrings = {
   },
   bookingsPage: {
     title: "My Bookings",
-    description: "Here is a list of all your upcoming reservations at Al Maidan Football Academy.",
+    description: "Here is a list of all your upcoming reservations at Al Maidan Sporting Club.",
   },
   bookingHistoryTable: {
     date: "Date",
@@ -210,7 +210,7 @@ export const enStrings = {
   },
   academyPage: {
     title: "Join the Academy",
-    description: "Register your young talent to join the Al Maidan Football Academy. We have programs for Under-10s and Under-14s.",
+    description: "Register your young talent to join the Al Maidan Sporting Club. We have programs for Under-10s and Under-14s.",
     formTitle: "Registration Form",
     formDescription: "Please fill out the form below. Our team will review the application and contact you.",
     parentNameLabel: "Parent/Guardian Name",
@@ -294,3 +294,5 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
+
+    
