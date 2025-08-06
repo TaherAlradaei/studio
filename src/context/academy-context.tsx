@@ -13,12 +13,16 @@ import {
     doc,
     Timestamp,
     arrayUnion,
-    arrayRemove
+    arrayRemove,
+    where,
+    getDocs,
+    deleteDoc,
+    setDoc
 } from "firebase/firestore";
 
 interface AcademyContextType {
   registrations: AcademyRegistration[];
-  addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate" | "submittedAt"> & {birthDate: Date}, status?: AcademyRegistration['status']) => Promise<void>;
+  addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status?: AcademyRegistration['status']) => Promise<void>;
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
   validateAccessCode: (code: string) => AcademyRegistration | null;
   addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt'>) => Promise<void>;
@@ -76,7 +80,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
         updates.accessCode = generateAccessCode();
     }
     
-    await updateDoc(registrationDocRef, updates);
+    await updateDoc(registrationDocRef, updates as any);
   };
 
   const validateAccessCode = (code: string): AcademyRegistration | null => {
@@ -98,7 +102,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getPosts = (memberId?: string): MemberPost[] => {
-    const allPosts = registrations.flatMap(r => r.posts || []);
+    const allPosts = registrations.flatMap(r => (r.posts || []));
     if (memberId) {
         const member = registrations.find(r => r.id === memberId);
         return member?.posts || [];

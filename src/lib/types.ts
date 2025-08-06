@@ -38,7 +38,7 @@ export interface AcademyRegistration {
   birthDate: Timestamp; // Changed to Firestore Timestamp
   ageGroup: "U10" | "U14";
   status: 'pending' | 'accepted' | 'rejected';
-  submittedAt: Timestamp; // Changed to Firestore Timestamp
+  submittedAt: Timestamp;
   accessCode?: string;
   posts?: MemberPost[];
 }
