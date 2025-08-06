@@ -1283,7 +1283,7 @@ export default function AdminPage() {
                   <Label htmlFor="welcome-title">{t.adminPage.welcomePageTitleLabel}</Label>
                   <Input 
                       id="welcome-title"
-                      value={welcomeTitle}
+                      value={welcomeTitle || ''}
                       onChange={(e) => setWelcomeTitle(e.target.value)}
                   />
                 </div>
@@ -1291,7 +1291,7 @@ export default function AdminPage() {
                   <Label htmlFor="welcome-message">{t.adminPage.welcomePageMessageLabel}</Label>
                   <Textarea
                       id="welcome-message"
-                      value={welcomeMessage}
+                      value={welcomeMessage || ''}
                       onChange={(e) => setWelcomeMessage(e.target.value)}
                       rows={4}
                   />
@@ -1761,3 +1761,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
