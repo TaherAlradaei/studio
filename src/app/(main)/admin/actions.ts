@@ -10,14 +10,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 
 export async function uploadFile(base64DataUrl: string, folder: string): Promise<{ url: string, path: string }> {
-    const fileType = base64DataUrl.split(';')[0].split('/')[1];
+    const mimeType = base64DataUrl.split(';')[0].split(':')[1];
     const base64Data = base64DataUrl.split(',')[1];
+    const fileExtension = mimeType.split('/')[1];
     
-    const filePath = `${folder}/${uuidv4()}.${fileType}`;
+    const filePath = `${folder}/${uuidv4()}.${fileExtension}`;
     const storageRef = ref(storage, filePath);
 
     await uploadString(storageRef, base64Data, 'base64', {
-        contentType: `image/${fileType}`
+        contentType: mimeType
     });
 
     const downloadURL = await getDownloadURL(storageRef);
@@ -110,13 +111,8 @@ export async function getBackgrounds(): Promise<Background[]> {
     if (docSnap.exists() && docSnap.data().items) {
         return docSnap.data().items as Background[];
     }
-    // Return defaults if not set
-    return [
-      { url: "https://images.unsplash.com/photo-1652190416284-10debef71bfa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmb290YmFsbCUyMHBsYXllciUyMGtpY2tpbmd8ZW58MHx8fHwxNzUyMjY3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080", hint: "football player kicking" },
-      { url: "https://images.unsplash.com/photo-1659188903747-7af9b849bdf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxnb2Fsa2VlcGVyJTIwZGl2aW5nJTIwc2F2ZXxlbnwwfHx8fDE3NTIyNjc0MDB8MA&ixlib=rb-4.1.0&q=80&w=1080", hint: "goalkeeper diving save" },
-      { url: "https://images.unsplash.com/photo-1631233143542-c7097a332932?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmb290YmFsbCUyMHBsYXllciUyMGhlYWRpbmd8ZW58MHx8fHwxNzUyMjY3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080", hint: "football player heading" },
-      { url: "https://images.unsplash.com/photo-1611587475814-cec57a649bce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdGFkaXVtJTIwZXZlbmluZyUyMGxpZ2h0c3xlbnwwfHx8fDE3NTIyNjc0MDB8MA&ixlib=rb-4.1.0&q=80&w=1080", hint: "stadium evening lights" },
-    ];
+    // Return empty array to allow for clean testing
+    return [];
 }
 
 export async function updateBackgrounds(backgrounds: Background[]): Promise<void> {

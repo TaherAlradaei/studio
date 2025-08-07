@@ -61,7 +61,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={cn('antialiased min-h-screen flex flex-col font-body bg-background')}>
+      <body className={cn('antialiased min-h-screen flex flex-col font-body bg-background overflow-x-hidden')}>
         <Providers>
           <BackgroundCycler />
           <DynamicFavicon />
