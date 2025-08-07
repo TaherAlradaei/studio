@@ -24,6 +24,9 @@ import { getPaymentInstructions } from "@/app/(main)/admin/actions";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Timestamp } from "firebase/firestore";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { format } from "date-fns";
+import { arSA } from "date-fns/locale";
 
 export function BookingHistoryTable() {
   const { bookings, updateBooking, acceptBooking } = useBookings();
@@ -45,12 +48,6 @@ export function BookingHistoryTable() {
   }, []);
 
   const userBookings = bookings.filter(b => b.userId === user?.uid && (b.date as Timestamp).toDate() >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled');
-
-  const dateOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  };
 
   const handleAccept = async (booking: Booking) => {
     try {
@@ -134,7 +131,8 @@ export function BookingHistoryTable() {
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden bg-card/80 backdrop-blur-sm">
+      {/* Desktop Table View */}
+      <div className="hidden md:block border rounded-lg overflow-hidden bg-card/80 backdrop-blur-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -151,7 +149,7 @@ export function BookingHistoryTable() {
               userBookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium">
-                    {(booking.date as Timestamp).toDate().toLocaleDateString(lang, dateOptions)}
+                    {format((booking.date as Timestamp).toDate(), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
                   </TableCell>
                   <TableCell>{booking.time}</TableCell>
                   <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
@@ -180,15 +178,56 @@ export function BookingHistoryTable() {
         </Table>
       </div>
 
+      {/* Mobile Card View */}
+      <div className="grid md:hidden gap-4">
+        {userBookings.length > 0 ? (
+            userBookings.map((booking) => (
+                <Card key={booking.id} className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                             <div>
+                                <CardTitle className="text-lg">
+                                  {format((booking.date as Timestamp).toDate(), 'PPP', { locale: lang === 'ar' ? arSA : undefined })}
+                                </CardTitle>
+                                <CardDescription>{t.bookingHistoryTable.time}: {booking.time}</CardDescription>
+                            </div>
+                            {getStatusBadge(booking.status)}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">{t.bookingHistoryTable.duration}</span>
+                            <span>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</span>
+                        </div>
+                         <div className="flex justify-between">
+                            <span className="text-muted-foreground">{t.bookingHistoryTable.price}</span>
+                            <span>{formatPrice(booking)}</span>
+                        </div>
+                         {booking.status === 'awaiting-confirmation' && (
+                            <div className="pt-3 border-t flex gap-2 justify-end flex-wrap">
+                               <Button size="sm" onClick={() => handleAccept(booking)} className="flex-1">{t.actions.accept}</Button>
+                               <Button size="sm" variant="destructive" onClick={() => handleDecline(booking)} className="flex-1">{t.actions.decline}</Button>
+                            </div>
+                         )}
+                    </CardContent>
+                </Card>
+            ))
+        ) : (
+            <div className="text-center text-muted-foreground py-12">{t.bookingHistoryTable.noBookings}</div>
+        )}
+      </div>
+
       <AlertDialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>{t.bookingHistoryTable.paymentDialogTitle}</AlertDialogTitle>
                 <AlertDialogDescription asChild>
                   <div>
-                    {currentBooking && t.bookingHistoryTable.paymentDialogDescription
-                        .replace('{date}', (currentBooking.date as Timestamp).toDate().toLocaleDateString(lang))
-                        .replace('{time}', currentBooking.time)}
+                    <p>
+                      {currentBooking && t.bookingHistoryTable.paymentDialogDescription
+                          .replace('{date}', (currentBooking.date as Timestamp).toDate().toLocaleDateString(lang))
+                          .replace('{time}', currentBooking.time)}
+                    </p>
                     <div className="mt-4 p-4 bg-muted/50 rounded-md border text-sm text-foreground">
                         <p className="whitespace-pre-wrap font-sans">{paymentInstructions}</p>
                     </div>

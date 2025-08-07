@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { useBookings } from "@/context/booking-context";
@@ -27,6 +28,7 @@ export function BookingForm({
   const { toast } = useToast();
   const { t, lang } = useLanguage();
   const { user } = useAuth();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   async function handleSubmit() {
@@ -63,6 +65,7 @@ export function BookingForm({
       });
 
       onBookingComplete();
+      router.push('/bookings');
     } catch (err) {
       toast({
         title: t.adminPage.errorTitle,
