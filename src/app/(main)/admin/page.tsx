@@ -329,25 +329,25 @@ export default function AdminPage() {
   }, [bookings]);
 
   const filteredBookings = useMemo(() => {
-    const date = filterDate || new Date();
+    if (!isClient || !filterDate) return [];
     
     let interval;
     switch (filterType) {
       case 'day':
-        interval = { start: startOfDay(date), end: endOfDay(date) };
+        interval = { start: startOfDay(filterDate), end: endOfDay(filterDate) };
         break;
       case 'week':
-        interval = { start: startOfDay(date), end: endOfDay(addDays(date, 6)) };
+        interval = { start: startOfDay(filterDate), end: endOfDay(addDays(filterDate, 6)) };
         break;
       case 'month':
-        interval = { start: startOfMonth(date), end: endOfMonth(date) };
+        interval = { start: startOfMonth(filterDate), end: endOfMonth(filterDate) };
         break;
     }
 
     return bookingsWithDates
       .filter(booking => isWithinInterval(booking.date, interval))
       .sort((a, b) => a.date.getTime() - b.date.getTime() || a.time.localeCompare(b.time));
-  }, [bookingsWithDates, filterDate, filterType]);
+  }, [bookingsWithDates, filterDate, filterType, isClient]);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -865,7 +865,7 @@ export default function AdminPage() {
             
              {/* Desktop Table View */}
             <div className="hidden md:block border rounded-lg overflow-x-auto">
-              <Table>
+              <Table dir={lang === 'ar' ? 'rtl' : 'ltr'}>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t.bookingHistoryTable.date}</TableHead>
@@ -1005,7 +1005,7 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
                 <div className="border rounded-lg overflow-x-auto">
-                    <Table>
+                    <Table dir={lang === 'ar' ? 'rtl' : 'ltr'}>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>{t.adminPage.talentName}</TableHead>
@@ -1606,7 +1606,7 @@ export default function AdminPage() {
 
 
   return (
-    <div className="container py-8">
+    <div className="container py-8" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <div className="text-center mb-6">
         <div className="flex justify-center items-center gap-4 mb-2">
           <Settings className="w-12 h-12 text-primary" />
@@ -1648,7 +1648,7 @@ export default function AdminPage() {
       </Tabs>
 
       <AlertDialog open={!!editingBooking} onOpenChange={() => setEditingBooking(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.adminPage.confirmDialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1674,7 +1674,7 @@ export default function AdminPage() {
                 setManualBookingDuration(1);
             }
         }}>
-        <AlertDialogContent>
+        <AlertDialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.adminPage.manualBookingTitle}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1716,7 +1716,7 @@ export default function AdminPage() {
       </AlertDialog>
 
       <AlertDialog open={!!infoBooking} onOpenChange={() => setInfoBooking(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'}>
             <AlertDialogHeader>
                 <AlertDialogTitle>{t.adminPage.bookingDetailsTitle}</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -1740,7 +1740,7 @@ export default function AdminPage() {
       </AlertDialog>
 
       <AlertDialog open={!!recurringBooking} onOpenChange={() => setRecurringBooking(null)}>
-          <AlertDialogContent>
+          <AlertDialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'}>
               <AlertDialogHeader>
                   <AlertDialogTitle>{t.adminPage.recurringBookingTitle}</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -1761,5 +1761,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
