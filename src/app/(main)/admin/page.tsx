@@ -323,7 +323,7 @@ export default function AdminPage() {
     }
 
     return bookingsWithDates
-      .filter(booking => isWithinInterval(booking.date, interval))
+      .filter(booking => isWithinInterval(booking.date, interval) && booking.status !== 'cancelled')
       .sort((a, b) => a.date.getTime() - b.date.getTime() || a.time.localeCompare(b.time));
   }, [bookingsWithDates, filterDate, filterType, isClient]);
 
