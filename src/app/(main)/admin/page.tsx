@@ -93,7 +93,10 @@ const AddMemberForm = () => {
     try {
       await addRegistration({
         userId: 'admin_added', // or some other identifier
-        ...values,
+        parentName: values.parentName,
+        phone: values.phone,
+        talentName: values.talentName,
+        ageGroup: values.ageGroup,
         birthDate: new Date(values.birthDate),
       }, 'accepted'); // Automatically accept members added by admin
       toast({

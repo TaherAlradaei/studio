@@ -28,11 +28,6 @@ import { useAcademy } from "@/context/academy-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Shield, UserPlus, Calendar as CalendarIcon } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { arSA } from 'date-fns/locale';
 import { useState, useEffect } from "react";
 
 
@@ -41,18 +36,13 @@ export default function AcademyRegistrationPage() {
   const { toast } = useToast();
   const { addRegistration } = useAcademy();
   const { user } = useAuth();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const formSchema = z.object({
     parentName: z.string().min(2, { message: t.academyPage.validation.parentNameMin }),
     phone: z.string().regex(/^[\d\s]{7,15}$/, { message: t.bookingForm.validation.phoneFormat }),
     talentName: z.string().min(2, { message: t.academyPage.validation.talentNameMin }),
-    birthDate: z.date({
-      required_error: t.academyPage.validation.birthDateInvalid,
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      message: t.academyPage.validation.birthDateInvalid,
     }),
     ageGroup: z.enum(["U10", "U14"]),
   });
@@ -63,6 +53,7 @@ export default function AcademyRegistrationPage() {
       parentName: "",
       phone: "",
       talentName: "",
+      birthDate: "",
     },
   });
 
@@ -79,7 +70,11 @@ export default function AcademyRegistrationPage() {
     try {
       await addRegistration({
         userId: user.uid,
-        ...values,
+        parentName: values.parentName,
+        phone: values.phone,
+        talentName: values.talentName,
+        ageGroup: values.ageGroup,
+        birthDate: new Date(values.birthDate),
       });
       toast({
         title: t.academyPage.toastSuccessTitle,
@@ -164,39 +159,11 @@ export default function AcademyRegistrationPage() {
                   control={form.control}
                   name="birthDate"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem>
                       <FormLabel>{t.academyPage.birthDateLabel}</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP", { locale: lang === 'ar' ? arSA : undefined })
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              isClient && (date > new Date() || date < new Date("1900-01-01"))
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <FormControl>
+                        <Input placeholder="YYYY-MM-DD" dir="ltr" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
