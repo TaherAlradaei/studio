@@ -162,7 +162,7 @@ export const enStrings = {
     accessCode: "Access Code",
     noRegistrations: "No academy registrations found.",
     dashboardTab: "Dashboard",
-    layoutTab: "Layout",
+    settingsTab: "Settings",
     layoutTabDescription: "Customize the layout of your admin dashboard.",
     reorderComingSoon: "The ability to reorder sections will be available soon.",
     trustedCustomersCardTitle: "Trusted Customers",

@@ -54,14 +54,6 @@ const generateAvailableTimes = () => {
 const availableTimes = generateAvailableTimes();
 
 
-type SectionId = 'bookingManagement' | 'academyRegistrations' | 'addAcademyMember' | 'manageAvailability' | 'trustedCustomers' | 'manageWelcomePage' | 'manageLogo' | 'manageBackgrounds' | 'paymentInstructions' | 'securitySettings' | 'schedulingAssistant';
-
-interface AdminSection {
-  id: SectionId;
-  title: string;
-  component: React.ReactNode;
-}
-
 const AddMemberForm = () => {
   const { t, lang } = useLanguage();
   const { toast } = useToast();
@@ -262,20 +254,6 @@ export default function AdminPage() {
 
   const [adminAccessCode, setAdminAccessCode] = useState("");
   const [newAdminCode, setNewAdminCode] = useState("");
-
-  const [sectionsOrder, setSectionsOrder] = useState<SectionId[]>([
-    'bookingManagement', 
-    'manageAvailability',
-    'academyRegistrations', 
-    'addAcademyMember',
-    'trustedCustomers',
-    'manageWelcomePage',
-    'manageLogo', 
-    'manageBackgrounds', 
-    'paymentInstructions', 
-    'securitySettings',
-    'schedulingAssistant'
-  ]);
   
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -826,785 +804,6 @@ export default function AdminPage() {
     return false;
   };
 
-  const sections: Record<SectionId, AdminSection> = {
-    bookingManagement: {
-      id: 'bookingManagement',
-      title: t.adminPage.bookingManagementCardTitle,
-      component: (
-        <Card className="bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>{t.adminPage.bookingManagementCardTitle}</CardTitle>
-            <CardDescription>{t.adminPage.bookingManagementCardDescription}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-6 mb-6 p-4 border rounded-lg bg-background/50">
-              <div className="flex-shrink-0">
-                <Label className="px-1">{t.adminPage.filterByDate}</Label>
-                <Calendar
-                  mode="single"
-                  selected={filterDate}
-                  onSelect={setFilterDate}
-                  className="rounded-md border w-full sm:w-auto mt-2"
-                  locale={lang === 'ar' ? arSA : undefined}
-                  dir={lang === 'ar' ? 'rtl' : 'ltr'}
-                  weekStartsOn={6}
-                />
-              </div>
-              <div className="flex-1">
-                <Label>{t.adminPage.filterByRange}</Label>
-                <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)} className="mt-2">
-                  <TabsList>
-                    <TabsTrigger value="day">{t.adminPage.day}</TabsTrigger>
-                    <TabsTrigger value="week">{t.adminPage.week}</TabsTrigger>
-                    <TabsTrigger value="month">{t.adminPage.month}</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <p className="text-sm text-muted-foreground mt-4">{t.adminPage.filterDescription}</p>
-              </div>
-            </div>
-            
-             {/* Desktop Table View */}
-            <div className="hidden md:block border rounded-lg overflow-x-auto">
-              <Table dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t.bookingHistoryTable.date}</TableHead>
-                    <TableHead>{t.bookingHistoryTable.time}</TableHead>
-                    <TableHead>{t.adminPage.customer}</TableHead>
-                    <TableHead>{t.adminPage.duration}</TableHead>
-                    <TableHead>{t.adminPage.price}</TableHead>
-                    <TableHead>{t.adminPage.status}</TableHead>
-                    <TableHead className="text-right min-w-[200px]">{t.adminPage.actions}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBookings.length > 0 ? (
-                    filteredBookings.map((booking) => (
-                      <TableRow key={booking.id}>
-                        <TableCell>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</TableCell>
-                        <TableCell>{booking.time}</TableCell>
-                        <TableCell>{booking.name}<br/><span className="text-sm text-muted-foreground">{booking.phone}</span></TableCell>
-                        <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
-                        <TableCell>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</TableCell>
-                        <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end flex-wrap">
-                             {booking.status === 'pending' && (
-                              <Button size="sm" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.setPriceButton}</Button>
-                            )}
-                            {booking.status === 'awaiting-confirmation' && (
-                                <>
-                                    <Button size="sm" variant="default" onClick={() => handleAdminConfirmBooking(booking)}>{t.adminPage.confirmButton}</Button>
-                                    <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
-                                </>
-                            )}
-                            {booking.status === 'confirmed' && (
-                                <>
-                                  <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
-                                  <Button size="sm" variant="outline" onClick={() => handleMakeRecurring(booking)}>
-                                      <Repeat className="mr-2 h-4 w-4" />
-                                      {t.adminPage.makeRecurringButton}
-                                  </Button>
-                                </>
-                            )}
-                            {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
-                                <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noBookingsInView}</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            
-            {/* Mobile Card View */}
-            <div className="grid md:hidden gap-4">
-               {filteredBookings.length > 0 ? (
-                    filteredBookings.map((booking) => (
-                        <Card key={booking.id} className="bg-background/50">
-                            <CardHeader>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <CardTitle className="text-lg">{booking.name}</CardTitle>
-                                        <CardDescription>{booking.phone}</CardDescription>
-                                    </div>
-                                    {getStatusBadge(booking.status)}
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-3 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">{t.bookingHistoryTable.date}</span>
-                                    <span>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</span>
-                                </div>
-                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">{t.bookingHistoryTable.time}</span>
-                                    <span>{booking.time}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">{t.adminPage.duration}</span>
-                                    <span>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">{t.adminPage.price}</span>
-                                    <span>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</span>
-                                </div>
-                                <div className="pt-3 border-t">
-                                     <div className="flex gap-2 justify-end flex-wrap">
-                                         {booking.status === 'pending' && (
-                                          <Button size="sm" onClick={() => handleSetPriceClick(booking)} className="flex-1">{t.adminPage.setPriceButton}</Button>
-                                        )}
-                                        {booking.status === 'awaiting-confirmation' && (
-                                            <>
-                                                <Button size="sm" variant="default" onClick={() => handleAdminConfirmBooking(booking)} className="flex-1">{t.adminPage.confirmButton}</Button>
-                                                <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
-                                            </>
-                                        )}
-                                        {booking.status === 'confirmed' && (
-                                            <>
-                                              <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
-                                              <Button size="sm" variant="outline" onClick={() => handleMakeRecurring(booking)} className="flex-1">
-                                                  <Repeat className="mr-2 h-4 w-4" />
-                                                  {t.adminPage.makeRecurringButton}
-                                              </Button>
-                                            </>
-                                        )}
-                                        {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
-                                            <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
-                                        )}
-                                      </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
-               ) : (
-                 <div className="text-center text-muted-foreground py-12">{t.adminPage.noBookingsInView}</div>
-               )}
-            </div>
-
-          </CardContent>
-        </Card>
-      ),
-    },
-    academyRegistrations: {
-      id: 'academyRegistrations',
-      title: t.adminPage.academyRegistrationsTitle,
-      component: (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-6 h-6 text-primary" />
-                    <CardTitle>{t.adminPage.academyRegistrationsTitle}</CardTitle>
-                </div>
-                <CardDescription>{t.adminPage.academyRegistrationsDesc}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="border rounded-lg overflow-x-auto">
-                    <Table dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>{t.adminPage.talentName}</TableHead>
-                                <TableHead>{t.adminPage.age}</TableHead>
-                                <TableHead>{t.adminPage.ageGroup}</TableHead>
-                                <TableHead>{t.adminPage.parentContact}</TableHead>
-                                <TableHead>{t.adminPage.accessCode}</TableHead>
-                                <TableHead>{t.adminPage.status}</TableHead>
-                                <TableHead className="text-right min-w-[150px]">{t.adminPage.actions}</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {registrations.length > 0 ? (
-                                registrations.map((reg) => (
-                                    <TableRow key={reg.id}>
-                                        <TableCell>{reg.talentName}</TableCell>
-                                        <TableCell>{isClient ? differenceInYears(new Date(), (reg.birthDate as Timestamp).toDate()) : '-'}</TableCell>
-                                        <TableCell>{reg.ageGroup}</TableCell>
-                                        <TableCell>{reg.parentName}<br /><span className="text-sm text-muted-foreground">{reg.phone}</span></TableCell>
-                                        <TableCell>
-                                            {reg.status === 'accepted' && reg.accessCode && (
-                                                <div className="flex items-center gap-2 font-mono text-sm">
-                                                    <KeyRound className="w-4 h-4 text-muted-foreground" />
-                                                    <span>{reg.accessCode}</span>
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{getRegistrationStatusBadge(reg.status)}</TableCell>
-                                        <TableCell className="text-right">
-                                            {reg.status === 'pending' && (
-                                                <div className="flex gap-2 justify-end">
-                                                    <Button size="sm" onClick={() => handleRegistrationStatusUpdate(reg, 'accepted')}>{t.actions.accept}</Button>
-                                                    <Button size="sm" variant="destructive" onClick={() => handleRegistrationStatusUpdate(reg, 'rejected')}>{t.actions.decline}</Button>
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noRegistrations}</TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
-      ),
-    },
-    addAcademyMember: {
-        id: 'addAcademyMember',
-        title: t.adminPage.addMemberCardTitle,
-        component: <AddMemberForm />
-    },
-    manageAvailability: {
-      id: 'manageAvailability',
-      title: t.adminPage.manageAvailabilityCardTitle,
-      component: (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                <CardTitle>{t.adminPage.manageAvailabilityCardTitle}</CardTitle>
-                <CardDescription>{t.adminPage.manageAvailabilityCardDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <div>
-                     <CardHeader className="p-0 mb-4">
-                        <div className="flex items-center gap-2">
-                            <CalendarDays className="w-6 h-6 text-primary" />
-                            <CardTitle className="font-headline text-xl">{t.bookingPage.selectDate}</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <div className="flex justify-center">
-                        <Calendar
-                            mode="single"
-                            selected={availabilityDate}
-                            onSelect={setAvailabilityDate}
-                            className="rounded-md"
-                            disabled={(date) => isClient && date < new Date(new Date().setHours(0, 0, 0, 0))}
-                            locale={lang === 'ar' ? arSA : undefined}
-                            dir={lang === 'ar' ? 'rtl' : 'ltr'}
-                            weekStartsOn={6}
-                        />
-                    </div>
-                </div>
-                <div>
-                    {availabilityDate && (
-                    <>
-                        <CardHeader className="p-0 mb-4">
-                            <div className="flex items-center gap-2">
-                                <Clock className="w-6 h-6 text-primary" />
-                                <CardTitle className="font-headline text-xl">{t.timeSlotPicker.title}</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <div className="mb-4">
-                            <Label htmlFor="admin-duration" className="block text-sm font-medium mb-2">
-                                {t.timeSlotPicker.durationLabel}
-                            </Label>
-                            <Select
-                                value={availabilityDuration.toString()}
-                                onValueChange={(value) => setAvailabilityDuration(parseFloat(value))}
-                            >
-                                <SelectTrigger id="admin-duration" className="w-[180px]">
-                                    <SelectValue placeholder={t.timeSlotPicker.durationPlaceholder} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="1">{t.timeSlotPicker.oneHour}</SelectItem>
-                                    <SelectItem value="1.5">{t.timeSlotPicker.oneAndHalfHour}</SelectItem>
-                                    <SelectItem value="2">{t.timeSlotPicker.twoHours}</SelectItem>
-                                    <SelectItem value="2.5">2.5 Hours</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                            {availableTimes.map((time) => {
-                                if (!isClient) {
-                                    return (
-                                        <div key={time} className="relative">
-                                             <Button variant="outline" className="w-full" disabled>
-                                                {time}
-                                            </Button>
-                                        </div>
-                                    );
-                                }
-                                const slotDateTime = new Date(availabilityDate);
-                                const [hours, minutes] = time.split(':').map(Number);
-                                slotDateTime.setHours(hours, minutes, 0, 0);
-
-                                const occupyingBooking = bookingsWithDates.find(b => {
-                                  if (b.status === 'cancelled') return false;
-                                  const bookingDate = new Date(b.date);
-                                  if (bookingDate.toDateString() !== slotDateTime.toDateString()) return false;
-                                  
-                                  const bookingStartMinutes = timeToMinutes(b.time);
-                                  const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
-                                  const slotStartMinutes = timeToMinutes(time);
-
-                                  return slotStartMinutes >= bookingStartMinutes && slotStartMinutes < bookingEndMinutes;
-                                });
-
-                                const isPast = new Date() > slotDateTime;
-                                const isBookedForManual = isSlotBooked(availabilityDate, time, availabilityDuration, bookingsWithDates);
-                                
-                                let buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" = "outline";
-                                let buttonClassName = "w-full";
-                                let badgeContent = null;
-                                let isDisabled = isPast || (isBookedForManual && !occupyingBooking);
-
-                                if (occupyingBooking) {
-                                    isDisabled = true;
-                                    switch (occupyingBooking.status) {
-                                        case 'blocked':
-                                            buttonVariant = 'destructive';
-                                            badgeContent = <Badge variant="destructive">{t.adminPage.blocked}</Badge>;
-                                            break;
-                                        case 'confirmed':
-                                            buttonVariant = 'secondary';
-                                            badgeContent = <Badge variant="default">{t.bookingHistoryTable.statusConfirmed}</Badge>;
-                                            break;
-                                        case 'awaiting-confirmation':
-                                            buttonVariant = 'default';
-                                            buttonClassName = "w-full bg-yellow-500 hover:bg-yellow-500/80 text-primary-foreground";
-                                            badgeContent = <Badge className="bg-yellow-500 hover:bg-yellow-500/80">{t.bookingHistoryTable.statusAwaitingConfirmation}</Badge>;
-                                            break;
-                                        case 'pending':
-                                            buttonVariant = 'ghost';
-                                            badgeContent = <Badge variant="secondary">{t.bookingHistoryTable.statusPending}</Badge>;
-                                            break;
-                                    }
-                                }
-                                
-                                return (
-                                <div key={time} className="relative">
-                                    <Button
-                                        variant={buttonVariant}
-                                        className={buttonClassName}
-                                        disabled={isDisabled}
-                                        onClick={async () => {
-                                            if (!availabilityDate) return;
-                                            try {
-                                                if (occupyingBooking?.status === 'blocked') {
-                                                    await unblockSlot(occupyingBooking.id!);
-                                                } else if (occupyingBooking?.status === 'confirmed') {
-                                                    setInfoBooking(occupyingBooking);
-                                                } else if (!occupyingBooking) {
-                                                    setManualBookingDuration(availabilityDuration);
-                                                    setNewManualBooking({date: availabilityDate, time, duration: availabilityDuration});
-                                                }
-                                            } catch (err) {
-                                                toast({
-                                                    title: t.adminPage.errorTitle,
-                                                    description: err instanceof Error ? err.message : "Failed to update availability.",
-                                                    variant: "destructive",
-                                                });
-                                            }
-                                        }}
-                                    >
-                                    {time}
-                                    </Button>
-                                    <div className="absolute -bottom-5 left-0 right-0 text-center text-xs">
-                                        {badgeContent}
-                                    </div>
-                                </div>
-                                );
-                            })}
-                        </div>
-                    </>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
-      ),
-    },
-    trustedCustomers: {
-      id: 'trustedCustomers',
-      title: t.adminPage.trustedCustomersCardTitle,
-      component: (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <UserCheck className="w-6 h-6 text-primary" />
-                    <CardTitle>{t.adminPage.trustedCustomersCardTitle}</CardTitle>
-                </div>
-                <CardDescription>{t.adminPage.trustedCustomersCardDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="new-trusted-customer">{t.adminPage.addTrustedCustomerLabel}</Label>
-                  <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                      <Input 
-                          id="new-trusted-customer"
-                          value={newTrustedCustomer}
-                          onChange={(e) => setNewTrustedCustomer(e.target.value)}
-                          placeholder={t.adminPage.trustedCustomerNamePlaceholder}
-                      />
-                      <Button onClick={handleAddTrustedCustomer} className="w-full sm:w-auto">{t.adminPage.addCustomerButton}</Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                    <h4 className="font-medium text-sm">{t.adminPage.trustedCustomersListTitle}</h4>
-                    {trustedCustomers.length > 0 ? (
-                        <div className="border rounded-lg p-2 space-y-2 max-h-48 overflow-y-auto">
-                            {trustedCustomers.map(customer => (
-                                <div key={customer} className="flex justify-between items-center bg-background/50 p-2 rounded-md">
-                                    <span>{customer}</span>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveTrustedCustomer(customer)}>
-                                        <Trash2 className="w-4 h-4 text-destructive"/>
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">{t.adminPage.noTrustedCustomers}</p>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
-      )
-    },
-     manageWelcomePage: {
-      id: 'manageWelcomePage',
-      title: t.adminPage.manageWelcomePageCardTitle,
-      component: (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <Presentation className="w-6 h-6 text-primary" />
-                    <CardTitle>{t.adminPage.manageWelcomePageCardTitle}</CardTitle>
-                </div>
-                <CardDescription>{t.adminPage.manageWelcomePageCardDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                {isWelcomePageLoading ? <p>Loading...</p> : <>
-                <div className="space-y-2">
-                  <Label htmlFor="welcome-title">{t.adminPage.welcomePageTitleLabel}</Label>
-                  <Input 
-                      id="welcome-title"
-                      value={welcomeTitle || ''}
-                      onChange={(e) => setWelcomeTitle(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="welcome-message">{t.adminPage.welcomePageMessageLabel}</Label>
-                  <Textarea
-                      id="welcome-message"
-                      value={welcomeMessage || ''}
-                      onChange={(e) => setWelcomeMessage(e.target.value)}
-                      rows={4}
-                  />
-                </div>
-                 <Button onClick={handleSaveWelcomeText} disabled={isSaving}>
-                    {isSaving ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t.adminPage.savingButton}
-                        </>
-                    ) : (
-                        t.adminPage.saveButton
-                    )}
-                </Button>
-
-                <div className="grid md:grid-cols-2 gap-6 pt-6 border-t">
-                    <div className="space-y-4">
-                        <Label>{t.adminPage.welcomePageFieldImageLabel}</Label>
-                        {welcomePageContent?.fieldImageUrl && (
-                            <Image
-                                src={welcomePageContent.fieldImageUrl}
-                                alt="Football Field"
-                                width={200}
-                                height={150}
-                                className="w-full h-auto object-cover rounded-md aspect-video border"
-                                data-ai-hint="football field"
-                            />
-                        )}
-                        <Button onClick={() => welcomePageFieldImageInputRef.current?.click()} className="w-full">
-                            {t.adminPage.replaceImageButton}
-                        </Button>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            ref={welcomePageFieldImageInputRef}
-                            onChange={(e) => handleWelcomePageImageChange(e, 'fieldImageUrl')}
-                            className="hidden"
-                        />
-                    </div>
-                     <div className="space-y-4">
-                        <Label>{t.adminPage.welcomePageCoachImageLabel}</Label>
-                        {welcomePageContent?.coachImageUrl && (
-                            <Image
-                                src={welcomePageContent.coachImageUrl}
-                                alt="Academy Coach"
-                                width={200}
-                                height={150}
-                                className="w-full h-auto object-cover rounded-md aspect-video border"
-                                data-ai-hint="football coach"
-                            />
-                        )}
-                        <Button onClick={() => welcomePageCoachImageInputRef.current?.click()} className="w-full">
-                            {t.adminPage.replaceImageButton}
-                        </Button>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            ref={welcomePageCoachImageInputRef}
-                            onChange={(e) => handleWelcomePageImageChange(e, 'coachImageUrl')}
-                            className="hidden"
-                        />
-                    </div>
-                </div>
-                </>}
-            </CardContent>
-        </Card>
-      ),
-    },
-    manageLogo: {
-      id: 'manageLogo',
-      title: t.adminPage.manageLogoCardTitle,
-      component: (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <ImageUp className="w-6 h-6 text-primary" />
-                    <CardTitle>{t.adminPage.manageLogoCardTitle}</CardTitle>
-                </div>
-                <CardDescription>{t.adminPage.manageLogoCardDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center gap-4">
-                 {isLogoLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
-                    <Image
-                        src={logo.url}
-                        alt="Current Logo"
-                        width={80}
-                        height={88}
-                        className="h-20 w-auto object-contain rounded-md bg-white/80 p-2"
-                    />
-                )}
-                <div className="flex-1 w-full">
-                     <Button onClick={handleLogoReplaceClick} className="w-full sm:w-auto">
-                        {t.adminPage.replaceLogoButton}
-                    </Button>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        ref={logoFileInputRef}
-                        onChange={handleLogoFileChange}
-                        className="hidden"
-                    />
-                </div>
-            </CardContent>
-        </Card>
-      ),
-    },
-    manageBackgrounds: {
-      id: 'manageBackgrounds',
-      title: t.adminPage.manageBackgroundsCardTitle,
-      component: (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                 <div className="flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <ImageUp className="w-6 h-6 text-primary" />
-                            <CardTitle>{t.adminPage.manageBackgroundsCardTitle}</CardTitle>
-                        </div>
-                        <CardDescription>{t.adminPage.manageBackgroundsCardDescription}</CardDescription>
-                    </div>
-                    <Button onClick={handleAddBackground}>{t.adminPage.addCustomerButton}</Button>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                {isBackgroundsLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : backgrounds.map((bg, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-background/50">
-                        <Image
-                            src={bg.url}
-                            alt={`Background ${index + 1}`}
-                            width={160}
-                            height={90}
-                            className="w-40 h-auto object-cover rounded-md aspect-video"
-                            data-ai-hint={bg.hint}
-                        />
-                        <div className="flex-1 w-full space-y-2">
-                            <Label htmlFor={`hint-${index}`}>{t.adminPage.imageHintLabel}</Label>
-                            <Input
-                                id={`hint-${index}`}
-                                value={hintInputs[index] || ''}
-                                onChange={(e) => handleHintChange(index, e.target.value)}
-                                placeholder={t.adminPage.imageHintPlaceholder}
-                            />
-                        </div>
-                        <div className="w-full sm:w-auto flex flex-col gap-2">
-                            <Button onClick={() => handleReplaceClick(index)} className="w-full">
-                                {t.adminPage.replaceImageButton}
-                            </Button>
-                             <Button onClick={() => handleDeleteBackground(index, bg.path)} className="w-full" variant="destructive">
-                                <Trash2 className="mr-2 h-4 w-4"/>
-                                {t.adminPage.cancel}
-                            </Button>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                ref={el => fileInputRefs.current[index] = el}
-                                onChange={(e) => handleFileChange(e, index)}
-                                className="hidden"
-                            />
-                        </div>
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-      ),
-    },
-    paymentInstructions: {
-      id: 'paymentInstructions',
-      title: t.adminPage.paymentInstructionsCardTitle,
-      component: (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <Info className="w-6 h-6 text-primary" />
-                    <CardTitle>{t.adminPage.paymentInstructionsCardTitle}</CardTitle>
-
-                </div>
-                <CardDescription>{t.adminPage.paymentInstructionsCardDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <Label htmlFor="payment-instructions">{t.adminPage.paymentInstructionsLabel}</Label>
-                <Textarea
-                    id="payment-instructions"
-                    value={paymentInstructions}
-                    onChange={(e) => setPaymentInstructions(e.target.value)}
-                    rows={5}
-                />
-                <Button onClick={handleSaveInstructions} disabled={isSaving}>
-                    {isSaving ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t.adminPage.savingButton}
-                        </>
-                    ) : (
-                        t.adminPage.saveButton
-                    )}
-                </Button>
-            </CardContent>
-        </Card>
-      ),
-    },
-    securitySettings: {
-        id: 'securitySettings',
-        title: t.adminPage.securitySettingsCardTitle,
-        component: (
-            <Card className="bg-card/80 backdrop-blur-sm">
-                <CardHeader>
-                    <div className="flex items-center gap-2">
-                        <Lock className="w-6 h-6 text-primary" />
-                        <CardTitle>{t.adminPage.securitySettingsCardTitle}</CardTitle>
-                    </div>
-                    <CardDescription>{t.adminPage.securitySettingsCardDesc}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="current-admin-code">{t.adminPage.securityCurrentCodeLabel}</Label>
-                        <Input
-                            id="current-admin-code"
-                            value={adminAccessCode || ''}
-                            readOnly
-                            className="font-mono mt-1"
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="new-admin-code">{t.adminPage.securityNewCodeLabel}</Label>
-                         <div className="flex flex-col sm:flex-row gap-2 mt-1">
-                            <Input
-                                id="new-admin-code"
-                                value={newAdminCode}
-                                onChange={(e) => setNewAdminCode(e.target.value)}
-                                placeholder={t.adminPage.securityNewCodePlaceholder}
-                            />
-                            <Button onClick={handleChangeAdminCode} className="w-full sm:w-auto">
-                                {t.adminPage.securityChangeCodeButton}
-                            </Button>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        )
-    },
-    schedulingAssistant: {
-      id: 'schedulingAssistant',
-      title: t.adminPage.title,
-      component: (
-        <>
-        <Card className="bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>{t.adminPage.title}</CardTitle>
-            <CardDescription>
-             {t.adminPage.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              value={bookingData}
-              onChange={(e) => setBookingData(e.target.value)}
-              rows={15}
-              placeholder={t.adminPage.dataPlaceholder}
-              className="font-code"
-            />
-             <div className="flex flex-wrap gap-2">
-              <Button onClick={handleAnalyze} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t.adminPage.analyzingButton}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    {t.adminPage.analyzeButton}
-                  </>
-                )}
-              </Button>
-               <Button onClick={handleUseMockData} variant="outline">
-                {t.adminPage.useMockButton}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {error && (
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive">{t.adminPage.errorTitle}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{error}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {recommendations && (
-          <Card className="border-accent">
-            <CardHeader>
-              <CardTitle className="text-primary flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-accent" />
-                {t.adminPage.recommendationsTitle}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
-                {recommendations}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        </>
-      ),
-    }
-  };
-
-
   return (
     <div className="container py-8" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <div className="text-center mb-6">
@@ -1616,35 +815,749 @@ export default function AdminPage() {
         </div>
       </div>
 
-       <Tabs defaultValue="dashboard" className="max-w-6xl mx-auto">
-        <TabsList className="mb-6 grid w-full grid-cols-1 sm:grid-cols-2">
-          <TabsTrigger value="dashboard">
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            {t.adminPage.dashboardTab}
+       <Tabs defaultValue="booking" className="max-w-6xl mx-auto grid md:grid-cols-[200px_1fr] gap-6 items-start" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <TabsList className="flex flex-col h-auto justify-start w-full">
+          <TabsTrigger value="booking" className="w-full justify-start gap-2">
+            <LayoutDashboard className="h-4 w-4" />
+            {t.adminPage.bookingManagementCardTitle}
           </TabsTrigger>
-          <TabsTrigger value="layout">
-            <Wand2 className="mr-2 h-4 w-4" />
-            {t.adminPage.layoutTab}
+          <TabsTrigger value="academy" className="w-full justify-start gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            {t.adminPage.academyRegistrationsTitle}
+          </TabsTrigger>
+           <TabsTrigger value="settings" className="w-full justify-start gap-2">
+            <Settings className="h-4 w-4" />
+            {t.adminPage.settingsTab}
+          </TabsTrigger>
+          <TabsTrigger value="assistant" className="w-full justify-start gap-2">
+            <Sparkles className="h-4 w-4" />
+            {t.adminPage.title}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="dashboard" className="grid grid-cols-1 gap-8">
-            {sectionsOrder.map(id => (
-              <div key={id}>
-                {sections[id].component}
-              </div>
-            ))}
-        </TabsContent>
-        <TabsContent value="layout">
-            <Card className="bg-card/80 backdrop-blur-sm">
-                <CardHeader>
-                    <CardTitle>{t.adminPage.layoutTab}</CardTitle>
-                    <CardDescription>{t.adminPage.layoutTabDescription}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <p className="text-muted-foreground">{t.adminPage.reorderComingSoon}</p>
-                </CardContent>
-            </Card>
-        </TabsContent>
+        <div className="w-full">
+            <TabsContent value="booking" className="grid grid-cols-1 gap-8 mt-0">
+                {/* Booking Management Card */}
+                <Card className="bg-card/80 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle>{t.adminPage.bookingManagementCardTitle}</CardTitle>
+                    <CardDescription>{t.adminPage.bookingManagementCardDescription}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col md:flex-row gap-6 mb-6 p-4 border rounded-lg bg-background/50">
+                      <div className="flex-shrink-0">
+                        <Label className="px-1">{t.adminPage.filterByDate}</Label>
+                        <Calendar
+                          mode="single"
+                          selected={filterDate}
+                          onSelect={setFilterDate}
+                          className="rounded-md border w-full sm:w-auto mt-2"
+                          locale={lang === 'ar' ? arSA : undefined}
+                          dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                          weekStartsOn={6}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Label>{t.adminPage.filterByRange}</Label>
+                        <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)} className="mt-2">
+                          <TabsList>
+                            <TabsTrigger value="day">{t.adminPage.day}</TabsTrigger>
+                            <TabsTrigger value="week">{t.adminPage.week}</TabsTrigger>
+                            <TabsTrigger value="month">{t.adminPage.month}</TabsTrigger>
+                          </TabsList>
+                        </Tabs>
+                        <p className="text-sm text-muted-foreground mt-4">{t.adminPage.filterDescription}</p>
+                      </div>
+                    </div>
+                    
+                     {/* Desktop Table View */}
+                    <div className="hidden md:block border rounded-lg overflow-x-auto">
+                      <Table dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t.bookingHistoryTable.date}</TableHead>
+                            <TableHead>{t.bookingHistoryTable.time}</TableHead>
+                            <TableHead>{t.adminPage.customer}</TableHead>
+                            <TableHead>{t.adminPage.duration}</TableHead>
+                            <TableHead>{t.adminPage.price}</TableHead>
+                            <TableHead>{t.adminPage.status}</TableHead>
+                            <TableHead className="text-right min-w-[200px]">{t.adminPage.actions}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredBookings.length > 0 ? (
+                            filteredBookings.map((booking) => (
+                              <TableRow key={booking.id}>
+                                <TableCell>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</TableCell>
+                                <TableCell>{booking.time}</TableCell>
+                                <TableCell>{booking.name}<br/><span className="text-sm text-muted-foreground">{booking.phone}</span></TableCell>
+                                <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
+                                <TableCell>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</TableCell>
+                                <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex gap-2 justify-end flex-wrap">
+                                     {booking.status === 'pending' && (
+                                      <Button size="sm" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.setPriceButton}</Button>
+                                    )}
+                                    {booking.status === 'awaiting-confirmation' && (
+                                        <>
+                                            <Button size="sm" variant="default" onClick={() => handleAdminConfirmBooking(booking)}>{t.adminPage.confirmButton}</Button>
+                                            <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                        </>
+                                    )}
+                                    {booking.status === 'confirmed' && (
+                                        <>
+                                          <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                          <Button size="sm" variant="outline" onClick={() => handleMakeRecurring(booking)}>
+                                              <Repeat className="mr-2 h-4 w-4" />
+                                              {t.adminPage.makeRecurringButton}
+                                          </Button>
+                                        </>
+                                    )}
+                                    {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
+                                        <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noBookingsInView}</TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    
+                    {/* Mobile Card View */}
+                    <div className="grid md:hidden gap-4">
+                       {filteredBookings.length > 0 ? (
+                            filteredBookings.map((booking) => (
+                                <Card key={booking.id} className="bg-background/50">
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <CardTitle className="text-lg">{booking.name}</CardTitle>
+                                                <CardDescription>{booking.phone}</CardDescription>
+                                            </div>
+                                            {getStatusBadge(booking.status)}
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">{t.bookingHistoryTable.date}</span>
+                                            <span>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</span>
+                                        </div>
+                                         <div className="flex justify-between">
+                                            <span className="text-muted-foreground">{t.bookingHistoryTable.time}</span>
+                                            <span>{booking.time}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">{t.adminPage.duration}</span>
+                                            <span>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">{t.adminPage.price}</span>
+                                            <span>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</span>
+                                        </div>
+                                        <div className="pt-3 border-t">
+                                             <div className="flex gap-2 justify-end flex-wrap">
+                                                 {booking.status === 'pending' && (
+                                                  <Button size="sm" onClick={() => handleSetPriceClick(booking)} className="flex-1">{t.adminPage.setPriceButton}</Button>
+                                                )}
+                                                {booking.status === 'awaiting-confirmation' && (
+                                                    <>
+                                                        <Button size="sm" variant="default" onClick={() => handleAdminConfirmBooking(booking)} className="flex-1">{t.adminPage.confirmButton}</Button>
+                                                        <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                                    </>
+                                                )}
+                                                {booking.status === 'confirmed' && (
+                                                    <>
+                                                      <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
+                                                      <Button size="sm" variant="outline" onClick={() => handleMakeRecurring(booking)} className="flex-1">
+                                                          <Repeat className="mr-2 h-4 w-4" />
+                                                          {t.adminPage.makeRecurringButton}
+                                                      </Button>
+                                                    </>
+                                                )}
+                                                {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
+                                                    <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
+                                                )}
+                                              </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))
+                       ) : (
+                         <div className="text-center text-muted-foreground py-12">{t.adminPage.noBookingsInView}</div>
+                       )}
+                    </div>
+        
+                  </CardContent>
+                </Card>
+
+                {/* Manage Availability Card */}
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <CardTitle>{t.adminPage.manageAvailabilityCardTitle}</CardTitle>
+                        <CardDescription>{t.adminPage.manageAvailabilityCardDescription}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <div>
+                             <CardHeader className="p-0 mb-4">
+                                <div className="flex items-center gap-2">
+                                    <CalendarDays className="w-6 h-6 text-primary" />
+                                    <CardTitle className="font-headline text-xl">{t.bookingPage.selectDate}</CardTitle>
+                                </div>
+                            </CardHeader>
+                            <div className="flex justify-center">
+                                <Calendar
+                                    mode="single"
+                                    selected={availabilityDate}
+                                    onSelect={setAvailabilityDate}
+                                    className="rounded-md"
+                                    disabled={(date) => isClient && date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                    locale={lang === 'ar' ? arSA : undefined}
+                                    dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                                    weekStartsOn={6}
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            {availabilityDate && (
+                            <>
+                                <CardHeader className="p-0 mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="w-6 h-6 text-primary" />
+                                        <CardTitle className="font-headline text-xl">{t.timeSlotPicker.title}</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <div className="mb-4">
+                                    <Label htmlFor="admin-duration" className="block text-sm font-medium mb-2">
+                                        {t.timeSlotPicker.durationLabel}
+                                    </Label>
+                                    <Select
+                                        value={availabilityDuration.toString()}
+                                        onValueChange={(value) => setAvailabilityDuration(parseFloat(value))}
+                                    >
+                                        <SelectTrigger id="admin-duration" className="w-[180px]">
+                                            <SelectValue placeholder={t.timeSlotPicker.durationPlaceholder} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="1">{t.timeSlotPicker.oneHour}</SelectItem>
+                                            <SelectItem value="1.5">{t.timeSlotPicker.oneAndHalfHour}</SelectItem>
+                                            <SelectItem value="2">{t.timeSlotPicker.twoHours}</SelectItem>
+                                            <SelectItem value="2.5">2.5 Hours</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                    {availableTimes.map((time) => {
+                                        if (!isClient) {
+                                            return (
+                                                <div key={time} className="relative">
+                                                     <Button variant="outline" className="w-full" disabled>
+                                                        {time}
+                                                    </Button>
+                                                </div>
+                                            );
+                                        }
+                                        const slotDateTime = new Date(availabilityDate);
+                                        const [hours, minutes] = time.split(':').map(Number);
+                                        slotDateTime.setHours(hours, minutes, 0, 0);
+        
+                                        const occupyingBooking = bookingsWithDates.find(b => {
+                                          if (b.status === 'cancelled') return false;
+                                          const bookingDate = new Date(b.date);
+                                          if (bookingDate.toDateString() !== slotDateTime.toDateString()) return false;
+                                          
+                                          const bookingStartMinutes = timeToMinutes(b.time);
+                                          const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
+                                          const slotStartMinutes = timeToMinutes(time);
+        
+                                          return slotStartMinutes >= bookingStartMinutes && slotStartMinutes < bookingEndMinutes;
+                                        });
+        
+                                        const isPast = new Date() > slotDateTime;
+                                        const isBookedForManual = isSlotBooked(availabilityDate, time, availabilityDuration, bookingsWithDates);
+                                        
+                                        let buttonVariant: "default" | "secondary" | "destructive" | "outline" | "ghost" = "outline";
+                                        let buttonClassName = "w-full";
+                                        let badgeContent = null;
+                                        let isDisabled = isPast || (isBookedForManual && !occupyingBooking);
+        
+                                        if (occupyingBooking) {
+                                            isDisabled = true;
+                                            switch (occupyingBooking.status) {
+                                                case 'blocked':
+                                                    buttonVariant = 'destructive';
+                                                    badgeContent = <Badge variant="destructive">{t.adminPage.blocked}</Badge>;
+                                                    break;
+                                                case 'confirmed':
+                                                    buttonVariant = 'secondary';
+                                                    badgeContent = <Badge variant="default">{t.bookingHistoryTable.statusConfirmed}</Badge>;
+                                                    break;
+                                                case 'awaiting-confirmation':
+                                                    buttonVariant = 'default';
+                                                    buttonClassName = "w-full bg-yellow-500 hover:bg-yellow-500/80 text-primary-foreground";
+                                                    badgeContent = <Badge className="bg-yellow-500 hover:bg-yellow-500/80">{t.bookingHistoryTable.statusAwaitingConfirmation}</Badge>;
+                                                    break;
+                                                case 'pending':
+                                                    buttonVariant = 'ghost';
+                                                    badgeContent = <Badge variant="secondary">{t.bookingHistoryTable.statusPending}</Badge>;
+                                                    break;
+                                            }
+                                        }
+                                        
+                                        return (
+                                        <div key={time} className="relative">
+                                            <Button
+                                                variant={buttonVariant}
+                                                className={buttonClassName}
+                                                disabled={isDisabled}
+                                                onClick={async () => {
+                                                    if (!availabilityDate) return;
+                                                    try {
+                                                        if (occupyingBooking?.status === 'blocked') {
+                                                            await unblockSlot(occupyingBooking.id!);
+                                                        } else if (occupyingBooking?.status === 'confirmed') {
+                                                            setInfoBooking(occupyingBooking);
+                                                        } else if (!occupyingBooking) {
+                                                            setManualBookingDuration(availabilityDuration);
+                                                            setNewManualBooking({date: availabilityDate, time, duration: availabilityDuration});
+                                                        }
+                                                    } catch (err) {
+                                                        toast({
+                                                            title: t.adminPage.errorTitle,
+                                                            description: err instanceof Error ? err.message : "Failed to update availability.",
+                                                            variant: "destructive",
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                            {time}
+                                            </Button>
+                                            <div className="absolute -bottom-5 left-0 right-0 text-center text-xs">
+                                                {badgeContent}
+                                            </div>
+                                        </div>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="academy" className="grid grid-cols-1 gap-8 mt-0">
+                {/* Academy Registrations Card */}
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.academyRegistrationsTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.academyRegistrationsDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="border rounded-lg overflow-x-auto">
+                            <Table dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>{t.adminPage.talentName}</TableHead>
+                                        <TableHead>{t.adminPage.age}</TableHead>
+                                        <TableHead>{t.adminPage.ageGroup}</TableHead>
+                                        <TableHead>{t.adminPage.parentContact}</TableHead>
+                                        <TableHead>{t.adminPage.accessCode}</TableHead>
+                                        <TableHead>{t.adminPage.status}</TableHead>
+                                        <TableHead className="text-right min-w-[150px]">{t.adminPage.actions}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {registrations.length > 0 ? (
+                                        registrations.map((reg) => (
+                                            <TableRow key={reg.id}>
+                                                <TableCell>{reg.talentName}</TableCell>
+                                                <TableCell>{isClient && reg.birthDate ? differenceInYears(new Date(), (reg.birthDate as Timestamp).toDate()) : '-'}</TableCell>
+                                                <TableCell>{reg.ageGroup}</TableCell>
+                                                <TableCell>{reg.parentName}<br /><span className="text-sm text-muted-foreground">{reg.phone}</span></TableCell>
+                                                <TableCell>
+                                                    {reg.status === 'accepted' && reg.accessCode && (
+                                                        <div className="flex items-center gap-2 font-mono text-sm">
+                                                            <KeyRound className="w-4 h-4 text-muted-foreground" />
+                                                            <span>{reg.accessCode}</span>
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>{getRegistrationStatusBadge(reg.status)}</TableCell>
+                                                <TableCell className="text-right">
+                                                    {reg.status === 'pending' && (
+                                                        <div className="flex gap-2 justify-end">
+                                                            <Button size="sm" onClick={() => handleRegistrationStatusUpdate(reg, 'accepted')}>{t.actions.accept}</Button>
+                                                            <Button size="sm" variant="destructive" onClick={() => handleRegistrationStatusUpdate(reg, 'rejected')}>{t.actions.decline}</Button>
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noRegistrations}</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
+                {/* Add Member Form Card */}
+                <AddMemberForm />
+            </TabsContent>
+            <TabsContent value="settings" className="grid grid-cols-1 gap-8 mt-0">
+                 <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Presentation className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.manageWelcomePageCardTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.manageWelcomePageCardDescription}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {isWelcomePageLoading ? <p>Loading...</p> : <>
+                        <div className="space-y-2">
+                          <Label htmlFor="welcome-title">{t.adminPage.welcomePageTitleLabel}</Label>
+                          <Input 
+                              id="welcome-title"
+                              value={welcomeTitle || ''}
+                              onChange={(e) => setWelcomeTitle(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="welcome-message">{t.adminPage.welcomePageMessageLabel}</Label>
+                          <Textarea
+                              id="welcome-message"
+                              value={welcomeMessage || ''}
+                              onChange={(e) => setWelcomeMessage(e.target.value)}
+                              rows={4}
+                          />
+                        </div>
+                         <Button onClick={handleSaveWelcomeText} disabled={isSaving}>
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {t.adminPage.savingButton}
+                                </>
+                            ) : (
+                                t.adminPage.saveButton
+                            )}
+                        </Button>
+        
+                        <div className="grid md:grid-cols-2 gap-6 pt-6 border-t">
+                            <div className="space-y-4">
+                                <Label>{t.adminPage.welcomePageFieldImageLabel}</Label>
+                                {welcomePageContent?.fieldImageUrl && (
+                                    <Image
+                                        src={welcomePageContent.fieldImageUrl}
+                                        alt="Football Field"
+                                        width={200}
+                                        height={150}
+                                        className="w-full h-auto object-cover rounded-md aspect-video border"
+                                        data-ai-hint="football field"
+                                    />
+                                )}
+                                <Button onClick={() => welcomePageFieldImageInputRef.current?.click()} className="w-full">
+                                    {t.adminPage.replaceImageButton}
+                                </Button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    ref={welcomePageFieldImageInputRef}
+                                    onChange={(e) => handleWelcomePageImageChange(e, 'fieldImageUrl')}
+                                    className="hidden"
+                                />
+                            </div>
+                             <div className="space-y-4">
+                                <Label>{t.adminPage.welcomePageCoachImageLabel}</Label>
+                                {welcomePageContent?.coachImageUrl && (
+                                    <Image
+                                        src={welcomePageContent.coachImageUrl}
+                                        alt="Academy Coach"
+                                        width={200}
+                                        height={150}
+                                        className="w-full h-auto object-cover rounded-md aspect-video border"
+                                        data-ai-hint="football coach"
+                                    />
+                                )}
+                                <Button onClick={() => welcomePageCoachImageInputRef.current?.click()} className="w-full">
+                                    {t.adminPage.replaceImageButton}
+                                </Button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    ref={welcomePageCoachImageInputRef}
+                                    onChange={(e) => handleWelcomePageImageChange(e, 'coachImageUrl')}
+                                    className="hidden"
+                                />
+                            </div>
+                        </div>
+                        </>}
+                    </CardContent>
+                </Card>
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <ImageUp className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.manageLogoCardTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.manageLogoCardDescription}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+                         {isLogoLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
+                            <Image
+                                src={logo.url}
+                                alt="Current Logo"
+                                width={80}
+                                height={88}
+                                className="h-20 w-auto object-contain rounded-md bg-white/80 p-2"
+                            />
+                        )}
+                        <div className="flex-1 w-full">
+                             <Button onClick={handleLogoReplaceClick} className="w-full sm:w-auto">
+                                {t.adminPage.replaceLogoButton}
+                            </Button>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={logoFileInputRef}
+                                onChange={handleLogoFileChange}
+                                className="hidden"
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                         <div className="flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <ImageUp className="w-6 h-6 text-primary" />
+                                    <CardTitle>{t.adminPage.manageBackgroundsCardTitle}</CardTitle>
+                                </div>
+                                <CardDescription>{t.adminPage.manageBackgroundsCardDescription}</CardDescription>
+                            </div>
+                            <Button onClick={handleAddBackground}>{t.adminPage.addCustomerButton}</Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {isBackgroundsLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : backgrounds.map((bg, index) => (
+                            <div key={index} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-background/50">
+                                <Image
+                                    src={bg.url}
+                                    alt={`Background ${index + 1}`}
+                                    width={160}
+                                    height={90}
+                                    className="w-40 h-auto object-cover rounded-md aspect-video"
+                                    data-ai-hint={bg.hint}
+                                />
+                                <div className="flex-1 w-full space-y-2">
+                                    <Label htmlFor={`hint-${index}`}>{t.adminPage.imageHintLabel}</Label>
+                                    <Input
+                                        id={`hint-${index}`}
+                                        value={hintInputs[index] || ''}
+                                        onChange={(e) => handleHintChange(index, e.target.value)}
+                                        placeholder={t.adminPage.imageHintPlaceholder}
+                                    />
+                                </div>
+                                <div className="w-full sm:w-auto flex flex-col gap-2">
+                                    <Button onClick={() => handleReplaceClick(index)} className="w-full">
+                                        {t.adminPage.replaceImageButton}
+                                    </Button>
+                                     <Button onClick={() => handleDeleteBackground(index, bg.path)} className="w-full" variant="destructive">
+                                        <Trash2 className="mr-2 h-4 w-4"/>
+                                        {t.adminPage.cancel}
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        ref={el => fileInputRefs.current[index] = el}
+                                        onChange={(e) => handleFileChange(e, index)}
+                                        className="hidden"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Info className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.paymentInstructionsCardTitle}</CardTitle>
+        
+                        </div>
+                        <CardDescription>{t.adminPage.paymentInstructionsCardDescription}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Label htmlFor="payment-instructions">{t.adminPage.paymentInstructionsLabel}</Label>
+                        <Textarea
+                            id="payment-instructions"
+                            value={paymentInstructions}
+                            onChange={(e) => setPaymentInstructions(e.target.value)}
+                            rows={5}
+                        />
+                        <Button onClick={handleSaveInstructions} disabled={isSaving}>
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {t.adminPage.savingButton}
+                                </>
+                            ) : (
+                                t.adminPage.saveButton
+                            )}
+                        </Button>
+                    </CardContent>
+                </Card>
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <UserCheck className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.trustedCustomersCardTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.trustedCustomersCardDescription}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                          <Label htmlFor="new-trusted-customer">{t.adminPage.addTrustedCustomerLabel}</Label>
+                          <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                              <Input 
+                                  id="new-trusted-customer"
+                                  value={newTrustedCustomer}
+                                  onChange={(e) => setNewTrustedCustomer(e.target.value)}
+                                  placeholder={t.adminPage.trustedCustomerNamePlaceholder}
+                              />
+                              <Button onClick={handleAddTrustedCustomer} className="w-full sm:w-auto">{t.adminPage.addCustomerButton}</Button>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="font-medium text-sm">{t.adminPage.trustedCustomersListTitle}</h4>
+                            {trustedCustomers.length > 0 ? (
+                                <div className="border rounded-lg p-2 space-y-2 max-h-48 overflow-y-auto">
+                                    {trustedCustomers.map(customer => (
+                                        <div key={customer} className="flex justify-between items-center bg-background/50 p-2 rounded-md">
+                                            <span>{customer}</span>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveTrustedCustomer(customer)}>
+                                                <Trash2 className="w-4 h-4 text-destructive"/>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">{t.adminPage.noTrustedCustomers}</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Lock className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.securitySettingsCardTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.securitySettingsCardDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <Label htmlFor="current-admin-code">{t.adminPage.securityCurrentCodeLabel}</Label>
+                            <Input
+                                id="current-admin-code"
+                                value={adminAccessCode || ''}
+                                readOnly
+                                className="font-mono mt-1"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="new-admin-code">{t.adminPage.securityNewCodeLabel}</Label>
+                             <div className="flex flex-col sm:flex-row gap-2 mt-1">
+                                <Input
+                                    id="new-admin-code"
+                                    value={newAdminCode}
+                                    onChange={(e) => setNewAdminCode(e.target.value)}
+                                    placeholder={t.adminPage.securityNewCodePlaceholder}
+                                />
+                                <Button onClick={handleChangeAdminCode} className="w-full sm:w-auto">
+                                    {t.adminPage.securityChangeCodeButton}
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="assistant" className="grid grid-cols-1 gap-8 mt-0">
+                <Card className="bg-card/80 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle>{t.adminPage.title}</CardTitle>
+                    <CardDescription>
+                     {t.adminPage.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Textarea
+                      value={bookingData}
+                      onChange={(e) => setBookingData(e.target.value)}
+                      rows={15}
+                      placeholder={t.adminPage.dataPlaceholder}
+                      className="font-code"
+                    />
+                     <div className="flex flex-wrap gap-2">
+                      <Button onClick={handleAnalyze} disabled={isLoading}>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t.adminPage.analyzingButton}
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            {t.adminPage.analyzeButton}
+                          </>
+                        )}
+                      </Button>
+                       <Button onClick={handleUseMockData} variant="outline">
+                        {t.adminPage.useMockButton}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+        
+                {error && (
+                  <Card className="border-destructive">
+                    <CardHeader>
+                      <CardTitle className="text-destructive">{t.adminPage.errorTitle}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p>{error}</p>
+                    </CardContent>
+                  </Card>
+                )}
+        
+                {recommendations && (
+                  <Card className="border-accent">
+                    <CardHeader>
+                      <CardTitle className="text-primary flex items-center gap-2">
+                        <Sparkles className="w-6 h-6 text-accent" />
+                        {t.adminPage.recommendationsTitle}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
+                        {recommendations}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+            </TabsContent>
+        </div>
       </Tabs>
 
       <AlertDialog open={!!editingBooking} onOpenChange={() => setEditingBooking(null)}>
@@ -1683,15 +1596,15 @@ export default function AdminPage() {
           </AlertDialogHeader>
           <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="manual-name" className="text-right">{t.bookingForm.nameLabel}</Label>
+                  <Label htmlFor="manual-name" className={cn("text-right", lang === 'ar' && "text-left")}>{t.bookingForm.nameLabel}</Label>
                   <Input id="manual-name" value={manualBookingName} onChange={(e) => setManualBookingName(e.target.value)} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="manual-phone" className="text-right">{t.bookingForm.phoneLabel}</Label>
+                  <Label htmlFor="manual-phone" className={cn("text-right", lang === 'ar' && "text-left")}>{t.bookingForm.phoneLabel}</Label>
                   <Input id="manual-phone" value={manualBookingPhone} onChange={(e) => setManualBookingPhone(e.target.value)} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="manual-duration" className="text-right">{t.bookingHistoryTable.duration}</Label>
+                  <Label htmlFor="manual-duration" className={cn("text-right", lang === 'ar' && "text-left")}>{t.bookingHistoryTable.duration}</Label>
                    <Select
                         value={manualBookingDuration.toString()}
                         onValueChange={(value) => setManualBookingDuration(parseFloat(value))}

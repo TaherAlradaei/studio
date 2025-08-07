@@ -164,7 +164,7 @@ export const arStrings: Dictionary = {
     accessCode: "رمز الدخول",
     noRegistrations: "لا توجد طلبات تسجيل في الأكاديمية.",
     dashboardTab: "لوحة التحكم",
-    layoutTab: "التخطيط",
+    settingsTab: "الإعدادات",
     layoutTabDescription: "قم بتخصيص تخطيط لوحة التحكم الخاصة بك.",
     reorderComingSoon: "ستتوفر إمكانية إعادة ترتيب الأقسام قريبًا.",
     trustedCustomersCardTitle: "العملاء الموثوقون",
