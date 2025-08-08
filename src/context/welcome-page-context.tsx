@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, type ReactNode, useMemo, useEffect, useCallback } from "react";
-import { getWelcomePageContent, updateWelcomePageContent as updateWelcomePageContentAction } from "@/app/(main)/admin/actions";
+import { getWelcomePageContent } from "@/app/(main)/admin/actions";
 import type { WelcomePageContent } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 interface WelcomePageContextType {
   welcomePageContent: WelcomePageContent | null;
   isWelcomePageLoading: boolean;
-  updateWelcomePageContent: (updates: Partial<WelcomePageContent>) => Promise<void>;
 }
 
 const WelcomePageContext = createContext<WelcomePageContextType | undefined>(undefined);
@@ -36,27 +35,10 @@ export const WelcomePageProvider = ({ children }: { children: ReactNode }) => {
     fetchContent();
   }, [toast]);
   
-
-  const updateWelcomePageContent = useCallback(async (updates: Partial<WelcomePageContent>) => {
-    setContent(prevContent => ({
-      ...prevContent!,
-      ...updates
-    }));
-    try {
-        await updateWelcomePageContentAction(updates);
-    } catch(e) {
-        toast({ title: "Error", description: "Failed to save welcome page content.", variant: "destructive" });
-         const fetchedContent = await getWelcomePageContent();
-         setContent(fetchedContent);
-    }
-  }, [toast]);
-  
-
   const value = useMemo(() => ({
     welcomePageContent: content,
     isWelcomePageLoading,
-    updateWelcomePageContent,
-  }), [content, isWelcomePageLoading, updateWelcomePageContent]);
+  }), [content, isWelcomePageLoading]);
 
   return (
     <WelcomePageContext.Provider value={value}>

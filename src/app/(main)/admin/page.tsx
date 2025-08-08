@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile } from "./actions";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
-import type { Booking, AcademyRegistration, GalleryImage } from "@/lib/types";
+import type { Booking, AcademyRegistration, GalleryImage, WelcomePageContent } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfDay, endOfDay, addDays, startOfMonth, endOfMonth, isWithinInterval, differenceInYears } from "date-fns";
@@ -33,7 +33,6 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
-import { useWelcomePage } from "@/context/welcome-page-context";
 import { Timestamp } from "firebase/firestore";
 
 
@@ -214,7 +213,9 @@ export default function AdminPage() {
   const { bookings, updateBooking, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
   const { registrations, updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
-  const { welcomePageContent, updateWelcomePageContent, isWelcomePageLoading } = useWelcomePage();
+  
+  const [welcomePageContent, setWelcomePageContent] = useState<WelcomePageContent | null>(null);
+  const [isWelcomePageLoading, setIsWelcomePageLoading] = useState(true);
 
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState("");
@@ -276,11 +277,21 @@ export default function AdminPage() {
   }, [backgrounds, isBackgroundsLoading]);
   
   useEffect(() => {
-    if (!isWelcomePageLoading && welcomePageContent) {
-      setWelcomeTitle(welcomePageContent.title);
-      setWelcomeMessage(welcomePageContent.message);
+    async function fetchWelcomeContent() {
+      try {
+        setIsWelcomePageLoading(true);
+        const content = await getWelcomePageContent();
+        setWelcomePageContent(content);
+        setWelcomeTitle(content.title);
+        setWelcomeMessage(content.message);
+      } catch (err) {
+        toast({ title: "Error", description: "Failed to load page content.", variant: "destructive" });
+      } finally {
+        setIsWelcomePageLoading(false);
+      }
     }
-  }, [welcomePageContent, isWelcomePageLoading]);
+    fetchWelcomeContent();
+  }, [toast]);
 
 
   useEffect(() => {
@@ -663,7 +674,9 @@ export default function AdminPage() {
                 // We're not storing the path for these images yet. Let's add that.
               }
               const { url, path } = await uploadFile(dataUrl, 'public/welcome');
-              await updateWelcomeContentAction({ [imageType]: url, [`${imageType}Path`]: path });
+              const newContent = { ...welcomePageContent, [imageType]: url, [`${imageType}Path`]: path };
+              await updateWelcomeContentAction(newContent as Partial<WelcomePageContent>);
+              setWelcomePageContent(newContent);
               toast({
                   title: t.adminPage.welcomePageContentUpdatedTitle,
                   description: t.adminPage.welcomePageImageUpdatedDesc,
@@ -692,7 +705,9 @@ export default function AdminPage() {
                 try {
                     const { url, path } = await uploadFile(dataUrl, 'public/gallery');
                     const currentImages = welcomePageContent?.galleryImages || [];
-                    await updateWelcomeContentAction({ galleryImages: [...currentImages, { url, path }] });
+                    const newImages = [...currentImages, { url, path }];
+                    await updateWelcomeContentAction({ galleryImages: newImages });
+                    setWelcomePageContent(prev => ({...prev!, galleryImages: newImages}));
                     toast({ title: "Gallery Image Added" });
                 } catch (err) {
                     toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
@@ -715,6 +730,7 @@ export default function AdminPage() {
             const currentImages = welcomePageContent?.galleryImages || [];
             const newImages = currentImages.filter(img => img.path !== imageToDelete.path);
             await updateWelcomeContentAction({ galleryImages: newImages });
+            setWelcomePageContent(prev => ({...prev!, galleryImages: newImages}));
             toast({ title: "Gallery Image Deleted", variant: "destructive" });
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete gallery image.", variant: "destructive" });
@@ -726,6 +742,7 @@ export default function AdminPage() {
       setIsSaving(true);
       try {
         await updateWelcomeContentAction({ title: welcomeTitle, message: welcomeMessage });
+        setWelcomePageContent(prev => ({...prev!, title: welcomeTitle, message: welcomeMessage}));
         toast({
           title: t.adminPage.welcomePageContentUpdatedTitle,
           description: t.adminPage.welcomePageTextUpdatedDesc,
