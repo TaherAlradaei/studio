@@ -153,13 +153,13 @@ export default function WelcomePage() {
             <h2 className="text-4xl font-bold font-headline text-primary text-center mb-8">{t.welcomePage.galleryTitle}</h2>
             <Carousel className="w-full max-w-4xl mx-auto">
               <CarouselContent>
-                {welcomePageContent?.galleryImageUrls?.map((url, index) => (
+                {welcomePageContent?.galleryImages?.map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="p-1">
                       <Card>
                         <CardContent className="flex aspect-video items-center justify-center p-0 overflow-hidden rounded-lg">
                            <Image
-                              src={url}
+                              src={image.url}
                               alt={`Gallery image ${index + 1}`}
                               width={800}
                               height={600}

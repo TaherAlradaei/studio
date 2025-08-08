@@ -59,6 +59,11 @@ export interface Background {
   path?: string;
 }
 
+export interface GalleryImage {
+    url: string;
+    path: string;
+}
+
 export interface WelcomePageContent {
   title: string;
   message: string;
@@ -66,5 +71,5 @@ export interface WelcomePageContent {
   fieldImageUrlPath?: string;
   coachImageUrl: string;
   coachImageUrlPath?: string;
-  galleryImageUrls?: string[];
+  galleryImages?: GalleryImage[];
 }

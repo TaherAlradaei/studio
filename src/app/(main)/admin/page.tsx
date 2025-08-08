@@ -7,12 +7,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
-import type { Booking, AcademyRegistration } from "@/lib/types";
+import type { Booking, AcademyRegistration, GalleryImage } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfDay, endOfDay, addDays, startOfMonth, endOfMonth, isWithinInterval, differenceInYears } from "date-fns";
@@ -252,6 +252,8 @@ export default function AdminPage() {
   
   const welcomePageFieldImageInputRef = useRef<HTMLInputElement | null>(null);
   const welcomePageCoachImageInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryImageInputRef = useRef<HTMLInputElement | null>(null);
+
   const [welcomeTitle, setWelcomeTitle] = useState("");
   const [welcomeMessage, setWelcomeMessage] = useState("");
 
@@ -676,6 +678,49 @@ export default function AdminPage() {
         event.target.value = '';
       }
     };
+    
+    const handleAddGalleryImage = () => {
+        galleryImageInputRef.current?.click();
+    };
+
+    const handleGalleryFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const dataUrl = e.target?.result as string;
+                try {
+                    const { url, path } = await uploadFile(dataUrl, 'public/gallery');
+                    const currentImages = welcomePageContent?.galleryImages || [];
+                    await updateWelcomePageContent({ galleryImages: [...currentImages, { url, path }] });
+                    toast({ title: "Gallery Image Added" });
+                } catch (err) {
+                    toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        if(event.target){
+            event.target.value = '';
+        }
+    };
+
+    const handleDeleteGalleryImage = async (imageToDelete: GalleryImage) => {
+        if (!imageToDelete.path) {
+            toast({ title: "Error", description: "Image path not found, cannot delete from storage.", variant: "destructive" });
+            return;
+        }
+        try {
+            await deleteFile(imageToDelete.path);
+            const currentImages = welcomePageContent?.galleryImages || [];
+            const newImages = currentImages.filter(img => img.path !== imageToDelete.path);
+            await updateWelcomePageContent({ galleryImages: newImages });
+            toast({ title: "Gallery Image Deleted", variant: "destructive" });
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to delete gallery image.", variant: "destructive" });
+        }
+    };
+
 
     const handleSaveWelcomeText = async () => {
       setIsSaving(true);
@@ -1305,6 +1350,48 @@ export default function AdminPage() {
                             </div>
                         </div>
                         </>}
+                    </CardContent>
+                </Card>
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <ImageIcon className="w-6 h-6 text-primary" />
+                                <CardTitle>{t.welcomePage.galleryTitle}</CardTitle>
+                            </div>
+                            <Button onClick={handleAddGalleryImage}>{t.adminPage.addCustomerButton}</Button>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={galleryImageInputRef}
+                                onChange={handleGalleryFileChange}
+                                className="hidden"
+                            />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {isWelcomePageLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
+                            welcomePageContent?.galleryImages?.map((image, index) => (
+                                <div key={index} className="relative group">
+                                    <Image
+                                        src={image.url}
+                                        alt={`Gallery image ${index + 1}`}
+                                        width={200}
+                                        height={150}
+                                        className="w-full h-auto object-cover rounded-md aspect-video"
+                                    />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <Button
+                                            variant="destructive"
+                                            size="icon"
+                                            onClick={() => handleDeleteGalleryImage(image)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </CardContent>
                 </Card>
                 <Card className="bg-card/80 backdrop-blur-sm">
