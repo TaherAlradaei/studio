@@ -663,7 +663,7 @@ export default function AdminPage() {
                 // We're not storing the path for these images yet. Let's add that.
               }
               const { url, path } = await uploadFile(dataUrl, 'public/welcome');
-              await updateWelcomePageContent({ [imageType]: url, [`${imageType}Path`]: path });
+              await updateWelcomeContentAction({ [imageType]: url, [`${imageType}Path`]: path });
               toast({
                   title: t.adminPage.welcomePageContentUpdatedTitle,
                   description: t.adminPage.welcomePageImageUpdatedDesc,
@@ -692,7 +692,7 @@ export default function AdminPage() {
                 try {
                     const { url, path } = await uploadFile(dataUrl, 'public/gallery');
                     const currentImages = welcomePageContent?.galleryImages || [];
-                    await updateWelcomePageContent({ galleryImages: [...currentImages, { url, path }] });
+                    await updateWelcomeContentAction({ galleryImages: [...currentImages, { url, path }] });
                     toast({ title: "Gallery Image Added" });
                 } catch (err) {
                     toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
@@ -714,7 +714,7 @@ export default function AdminPage() {
             await deleteFile(imageToDelete.path);
             const currentImages = welcomePageContent?.galleryImages || [];
             const newImages = currentImages.filter(img => img.path !== imageToDelete.path);
-            await updateWelcomePageContent({ galleryImages: newImages });
+            await updateWelcomeContentAction({ galleryImages: newImages });
             toast({ title: "Gallery Image Deleted", variant: "destructive" });
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete gallery image.", variant: "destructive" });
@@ -725,7 +725,7 @@ export default function AdminPage() {
     const handleSaveWelcomeText = async () => {
       setIsSaving(true);
       try {
-        await updateWelcomePageContent({ title: welcomeTitle, message: welcomeMessage });
+        await updateWelcomeContentAction({ title: welcomeTitle, message: welcomeMessage });
         toast({
           title: t.adminPage.welcomePageContentUpdatedTitle,
           description: t.adminPage.welcomePageTextUpdatedDesc,
@@ -1418,7 +1418,7 @@ export default function AdminPage() {
                             </Button>
                             <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,image/gif"
                                 ref={logoFileInputRef}
                                 onChange={handleLogoFileChange}
                                 className="hidden"
