@@ -66,4 +66,5 @@ export interface WelcomePageContent {
   fieldImageUrlPath?: string;
   coachImageUrl: string;
   coachImageUrlPath?: string;
+  galleryImageUrls?: string[];
 }

@@ -10,7 +10,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 
 export async function uploadFile(base64DataUrl: string, folder: string): Promise<{ url: string, path: string }> {
-    const mimeType = base64DataUrl.split(';')[0].split(':')[1];
+    const mimeTypeMatch = base64DataUrl.match(/^data:(image\/[a-z]+);base64,/);
+    if (!mimeTypeMatch) {
+        throw new Error("Invalid data URL format");
+    }
+    const mimeType = mimeTypeMatch[1];
     const base64Data = base64DataUrl.split(',')[1];
     const fileExtension = mimeType.split('/')[1];
     
@@ -133,6 +137,13 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
         message: "Your premier destination for football in Sana'a. Book a field, join our academy, and become part of our community.",
         fieldImageUrl: "https://images.unsplash.com/photo-1557174949-3b1f5b2e8fac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmb290YmFsbCUyMGZpZWxkfGVufDB8fHx8MTc1MjI2NjI3OHww&ixlib=rb-4.1.0&q=80&w=1080",
         coachImageUrl: "https://images.unsplash.com/photo-1603683180670-89e591ecf86a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmb290YmFsbCUyMGNvYWNofGVufDB8fHx8MTc1MjI2NjI3OXww&ixlib=rb-4.1.0&q=80&w=1080",
+        galleryImageUrls: [
+            "https://placehold.co/800x600.png",
+            "https://placehold.co/800x600.png",
+            "https://placehold.co/800x600.png",
+            "https://placehold.co/800x600.png",
+            "https://placehold.co/800x600.png"
+        ]
     };
 }
 

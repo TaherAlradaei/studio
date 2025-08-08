@@ -14,8 +14,8 @@ export const enStrings = {
     phone: "Phone: +967 736 333 328",
   },
   welcomePage: {
-    defaultTitle: "Welcome to Al Maidan Sporting Club",
-    defaultMessage: "Your premier destination for football in Sana'a. Book a field, join our academy, and become part of our community.",
+    welcomeTitle: "Welcome to Al Maidan Sporting Club",
+    welcomeMessage: "Your premier destination for football in Sana'a. Book a field, join our academy, and become part of our community.",
     fieldTitle: "Quality Pitches",
     fieldDesc: "Our fields are equipped to the highest standards for the best playing experience.",
     coachTitle: "Professional Coaching",
@@ -23,6 +23,13 @@ export const enStrings = {
     alreadyMember: "Already an Academy Member?",
     alreadyMemberDesc: "Log in to your personal space to share your progress and connect with teammates.",
     memberAreaButton: "Member Area",
+    ourMissionTitle: "Our Mission",
+    ourMissionText: "To provide a safe and stimulating sports environment for youth to develop their football skills, focusing on sportsmanship, teamwork, and personal growth.",
+    ourVisionTitle: "Our Vision",
+    ourVisionText: "To be the leading football academy in the region, recognized for excellence in training young talent and developing future leaders on and off the field.",
+    ourGoalsTitle: "Our Goals",
+    ourGoalsText: "We aim to deliver high-quality coaching, foster a love for the game, and develop disciplined, respectful players who contribute positively to their community.",
+    galleryTitle: "Gallery",
   },
   bookingPage: {
     title: "Book Your Field",
@@ -294,5 +301,3 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
-
-    
