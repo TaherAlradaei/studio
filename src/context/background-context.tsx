@@ -29,10 +29,6 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(true);
         const fetchedBackgrounds = await getBackgrounds();
         setBackgrounds(fetchedBackgrounds);
-        if (fetchedBackgrounds.length > 0) {
-            // Set initial random index only on client after mount to avoid hydration mismatch
-            setCurrentIndex(Math.floor(Math.random() * fetchedBackgrounds.length));
-        }
       } catch (error) {
         toast({
           title: "Error",
@@ -45,6 +41,13 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
     };
     fetchBackgrounds();
   }, [toast]);
+
+  useEffect(() => {
+    // Set initial random index only on client after mount to avoid hydration mismatch
+    if (backgrounds.length > 0) {
+      setCurrentIndex(Math.floor(Math.random() * backgrounds.length));
+    }
+  }, [backgrounds.length]);
 
   const cycleBackground = useCallback(() => {
     if (backgrounds.length > 0) {
