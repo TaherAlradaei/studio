@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, type ReactNode, useCallback, useMemo, useEffect } from "react";
-import { getBackgrounds, updateBackgrounds, deleteFile as deleteFileAction } from "@/app/(main)/admin/actions";
+import { getBackgrounds, updateBackgrounds } from "@/app/(main)/admin/actions";
 import type { Background } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,6 +29,9 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(true);
         const fetchedBackgrounds = await getBackgrounds();
         setBackgrounds(fetchedBackgrounds);
+        if (fetchedBackgrounds.length > 0) {
+            setCurrentIndex(Math.floor(Math.random() * fetchedBackgrounds.length));
+        }
       } catch (error) {
         toast({
           title: "Error",
@@ -54,6 +57,12 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
         if(index === newBackgrounds.length) {
              newBackgrounds.push(newBackground);
         } else {
+            // When replacing, ensure old file is deleted if path exists
+            const oldPath = newBackgrounds[index]?.path;
+            if (oldPath && oldPath !== newBackground.path) {
+                // This part should be handled in the calling component (admin page)
+                // to ensure we can also call deleteFile server action.
+            }
             newBackgrounds[index] = newBackground;
         }
         await updateBackgrounds(newBackgrounds);
@@ -67,12 +76,19 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
     setBackgrounds(newBackgrounds);
     if(currentIndex >= newBackgrounds.length && newBackgrounds.length > 0){
         setCurrentIndex(newBackgrounds.length - 1);
+    } else if (newBackgrounds.length === 0) {
+        setCurrentIndex(0);
     }
   };
   
   const currentBackground = useMemo(() => {
       if (isBackgroundsLoading || backgrounds.length === 0) {
-          return undefined;
+          // Provide a default fallback background if none are loaded
+          return {
+              url: "https://placehold.co/1920x1080.png",
+              hint: "placeholder",
+              path: "",
+          };
       }
       return backgrounds[currentIndex];
   }, [backgrounds, currentIndex, isBackgroundsLoading]);
@@ -85,7 +101,7 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
     cycleBackground,
     updateBackground,
     deleteBackground,
-  }), [backgrounds, currentBackground, isBackgroundsLoading, cycleBackground, deleteBackground]);
+  }), [backgrounds, currentBackground, isBackgroundsLoading, cycleBackground, updateBackground, deleteBackground]);
 
   return (
     <BackgroundContext.Provider value={value}>

@@ -601,6 +601,12 @@ export default function AdminPage() {
           reader.onload = async (e) => {
               const dataUrl = e.target?.result as string;
               try {
+                // If a background already exists, delete the old one from storage
+                const oldPath = backgrounds[index]?.path;
+                if (oldPath) {
+                   await deleteFile(oldPath);
+                }
+
                 const { url, path } = await uploadFile(dataUrl, 'public/backgrounds');
                 const newHint = hintInputs[index] || '';
                 await updateBackground(index, { url, path, hint: newHint });
