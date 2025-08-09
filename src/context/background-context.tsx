@@ -30,6 +30,7 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
         const fetchedBackgrounds = await getBackgrounds();
         setBackgrounds(fetchedBackgrounds);
         if (fetchedBackgrounds.length > 0) {
+            // Set initial random index only on client after mount to avoid hydration mismatch
             setCurrentIndex(Math.floor(Math.random() * fetchedBackgrounds.length));
         }
       } catch (error) {
@@ -57,12 +58,6 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
         if(index === newBackgrounds.length) {
              newBackgrounds.push(newBackground);
         } else {
-            // When replacing, ensure old file is deleted if path exists
-            const oldPath = newBackgrounds[index]?.path;
-            if (oldPath && oldPath !== newBackground.path) {
-                // This part should be handled in the calling component (admin page)
-                // to ensure we can also call deleteFile server action.
-            }
             newBackgrounds[index] = newBackground;
         }
         await updateBackgrounds(newBackgrounds);
@@ -90,7 +85,8 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
               path: "",
           };
       }
-      return backgrounds[currentIndex];
+      // Ensure currentIndex is always valid
+      return backgrounds[currentIndex % backgrounds.length];
   }, [backgrounds, currentIndex, isBackgroundsLoading]);
 
 
