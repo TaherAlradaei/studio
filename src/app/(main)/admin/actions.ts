@@ -31,6 +31,10 @@ export async function uploadFile(base64DataUrl: string, folder: string): Promise
 }
 
 export async function deleteFile(filePath: string): Promise<void> {
+    if (!filePath) {
+        console.log("No file path provided for deletion, skipping.");
+        return;
+    }
     const storageRef = ref(storage, filePath);
     try {
         await deleteObject(storageRef);
@@ -147,7 +151,5 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
 
 export async function updateWelcomePageContent(content: Partial<WelcomePageContent>): Promise<void> {
     const docRef = doc(db, 'settings', 'welcomePage');
-    // Using merge: true ensures we only update the fields provided,
-    // and don't overwrite other fields (like galleryImages when only updating fieldImageUrl)
     await setDoc(docRef, content, { merge: true });
 }

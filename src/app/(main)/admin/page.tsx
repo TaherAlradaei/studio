@@ -662,24 +662,29 @@ export default function AdminPage() {
         reader.onload = async (e) => {
           const dataUrl = e.target?.result as string;
           try {
-              if (welcomePageContent[imageType]) {
-                // This part requires storing the path in the db, which needs to be added.
-                // Assuming `fieldImageUrlPath` and `coachImageUrlPath` exist.
-                const oldPath = welcomePageContent[`${imageType}Path`];
-                if (oldPath) {
-                    await deleteFile(oldPath);
-                }
+              const oldPath = welcomePageContent[`${imageType}Path`];
+              if (oldPath) {
+                  await deleteFile(oldPath);
               }
+
               const { url, path } = await uploadFile(dataUrl, 'public/welcome');
-              const newContent = { ...welcomePageContent, [imageType]: url, [`${imageType}Path`]: path };
-              await updateWelcomeContentAction({ [imageType]: url, [`${imageType}Path`]: path });
-              setWelcomePageContent(newContent);
+              
+              const updateData: Partial<WelcomePageContent> = {
+                  [imageType]: url,
+                  [`${imageType}Path`]: path,
+              };
+              
+              await updateWelcomeContentAction(updateData);
+              
+              setWelcomePageContent(prev => prev ? { ...prev, ...updateData } : null);
+              
               toast({
                   title: t.adminPage.welcomePageContentUpdatedTitle,
                   description: t.adminPage.welcomePageImageUpdatedDesc,
               });
           } catch(err) {
-              toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
+              const errorMessage = err instanceof Error ? err.message : "Failed to upload image";
+              toast({ title: "Upload Error", description: errorMessage, variant: "destructive" });
           }
         };
         reader.readAsDataURL(file);
@@ -704,7 +709,7 @@ export default function AdminPage() {
                     const currentImages = welcomePageContent?.galleryImages || [];
                     const newImages = [...currentImages, { url, path }];
                     await updateWelcomeContentAction({ galleryImages: newImages });
-                    setWelcomePageContent(prev => ({...prev!, galleryImages: newImages}));
+                    setWelcomePageContent(prev => prev ? ({...prev, galleryImages: newImages}) : null);
                     toast({ title: "Gallery Image Added" });
                 } catch (err) {
                     toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
@@ -727,7 +732,7 @@ export default function AdminPage() {
             const currentImages = welcomePageContent?.galleryImages || [];
             const newImages = currentImages.filter(img => img.path !== imageToDelete.path);
             await updateWelcomeContentAction({ galleryImages: newImages });
-            setWelcomePageContent(prev => ({...prev!, galleryImages: newImages}));
+            setWelcomePageContent(prev => prev ? ({...prev, galleryImages: newImages}) : null);
             toast({ title: "Gallery Image Deleted", variant: "destructive" });
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete gallery image.", variant: "destructive" });
