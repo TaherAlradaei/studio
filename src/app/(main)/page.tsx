@@ -37,10 +37,10 @@ export default function WelcomePage() {
       <div className="md:hidden">
         <div className="text-center mb-12">
            <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary mb-4">
-              {welcomePageContent?.title}
+              {t.welcomePage.welcomeTitle}
            </h1>
            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              {welcomePageContent?.message}
+              {t.welcomePage.welcomeMessage}
            </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -106,10 +106,10 @@ export default function WelcomePage() {
       <div className="hidden md:block">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold font-headline text-primary mb-4">
-            {welcomePageContent?.title}
+            {t.welcomePage.welcomeTitle}
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            {welcomePageContent?.message}
+            {t.welcomePage.welcomeMessage}
           </p>
         </div>
 

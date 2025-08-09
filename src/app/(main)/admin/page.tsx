@@ -255,9 +255,6 @@ export default function AdminPage() {
   const welcomePageCoachImageInputRef = useRef<HTMLInputElement | null>(null);
   const galleryImageInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [welcomeTitle, setWelcomeTitle] = useState("");
-  const [welcomeMessage, setWelcomeMessage] = useState("");
-
   const [adminAccessCode, setAdminAccessCode] = useState("");
   const [newAdminCode, setNewAdminCode] = useState("");
   
@@ -282,8 +279,6 @@ export default function AdminPage() {
         setIsWelcomePageLoading(true);
         const content = await getWelcomePageContent();
         setWelcomePageContent(content);
-        setWelcomeTitle(content.title);
-        setWelcomeMessage(content.message);
       } catch (err) {
         toast({ title: "Error", description: "Failed to load page content.", variant: "destructive" });
       } finally {
@@ -662,20 +657,22 @@ export default function AdminPage() {
       imageType: 'fieldImageUrl' | 'coachImageUrl'
     ) => {
       const file = event.target.files?.[0];
-      if (file) {
+      if (file && welcomePageContent) {
         const reader = new FileReader();
         reader.onload = async (e) => {
           const dataUrl = e.target?.result as string;
           try {
-              if (welcomePageContent && welcomePageContent[imageType]) {
-                // This assumes the URL is a Firebase Storage URL. A more robust solution would parse the path.
-                // For now, we'll assume it's a simple path based on the upload folder.
-                // This part is tricky and might need a better way to get the storage path.
-                // We're not storing the path for these images yet. Let's add that.
+              if (welcomePageContent[imageType]) {
+                // This part requires storing the path in the db, which needs to be added.
+                // Assuming `fieldImageUrlPath` and `coachImageUrlPath` exist.
+                const oldPath = welcomePageContent[`${imageType}Path`];
+                if (oldPath) {
+                    await deleteFile(oldPath);
+                }
               }
               const { url, path } = await uploadFile(dataUrl, 'public/welcome');
               const newContent = { ...welcomePageContent, [imageType]: url, [`${imageType}Path`]: path };
-              await updateWelcomeContentAction(newContent as Partial<WelcomePageContent>);
+              await updateWelcomeContentAction({ [imageType]: url, [`${imageType}Path`]: path });
               setWelcomePageContent(newContent);
               toast({
                   title: t.adminPage.welcomePageContentUpdatedTitle,
@@ -735,23 +732,6 @@ export default function AdminPage() {
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete gallery image.", variant: "destructive" });
         }
-    };
-
-
-    const handleSaveWelcomeText = async () => {
-      setIsSaving(true);
-      try {
-        await updateWelcomeContentAction({ title: welcomeTitle, message: welcomeMessage });
-        setWelcomePageContent(prev => ({...prev!, title: welcomeTitle, message: welcomeMessage}));
-        toast({
-          title: t.adminPage.welcomePageContentUpdatedTitle,
-          description: t.adminPage.welcomePageTextUpdatedDesc,
-        });
-      } catch (error) {
-         toast({ title: t.adminPage.errorTitle, description: "Failed to save welcome content.", variant: "destructive" });
-      } finally {
-        setIsSaving(false);
-      }
     };
 
     const handleRegistrationStatusUpdate = async (registration: AcademyRegistration, status: 'accepted' | 'rejected') => {
@@ -1289,84 +1269,56 @@ export default function AdminPage() {
                         <CardDescription>{t.adminPage.manageWelcomePageCardDescription}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {isWelcomePageLoading ? <p>Loading...</p> : <>
-                        <div className="space-y-2">
-                          <Label htmlFor="welcome-title">{t.adminPage.welcomePageTitleLabel}</Label>
-                          <Input 
-                              id="welcome-title"
-                              value={welcomeTitle || ''}
-                              onChange={(e) => setWelcomeTitle(e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="welcome-message">{t.adminPage.welcomePageMessageLabel}</Label>
-                          <Textarea
-                              id="welcome-message"
-                              value={welcomeMessage || ''}
-                              onChange={(e) => setWelcomeMessage(e.target.value)}
-                              rows={4}
-                          />
-                        </div>
-                         <Button onClick={handleSaveWelcomeText} disabled={isSaving}>
-                            {isSaving ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    {t.adminPage.savingButton}
-                                </>
-                            ) : (
-                                t.adminPage.saveButton
-                            )}
-                        </Button>
-        
-                        <div className="grid md:grid-cols-2 gap-6 pt-6 border-t">
-                            <div className="space-y-4">
-                                <Label>{t.adminPage.welcomePageFieldImageLabel}</Label>
-                                {welcomePageContent?.fieldImageUrl && (
-                                    <Image
-                                        src={welcomePageContent.fieldImageUrl}
-                                        alt="Football Field"
-                                        width={200}
-                                        height={150}
-                                        className="w-full h-auto object-cover rounded-md aspect-video border"
-                                        data-ai-hint="football field"
+                        {isWelcomePageLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
+                            <div className="grid md:grid-cols-2 gap-6 pt-6">
+                                <div className="space-y-4">
+                                    <Label>{t.adminPage.welcomePageFieldImageLabel}</Label>
+                                    {welcomePageContent?.fieldImageUrl && (
+                                        <Image
+                                            src={welcomePageContent.fieldImageUrl}
+                                            alt="Football Field"
+                                            width={200}
+                                            height={150}
+                                            className="w-full h-auto object-cover rounded-md aspect-video border"
+                                            data-ai-hint="football field"
+                                        />
+                                    )}
+                                    <Button onClick={() => welcomePageFieldImageInputRef.current?.click()} className="w-full">
+                                        {t.adminPage.replaceImageButton}
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        ref={welcomePageFieldImageInputRef}
+                                        onChange={(e) => handleWelcomePageImageChange(e, 'fieldImageUrl')}
+                                        className="hidden"
                                     />
-                                )}
-                                <Button onClick={() => welcomePageFieldImageInputRef.current?.click()} className="w-full">
-                                    {t.adminPage.replaceImageButton}
-                                </Button>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    ref={welcomePageFieldImageInputRef}
-                                    onChange={(e) => handleWelcomePageImageChange(e, 'fieldImageUrl')}
-                                    className="hidden"
-                                />
-                            </div>
-                             <div className="space-y-4">
-                                <Label>{t.adminPage.welcomePageCoachImageLabel}</Label>
-                                {welcomePageContent?.coachImageUrl && (
-                                    <Image
-                                        src={welcomePageContent.coachImageUrl}
-                                        alt="Academy Coach"
-                                        width={200}
-                                        height={150}
-                                        className="w-full h-auto object-cover rounded-md aspect-video border"
-                                        data-ai-hint="football coach"
+                                </div>
+                                 <div className="space-y-4">
+                                    <Label>{t.adminPage.welcomePageCoachImageLabel}</Label>
+                                    {welcomePageContent?.coachImageUrl && (
+                                        <Image
+                                            src={welcomePageContent.coachImageUrl}
+                                            alt="Academy Coach"
+                                            width={200}
+                                            height={150}
+                                            className="w-full h-auto object-cover rounded-md aspect-video border"
+                                            data-ai-hint="football coach"
+                                        />
+                                    )}
+                                    <Button onClick={() => welcomePageCoachImageInputRef.current?.click()} className="w-full">
+                                        {t.adminPage.replaceImageButton}
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        ref={welcomePageCoachImageInputRef}
+                                        onChange={(e) => handleWelcomePageImageChange(e, 'coachImageUrl')}
+                                        className="hidden"
                                     />
-                                )}
-                                <Button onClick={() => welcomePageCoachImageInputRef.current?.click()} className="w-full">
-                                    {t.adminPage.replaceImageButton}
-                                </Button>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    ref={welcomePageCoachImageInputRef}
-                                    onChange={(e) => handleWelcomePageImageChange(e, 'coachImageUrl')}
-                                    className="hidden"
-                                />
+                                </div>
                             </div>
-                        </div>
-                        </>}
+                        )}
                     </CardContent>
                 </Card>
                 <Card className="bg-card/80 backdrop-blur-sm">

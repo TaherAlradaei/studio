@@ -133,8 +133,6 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
     }
      // Return defaults if not set
     return {
-        title: "Welcome to Al Maidan Sporting Club",
-        message: "Your premier destination for football in Sana'a. Book a field, join our academy, and become part of our community.",
         fieldImageUrl: "https://images.unsplash.com/photo-1557174949-3b1f5b2e8fac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmb290YmFsbCUyMGZpZWxkfGVufDB8fHx8MTc1MjI2NjI3OHww&ixlib=rb-4.1.0&q=80&w=1080",
         coachImageUrl: "https://images.unsplash.com/photo-1603683180670-89e591ecf86a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmb290YmFsbCUyMGNvYWNofGVufDB8fHx8MTc1MjI2NjI3OXww&ixlib=rb-4.1.0&q=80&w=1080",
         galleryImages: [
@@ -149,5 +147,7 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
 
 export async function updateWelcomePageContent(content: Partial<WelcomePageContent>): Promise<void> {
     const docRef = doc(db, 'settings', 'welcomePage');
+    // Using merge: true ensures we only update the fields provided,
+    // and don't overwrite other fields (like galleryImages when only updating fieldImageUrl)
     await setDoc(docRef, content, { merge: true });
 }
