@@ -9,7 +9,7 @@ import { useWelcomePage } from "@/context/welcome-page-context";
 import { FieldIcon } from "@/components/icons";
 import { Shield, User, Loader2, Eye, Target, Heart, Users } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
@@ -35,69 +35,77 @@ export default function WelcomePage() {
 
   return (
     <div className="container py-8 md:py-12">
-      {/* Mobile View */}
-      <div className="md:hidden">
-        <div className="text-center mb-12">
-           <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary mb-4">
-              {t.welcomePage.welcomeTitle}
-           </h1>
-           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              {t.welcomePage.welcomeMessage}
-           </p>
+      <div className="text-center mb-12">
+         <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary mb-4">
+            {t.welcomePage.welcomeTitle}
+         </h1>
+         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            {t.welcomePage.welcomeMessage}
+         </p>
+      </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          <Card className="overflow-hidden bg-card/50 backdrop-blur-sm">
+            <CardHeader className="p-0">
+                {welcomePageContent?.fieldImageUrl &&
+                    <Image
+                      src={welcomePageContent.fieldImageUrl}
+                      alt="Football Field"
+                      width={600}
+                      height={400}
+                      className="w-full h-48 object-cover"
+                       data-ai-hint="football field"
+                    />
+                }
+            </CardHeader>
+            <CardContent className="p-6 text-center">
+              <h2 className="text-2xl font-bold font-headline mb-2">{t.welcomePage.fieldTitle}</h2>
+              <p className="text-muted-foreground mb-4">{t.welcomePage.fieldDesc}</p>
+              <Button asChild size="lg">
+                <Link href="/booking">
+                  <FieldIcon className="mr-2" />
+                  {t.header.bookField}
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden bg-card/50 backdrop-blur-sm">
+             <CardHeader className="p-0">
+                {welcomePageContent?.coachImageUrl &&
+                    <Image
+                      src={welcomePageContent.coachImageUrl}
+                      alt="Academy Coach"
+                      width={600}
+                      height={400}
+                      className="w-full h-48 object-cover"
+                       data-ai-hint="football coach"
+                    />
+                }
+            </CardHeader>
+            <CardContent className="p-6 text-center">
+              <h2 className="text-2xl font-bold font-headline mb-2">{t.welcomePage.coachTitle}</h2>
+              <p className="text-muted-foreground mb-4">{t.welcomePage.coachDesc}</p>
+              <Button asChild size="lg" variant="secondary">
+                <Link href="/academy">
+                  <Shield className="mr-2" />
+                  {t.header.academy}
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-        <div className="grid grid-cols-1 gap-4 mb-12">
-            <Button asChild size="lg">
-              <Link href="/booking">
-                <FieldIcon className="mr-2" />
-                {t.header.bookField}
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/academy">
-                <Shield className="mr-2"/>
-                {t.header.academy}
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
+        
+        {/* "Find a Team" button only for mobile view */}
+        <div className="mb-12 text-center md:hidden">
+            <Button asChild size="lg" variant="outline" className="w-full max-w-sm mx-auto">
               <Link href={isRegistered ? "/find-a-team/players" : "/find-a-team"}>
                 <Users className="mr-2"/>
                 {t.header.findTeam}
               </Link>
             </Button>
         </div>
-         <div className="text-center">
-           {user ? (
-            <>
-              <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.alreadyMember}</h3>
-              <p className="text-muted-foreground mb-6">{t.welcomePage.alreadyMemberDesc}</p>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/member-area">{t.welcomePage.memberAreaButton}</Link>
-              </Button>
-            </>
-          ) : (
-            <>
-              <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-4">{t.auth.getStartedTitle}</h3>
-              <p className="text-muted-foreground mb-6">{t.auth.getStartedDesc}</p>
-              <Button asChild size="lg">
-                <Link href="/login">{t.auth.createAccountAction}</Link>
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
 
-      {/* Desktop View */}
-      <div className="hidden md:block">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold font-headline text-primary mb-4">
-            {t.welcomePage.welcomeTitle}
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            {t.welcomePage.welcomeMessage}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+        <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
           <Card className="text-center bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <div className="flex justify-center items-center mb-4">
@@ -185,7 +193,8 @@ export default function WelcomePage() {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }
+
+    
