@@ -938,6 +938,7 @@ export default function AdminPage() {
                           locale={lang === 'ar' ? arSA : undefined}
                           dir={lang === 'ar' ? 'rtl' : 'ltr'}
                           weekStartsOn={6}
+                          disabled={(date) => isClient && date < new Date(new Date().setHours(0, 0, 0, 0))}
                         />
                       </div>
                       <div className="flex-1">
