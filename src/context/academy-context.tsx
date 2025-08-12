@@ -7,8 +7,6 @@ import { db } from "@/lib/firebase";
 import { uploadFile, deleteFile } from "@/app/(main)/admin/actions";
 import { 
     collection, 
-    query, 
-    onSnapshot, 
     addDoc, 
     updateDoc, 
     doc,
