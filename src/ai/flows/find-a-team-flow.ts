@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -10,7 +11,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { collection, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { TeamRegistration } from '@/lib/types';
 
 
 const TeamRegistrationSchema = z.object({
