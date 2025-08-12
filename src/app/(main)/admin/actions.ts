@@ -117,7 +117,9 @@ export async function getBackgrounds(): Promise<Background[]> {
     const docRef = doc(db, 'settings', 'backgrounds');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists() && docSnap.data().items) {
-        return docSnap.data().items as Background[];
+        const backgrounds = docSnap.data().items as Background[];
+        // Filter out invalid Facebook photo page URLs
+        return backgrounds.filter(bg => !bg.url.includes("facebook.com/photo"));
     }
     // Return empty array to allow for clean testing
     return [];
@@ -125,7 +127,7 @@ export async function getBackgrounds(): Promise<Background[]> {
 
 export async function updateBackgrounds(backgrounds: Background[]): Promise<void> {
     const docRef = doc(db, 'settings', 'backgrounds');
-    await setDoc(docRef, { items: backgrounds });
+    await setDoc(docRef, { items: backgrounds }, { merge: true });
 }
 
 // Welcome Page Settings
