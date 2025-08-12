@@ -213,11 +213,10 @@ export default function AdminPage() {
   const { t, lang } = useLanguage();
   const { unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
   const { updateBooking } = useBookings();
-  const { updateRegistrationStatus } = useAcademy();
+  const { registrations, updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
   
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
 
   const [welcomePageContent, setWelcomePageContent] = useState<WelcomePageContent | null>(null);
   const [isWelcomePageLoading, setIsWelcomePageLoading] = useState(true);
@@ -279,18 +278,8 @@ export default function AdminPage() {
       setBookings(bookingsData);
     });
 
-    const registrationsQuery = query(collection(db, "academyRegistrations"));
-    const registrationsUnsubscribe = onSnapshot(registrationsQuery, (querySnapshot) => {
-      const registrationsData: AcademyRegistration[] = [];
-      querySnapshot.forEach((doc) => {
-        registrationsData.push({ id: doc.id, ...doc.data() } as AcademyRegistration);
-      });
-      setRegistrations(registrationsData);
-    });
-
     return () => {
         bookingsUnsubscribe();
-        registrationsUnsubscribe();
     }
   }, []);
 
@@ -1380,24 +1369,26 @@ export default function AdminPage() {
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {isWelcomePageLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
                             welcomePageContent?.galleryImages?.map((image, index) => (
-                                <div key={index} className="relative group">
-                                    <Image
-                                        src={image.url}
-                                        alt={`Gallery image ${index + 1}`}
-                                        width={200}
-                                        height={150}
-                                        className="w-full h-auto object-cover rounded-md aspect-video"
-                                    />
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <Button
-                                            variant="destructive"
-                                            size="icon"
-                                            onClick={() => handleDeleteGalleryImage(image)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                image.url && (
+                                    <div key={index} className="relative group">
+                                        <Image
+                                            src={image.url}
+                                            alt={`Gallery image ${index + 1}`}
+                                            width={200}
+                                            height={150}
+                                            className="w-full h-auto object-cover rounded-md aspect-video"
+                                        />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Button
+                                                variant="destructive"
+                                                size="icon"
+                                                onClick={() => handleDeleteGalleryImage(image)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
+                                )
                             ))
                         )}
                     </CardContent>
@@ -1412,13 +1403,15 @@ export default function AdminPage() {
                     </CardHeader>
                     <CardContent className="flex flex-col sm:flex-row items-center gap-4">
                          {isLogoLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
-                            <Image
-                                src={logo.url}
-                                alt="Current Logo"
-                                width={80}
-                                height={88}
-                                className="h-20 w-auto object-contain rounded-md bg-white/80 p-2"
-                            />
+                            logo.url && (
+                                <Image
+                                    src={logo.url}
+                                    alt="Current Logo"
+                                    width={80}
+                                    height={88}
+                                    className="h-20 w-auto object-contain rounded-md bg-white/80 p-2"
+                                />
+                            )
                         )}
                         <div className="flex-1 w-full">
                              <Button onClick={handleLogoReplaceClick} className="w-full sm:w-auto">
@@ -1449,41 +1442,43 @@ export default function AdminPage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {isBackgroundsLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : backgrounds.map((bg, index) => (
-                            <div key={index} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-background/50">
-                                <Image
-                                    src={bg.url}
-                                    alt={`Background ${index + 1}`}
-                                    width={160}
-                                    height={90}
-                                    className="w-40 h-auto object-cover rounded-md aspect-video"
-                                    data-ai-hint={bg.hint}
-                                />
-                                <div className="flex-1 w-full space-y-2">
-                                    <Label htmlFor={`hint-${index}`}>{t.adminPage.imageHintLabel}</Label>
-                                    <Input
-                                        id={`hint-${index}`}
-                                        value={hintInputs[index] || ''}
-                                        onChange={(e) => handleHintChange(index, e.target.value)}
-                                        placeholder={t.adminPage.imageHintPlaceholder}
+                            bg.url && (
+                                <div key={index} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-background/50">
+                                    <Image
+                                        src={bg.url}
+                                        alt={`Background ${index + 1}`}
+                                        width={160}
+                                        height={90}
+                                        className="w-40 h-auto object-cover rounded-md aspect-video"
+                                        data-ai-hint={bg.hint}
                                     />
+                                    <div className="flex-1 w-full space-y-2">
+                                        <Label htmlFor={`hint-${index}`}>{t.adminPage.imageHintLabel}</Label>
+                                        <Input
+                                            id={`hint-${index}`}
+                                            value={hintInputs[index] || ''}
+                                            onChange={(e) => handleHintChange(index, e.target.value)}
+                                            placeholder={t.adminPage.imageHintPlaceholder}
+                                        />
+                                    </div>
+                                    <div className="w-full sm:w-auto flex flex-col gap-2">
+                                        <Button onClick={() => handleReplaceClick(index)} className="w-full">
+                                            {t.adminPage.replaceImageButton}
+                                        </Button>
+                                         <Button onClick={() => handleDeleteBackground(index, bg.path)} className="w-full" variant="destructive">
+                                            <Trash2 className="mr-2 h-4 w-4"/>
+                                            {t.adminPage.cancel}
+                                        </Button>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            ref={el => fileInputRefs.current[index] = el}
+                                            onChange={(e) => handleFileChange(e, index)}
+                                            className="hidden"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="w-full sm:w-auto flex flex-col gap-2">
-                                    <Button onClick={() => handleReplaceClick(index)} className="w-full">
-                                        {t.adminPage.replaceImageButton}
-                                    </Button>
-                                     <Button onClick={() => handleDeleteBackground(index, bg.path)} className="w-full" variant="destructive">
-                                        <Trash2 className="mr-2 h-4 w-4"/>
-                                        {t.adminPage.cancel}
-                                    </Button>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        ref={el => fileInputRefs.current[index] = el}
-                                        onChange={(e) => handleFileChange(e, index)}
-                                        className="hidden"
-                                    />
-                                </div>
-                            </div>
+                            )
                         ))}
                     </CardContent>
                 </Card>
