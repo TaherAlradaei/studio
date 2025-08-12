@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
@@ -15,6 +15,7 @@ import { User, LogOut, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useFindATeam } from "@/context/find-a-team-context";
 
 const LanguageSwitcher = () => {
   const { lang, setLang } = useLanguage();
@@ -73,6 +74,7 @@ export function Header() {
   const pathname = usePathname();
   const { t, lang } = useLanguage();
   const { user, logout } = useAuth();
+  const { isRegistered } = useFindATeam();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
@@ -88,7 +90,7 @@ export function Header() {
   const navLinks = [
     { href: "/booking", label: t.header.bookField },
     { href: "/academy", label: t.header.academy },
-    { href: "/find-a-team", label: t.header.findTeam },
+    { href: isRegistered ? "/find-a-team/players" : "/find-a-team", label: t.header.findTeam },
     { href: "/bookings", label: t.header.myBookings },
     { href: "/member-area", label: t.welcomePage.memberAreaButton },
   ];

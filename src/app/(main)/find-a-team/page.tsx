@@ -29,6 +29,7 @@ import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import { useFindATeam } from "@/context/find-a-team-context";
+import { useRouter } from "next/navigation";
 
 
 export default function FindATeamPage() {
@@ -36,6 +37,7 @@ export default function FindATeamPage() {
   const { toast } = useToast();
   const { addRegistration } = useFindATeam();
   const { user } = useAuth();
+  const router = useRouter();
 
   const formSchema = z.object({
     name: z.string().min(2, { message: t.bookingForm.validation.nameMin }),
@@ -75,7 +77,7 @@ export default function FindATeamPage() {
         title: t.findATeamPage.toastSuccessTitle,
         description: t.findATeamPage.toastSuccessDesc,
       });
-      form.reset();
+      router.push('/find-a-team/players');
     } catch (error) {
       toast({
         title: t.adminPage.errorTitle,

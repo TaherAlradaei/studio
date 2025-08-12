@@ -276,10 +276,17 @@ export const enStrings = {
     availabilityDesc: "Let us know which days and times you are usually available to play.",
     submitButton: "Submit Registration",
     toastSuccessTitle: "Registration Sent!",
-    toastSuccessDesc: "We've received your interest. We'll be in touch soon!",
+    toastSuccessDesc: "We've received your interest. You will now be listed for other players to see.",
     validation: {
       availabilityMin: "Please provide some details about your availability.",
     },
+    playerListTitle: "Players Looking for a Team",
+    playerListDesc: "Here's a list of other players looking for teams. Reach out to them to form a team!",
+    noPlayers: "There are currently no players looking for teams. Be the first to join the list!",
+    leaveListButton: "Leave List",
+    leaveListConfirmTitle: "Are you sure?",
+    leaveListConfirmDesc: "This will remove you from the public listing. You can always register again later.",
+    leaveListSuccess: "You have been successfully removed from the list."
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",

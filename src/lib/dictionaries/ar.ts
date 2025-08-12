@@ -278,10 +278,17 @@ export const arStrings: Dictionary = {
     availabilityDesc: "اذكر الأيام والأوقات التي تكون متاحًا فيها للعب عادةً.",
     submitButton: "إرسال التسجيل",
     toastSuccessTitle: "تم إرسال التسجيل",
-    toastSuccessDesc: "لقد سجلنا اهتمامك. سنتواصل معك قريبًا!",
+    toastSuccessDesc: "لقد سجلنا اهتمامك. سيتم الآن عرض قائمتك للاعبين الآخرين.",
     validation: {
       availabilityMin: "يرجى تقديم بعض التفاصيل حول مواعيدك المتاحة.",
     },
+    playerListTitle: "لاعبون يبحثون عن فريق",
+    playerListDesc: "هذه قائمة باللاعبين الآخرين الذين يبحثون عن فرق. تواصل معهم لتشكيل فريق!",
+    noPlayers: "لا يوجد حاليًا لاعبون يبحثون عن فرق. كن أول من ينضم إلى القائمة!",
+    leaveListButton: "مغادرة القائمة",
+    leaveListConfirmTitle: "هل أنت متأكد؟",
+    leaveListConfirmDesc: "سيؤدي هذا إلى إزالة اسمك من القائمة العامة. يمكنك دائمًا التسجيل مرة أخرى لاحقًا.",
+    leaveListSuccess: "تمت إزالتك من القائمة بنجاح."
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",

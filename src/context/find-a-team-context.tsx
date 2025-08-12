@@ -9,37 +9,76 @@ import {
     query, 
     onSnapshot, 
     addDoc, 
-    updateDoc, 
     doc,
-    Timestamp
+    deleteDoc,
+    Timestamp,
+    where
 } from "firebase/firestore";
+import { useAuth } from "./auth-context";
+import { useToast } from "@/hooks/use-toast";
 
 interface FindATeamContextType {
   registrations: TeamRegistration[];
+  isRegistered: boolean;
   addRegistration: (registration: Omit<TeamRegistration, "id" | "status" | "submittedAt">) => Promise<void>;
-  updateRegistrationStatus: (id: string, status: TeamRegistration['status']) => Promise<void>;
+  deleteRegistration: (id: string) => Promise<void>;
 }
 
 const FindATeamContext = createContext<FindATeamContextType | undefined>(undefined);
 
 export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [registrations, setRegistrations] = useState<TeamRegistration[]>([]);
+  const [isRegistered, setIsRegistered] = useState(false);
+
+  useEffect(() => {
+    // This listener fetches all registrations. This assumes your Firestore rules
+    // allow any authenticated user to read the findATeamRegistrations collection.
+    if (user) {
+        const q = query(collection(db, "findATeamRegistrations"));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const regs: TeamRegistration[] = [];
+            let userFound = false;
+            querySnapshot.forEach((doc) => {
+                const data = { id: doc.id, ...doc.data() } as TeamRegistration;
+                regs.push(data);
+                if (data.userId === user.uid) {
+                    userFound = true;
+                }
+            });
+            setRegistrations(regs);
+            setIsRegistered(userFound);
+        }, (error) => {
+            console.error("Error fetching team registrations:", error);
+            toast({
+                title: "Error",
+                description: "Could not fetch player list. You may not have permission.",
+                variant: "destructive"
+            });
+        });
+
+        return () => unsubscribe();
+    } else {
+        setRegistrations([]);
+        setIsRegistered(false);
+    }
+  }, [user, toast]);
 
   const addRegistration = useCallback(async (newRegistrationData: Omit<TeamRegistration, "id" | "status" | "submittedAt">) => {
     await addDoc(collection(db, "findATeamRegistrations"), {
       ...newRegistrationData,
-      status: 'pending',
+      status: 'pending', // 'pending' means they are on the list
       submittedAt: Timestamp.now(),
     });
   }, []);
   
-  const updateRegistrationStatus = async (id: string, status: TeamRegistration['status']) => {
-    const registrationDocRef = doc(db, "findATeamRegistrations", id);
-    await updateDoc(registrationDocRef, { status });
+  const deleteRegistration = async (id: string) => {
+    await deleteDoc(doc(db, "findATeamRegistrations", id));
   };
 
   return (
-    <FindATeamContext.Provider value={{ registrations, addRegistration, updateRegistrationStatus }}>
+    <FindATeamContext.Provider value={{ registrations, isRegistered, addRegistration, deleteRegistration }}>
       {children}
     </FindATeamContext.Provider>
   );
