@@ -88,6 +88,7 @@ export function Header() {
   const navLinks = [
     { href: "/booking", label: t.header.bookField },
     { href: "/academy", label: t.header.academy },
+    { href: "/find-a-team", label: t.header.findTeam },
     { href: "/bookings", label: t.header.myBookings },
     { href: "/member-area", label: t.welcomePage.memberAreaButton },
   ];

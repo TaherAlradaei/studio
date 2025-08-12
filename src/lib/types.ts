@@ -44,6 +44,17 @@ export interface AcademyRegistration {
   posts?: MemberPost[];
 }
 
+export interface TeamRegistration {
+  id: string;
+  userId: string;
+  name: string;
+  phone: string;
+  position: "Goalkeeper" | "Defender" | "Midfielder" | "Forward" | "Any";
+  availability: string;
+  status: 'pending' | 'placed';
+  submittedAt: Timestamp;
+}
+
 export interface User {
     uid: string;
     displayName: string | null;
