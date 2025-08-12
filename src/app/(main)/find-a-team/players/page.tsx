@@ -5,7 +5,7 @@ import { useFindATeam } from "@/context/find-a-team-context";
 import { useLanguage } from "@/context/language-context";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserMinus, Phone, ShieldCheck } from "lucide-react";
+import { Users, UserMinus, Phone, ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,19 +24,37 @@ import type { TeamRegistration } from "@/lib/types";
 
 export default function PlayersListPage() {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { registrations, isRegistered, deleteRegistration } = useFindATeam();
   const router = useRouter();
   const { toast } = useToast();
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
+  // This state is to track loading of the player list itself
+  const [isListLoading, setIsListLoading] = useState(true);
 
   useEffect(() => {
-    // If a user lands here but isn't registered, send them to the registration form.
-    if (!isRegistered && user) {
-      router.push('/find-a-team');
+    if (!isAuthLoading) {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      // If a user lands here but isn't registered, send them to the registration form.
+      if (!isRegistered) {
+        router.push('/find-a-team');
+      }
     }
-  }, [isRegistered, user, router]);
+  }, [isRegistered, user, isAuthLoading, router]);
+
+  useEffect(() => {
+    // Determine loading state for the list based on registrations
+    if (isRegistered && registrations.length === 0) {
+        setIsListLoading(true);
+    } else {
+        setIsListLoading(false);
+    }
+  }, [registrations, isRegistered]);
 
   const handleLeaveList = async () => {
     if (!user) return;
@@ -62,6 +80,14 @@ export default function PlayersListPage() {
     };
     return positionMap[position] || position;
   }
+  
+  if (isAuthLoading || !isRegistered) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
@@ -84,7 +110,11 @@ export default function PlayersListPage() {
             </Button>
        </div>
 
-      {registrations.length > 0 ? (
+      {isListLoading ? (
+         <div className="flex justify-center items-center min-h-[30vh]">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : registrations.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {registrations.map((player) => (
             <Card key={player.id} className="bg-card/80 backdrop-blur-sm">
