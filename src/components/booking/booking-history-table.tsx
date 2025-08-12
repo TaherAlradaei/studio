@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getDefaultPrice } from "@/lib/pricing";
 import { getPaymentInstructions } from "@/app/(main)/admin/actions";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Timestamp } from "firebase/firestore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -29,12 +29,13 @@ import { format } from "date-fns";
 import { arSA } from "date-fns/locale";
 
 export function BookingHistoryTable() {
-  const { bookings, updateBooking, acceptBooking } = useBookings();
+  const { updateBooking, acceptBooking } = useBookings();
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   const { toast } = useToast();
   const router = useRouter();
 
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
@@ -45,9 +46,20 @@ export function BookingHistoryTable() {
         setPaymentInstructions(instructions);
     };
     fetchSettings();
-  }, []);
 
-  const userBookings = bookings.filter(b => b.userId === user?.uid && (b.date as Timestamp).toDate() >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled');
+    if (user?.uid) {
+        const q = query(collection(db, "bookings"), where("userId", "==", user.uid));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const bookingsData: Booking[] = [];
+            querySnapshot.forEach((doc) => {
+                bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
+            });
+            const userBookings = bookingsData.filter(b => (b.date as Timestamp).toDate() >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled');
+            setBookings(userBookings);
+        });
+        return () => unsubscribe();
+    }
+  }, [user]);
 
   const handleAccept = async (booking: Booking) => {
     try {
@@ -145,8 +157,8 @@ export function BookingHistoryTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {userBookings.length > 0 ? (
-              userBookings.map((booking) => (
+            {bookings.length > 0 ? (
+              bookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium">
                     {format((booking.date as Timestamp).toDate(), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
@@ -180,8 +192,8 @@ export function BookingHistoryTable() {
 
       {/* Mobile Card View */}
       <div className="grid md:hidden gap-4">
-        {userBookings.length > 0 ? (
-            userBookings.map((booking) => (
+        {bookings.length > 0 ? (
+            bookings.map((booking) => (
                 <Card key={booking.id} className="bg-card/80 backdrop-blur-sm">
                     <CardHeader>
                         <div className="flex justify-between items-start">

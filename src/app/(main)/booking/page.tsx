@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
 import { TimeSlotPicker } from "@/components/booking/time-slot-picker";
 import { BookingForm } from "@/components/booking/booking-form";
-import { useBookings } from "@/context/booking-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CalendarDays, DollarSign } from "lucide-react";
 import { FieldIcon } from "@/components/icons";
@@ -16,7 +15,8 @@ import { arSA } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import type { Booking } from "@/lib/types";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, collection, onSnapshot, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const pricingData = [
     { slot: "07:00 - 11:00", price: "6,000" },
@@ -32,11 +32,20 @@ export default function BookingPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
-  const { bookings } = useBookings();
+  const [bookings, setBookings] = useState<Booking[]>([]);
   
   useEffect(() => {
     // Set initial date only on client to avoid hydration errors
     setSelectedDate(new Date());
+     const q = query(collection(db, "bookings"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const bookingsData: Booking[] = [];
+      querySnapshot.forEach((doc) => {
+        bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
+      });
+      setBookings(bookingsData);
+    });
+    return () => unsubscribe();
   }, []);
   
   useEffect(() => {

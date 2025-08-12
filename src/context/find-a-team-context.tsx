@@ -25,18 +25,6 @@ const FindATeamContext = createContext<FindATeamContextType | undefined>(undefin
 export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<TeamRegistration[]>([]);
 
-  useEffect(() => {
-    const q = query(collection(db, "findATeamRegistrations"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const registrationsData: TeamRegistration[] = [];
-      querySnapshot.forEach((doc) => {
-        registrationsData.push({ id: doc.id, ...doc.data() } as TeamRegistration);
-      });
-      setRegistrations(registrationsData);
-    });
-    return () => unsubscribe();
-  }, []);
-
   const addRegistration = useCallback(async (newRegistrationData: Omit<TeamRegistration, "id" | "status" | "submittedAt">) => {
     await addDoc(collection(db, "findATeamRegistrations"), {
       ...newRegistrationData,

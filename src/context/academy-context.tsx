@@ -43,18 +43,6 @@ const generateAccessCode = (length = 6) => {
 export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
 
-  useEffect(() => {
-    const q = query(collection(db, "academyRegistrations"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const registrationsData: AcademyRegistration[] = [];
-      querySnapshot.forEach((doc) => {
-        registrationsData.push({ id: doc.id, ...doc.data() } as AcademyRegistration);
-      });
-      setRegistrations(registrationsData);
-    });
-    return () => unsubscribe();
-  }, []);
-
   const addRegistration = useCallback(async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status: AcademyRegistration['status'] = 'pending') => {
     
     // Ensure birthDate is a valid Date object before converting to Timestamp
