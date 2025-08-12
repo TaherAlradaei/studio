@@ -33,8 +33,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
-import { Timestamp, collection, onSnapshot, query } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { Timestamp } from "firebase/firestore";
 
 
 const generateAvailableTimes = () => {
@@ -212,14 +211,10 @@ const AddMemberForm = () => {
 
 export default function AdminPage() {
   const { t, lang } = useLanguage();
-  const { unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
-  const { updateBooking } = useBookings();
-  const { updateRegistrationStatus } = useAcademy();
+  const { bookings: allBookings, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings, updateBooking } = useBookings();
+  const { registrations, updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
   
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
-
   const [welcomePageContent, setWelcomePageContent] = useState<WelcomePageContent | null>(null);
   const [isWelcomePageLoading, setIsWelcomePageLoading] = useState(true);
 
@@ -271,29 +266,6 @@ export default function AdminPage() {
     setAvailabilityDate(new Date());
     setFilterDate(new Date());
 
-    const bookingsQuery = query(collection(db, "bookings"));
-    const bookingsUnsubscribe = onSnapshot(bookingsQuery, (querySnapshot) => {
-      const bookingsData: Booking[] = [];
-      querySnapshot.forEach((doc) => {
-        bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
-      });
-      setBookings(bookingsData);
-    });
-
-    const registrationsQuery = query(collection(db, "academyRegistrations"));
-    const registrationsUnsubscribe = onSnapshot(registrationsQuery, (querySnapshot) => {
-      const regs: AcademyRegistration[] = [];
-      querySnapshot.forEach((doc) => {
-        regs.push({ id: doc.id, ...doc.data() } as AcademyRegistration);
-      });
-      setRegistrations(regs);
-    });
-
-
-    return () => {
-        bookingsUnsubscribe();
-        registrationsUnsubscribe();
-    }
   }, []);
 
   useEffect(() => {
@@ -341,14 +313,14 @@ export default function AdminPage() {
 
 
   const bookingsWithDates = useMemo(() => {
-    return bookings.map(b => ({
+    return allBookings.map(b => ({
       ...b,
       date: b.date instanceof Timestamp ? b.date.toDate() : b.date
     }));
-  }, [bookings]);
+  }, [allBookings]);
 
   const filteredBookings = useMemo(() => {
-    if (!isClient || !filterDate) return [];
+    if (!filterDate) return [];
     
     let interval;
     switch (filterType) {
@@ -366,7 +338,7 @@ export default function AdminPage() {
     return bookingsWithDates
       .filter(booking => booking.date && isWithinInterval(booking.date, interval) && booking.status !== 'cancelled')
       .sort((a, b) => (a.date?.getTime() || 0) - (b.date?.getTime() || 0) || a.time.localeCompare(b.time));
-  }, [bookingsWithDates, filterDate, filterType, isClient]);
+  }, [bookingsWithDates, filterDate, filterType]);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -389,7 +361,7 @@ export default function AdminPage() {
   };
   
   const handleUseMockData = () => {
-    setBookingData(JSON.stringify(bookings, null, 2));
+    setBookingData(JSON.stringify(allBookings, null, 2));
   };
 
   const handleSetPriceClick = (booking: Booking) => {

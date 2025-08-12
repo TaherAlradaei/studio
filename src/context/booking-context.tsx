@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, type ReactNode } from "react";
+import React, { createContext, useContext, useState, type ReactNode, useEffect } from "react";
 import type { Booking } from "@/lib/types";
 import { addDays } from 'date-fns';
 import { db } from "@/lib/firebase";
@@ -20,6 +20,7 @@ import {
     setDoc
 } from "firebase/firestore";
 import { getDefaultPrice } from "@/lib/pricing";
+import { useAuth } from "./auth-context";
 
 interface BookingContextType {
   bookings: Booking[];
@@ -42,6 +43,26 @@ const timeToMinutes = (time: string) => {
 
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    // Only admins should listen to all bookings for the admin panel.
+    // Regular users will get their own bookings on the "My Bookings" page.
+    if (user?.isAdmin) {
+      const q = query(collection(db, "bookings"));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const bookingsData: Booking[] = [];
+        querySnapshot.forEach((doc) => {
+          bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
+        });
+        setBookings(bookingsData);
+      });
+      return () => unsubscribe();
+    } else {
+      // Clear bookings if user is not admin
+      setBookings([]);
+    }
+  }, [user?.isAdmin]);
 
   const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price" | "date" | "isRecurring"> & {date: Date}) => {
     const price = getDefaultPrice(newBookingData.time) * newBookingData.duration;

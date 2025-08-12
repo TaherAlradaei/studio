@@ -76,16 +76,8 @@ export function Header() {
   const { user, logout } = useAuth();
   const { isRegistered } = useFindATeam();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const isAdmin = user?.isAdmin;
-  
-  // Conditionally render AdminNavWithNotifications only on admin page to avoid context errors
-  const onAdminPage = pathname === '/admin';
 
   const navLinks = [
     { href: "/booking", label: t.header.bookField },
@@ -95,8 +87,8 @@ export function Header() {
     { href: "/member-area", label: t.welcomePage.memberAreaButton },
   ];
   
-  if (isAdmin && !onAdminPage) {
-    navLinks.push({ href: "/admin", label: t.header.admin });
+  if (isAdmin) {
+    // We create a separate link for the admin nav with notifications.
   }
 
   return (
@@ -121,7 +113,7 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          {isAdmin && onAdminPage && isClient && <AdminNavWithNotifications />}
+          {isAdmin && <AdminNavWithNotifications />}
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <div className="hidden sm:block">
@@ -177,7 +169,7 @@ export function Header() {
                                 {link.label}
                             </Link>
                           ))}
-                           {isAdmin && onAdminPage && isClient && <AdminNavWithNotifications />}
+                           {isAdmin && <AdminNavWithNotifications />}
                         </nav>
                         <div className="mt-auto space-y-4">
                            {user && (
