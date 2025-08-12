@@ -23,11 +23,11 @@ export interface PostComment {
 export interface MemberPost {
   id: string;
   author: string;
-  photoUrl: string;
-  storagePath?: string; // To track the file in Firebase Storage for deletion
-  story?: string;
+  story: string;
   comments?: PostComment[];
   createdAt: Timestamp;
+  photoUrl?: string; // Optional for any legacy data
+  storagePath?: string;
 }
 
 export interface AcademyRegistration {

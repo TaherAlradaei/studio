@@ -6,9 +6,8 @@ import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
 import type { AcademyRegistration, MemberPost } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { KeyRound, Camera, BookOpen, Trash2, MessageSquare, Send } from "lucide-react";
+import { KeyRound, BookOpen, Trash2, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,6 +15,8 @@ import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
   const { t } = useLanguage();
@@ -23,35 +24,23 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
   const { user } = useAuth();
   const { toast } = useToast();
   const [story, setStory] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
 
   const allPosts = getPosts();
   const isAdmin = user?.isAdmin || false;
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const photoDataUrl = e.target?.result as string;
-        try {
-            await addPost(member.id, { story, author: member.talentName, comments: [] }, photoDataUrl);
-            setStory("");
-            toast({ title: t.memberArea.postAddedSuccess });
-        } catch (err) {
-            toast({ title: "Upload Error", description: "Failed to upload post image.", variant: "destructive" });
-        }
-      };
-      reader.readAsDataURL(file);
+  const handleAddPost = async () => {
+    if (!story.trim()) {
+        toast({ title: "Story cannot be empty", variant: "destructive" });
+        return;
     }
-     if(event.target) {
-        event.target.value = '';
+    try {
+        await addPost(member.id, { story, author: member.talentName, comments: [] });
+        setStory("");
+        toast({ title: t.memberArea.postAddedSuccess });
+    } catch (err) {
+        toast({ title: "Error", description: "Failed to add story.", variant: "destructive" });
     }
-  };
-
-  const handleAddPost = () => {
-    fileInputRef.current?.click();
   };
 
   const handleCommentChange = (postId: string, text: string) => {
@@ -69,7 +58,7 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
   const handleDeletePost = async (postId: string) => {
     if (isAdmin) {
         await deletePost(postId);
-        toast({ title: "Post Deleted", description: "The post has been successfully removed.", variant: "destructive" });
+        toast({ title: "Story Deleted", description: "The story has been successfully removed.", variant: "destructive" });
     }
   }
 
@@ -87,23 +76,17 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
             <div className="flex items-center gap-2">
-                <Camera className="w-6 h-6 text-primary" />
+                <BookOpen className="w-6 h-6 text-primary" />
                 <CardTitle>{t.memberArea.addPostTitle}</CardTitle>
             </div>
             <CardDescription>{t.memberArea.addPostDesc}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-            <Input
+            <Textarea
                 value={story}
                 onChange={(e) => setStory(e.target.value)}
                 placeholder={t.memberArea.storyPlaceholder}
-            />
-            <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
+                rows={4}
             />
             <Button onClick={handleAddPost} className="w-full sm:w-auto">
                 {t.memberArea.addPostButton}
@@ -122,28 +105,26 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {allPosts.map((post) => (
               <Card key={post.id} className="flex flex-col overflow-hidden bg-card/80 backdrop-blur-sm">
-                <div className="relative">
-                    <Image
-                      src={post.photoUrl}
-                      alt={post.story || "Member photo"}
-                      width={400}
-                      height={300}
-                      className="w-full h-48 object-cover"
-                    />
+                <CardHeader className="flex-row justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <Avatar className="w-8 h-8">
+                            <AvatarFallback className="text-xs bg-secondary text-secondary-foreground">{post.author.substring(0, 1)}</AvatarFallback>
+                        </Avatar>
+                        <CardTitle className="text-base font-semibold">{post.author}</CardTitle>
+                    </div>
                     {isAdmin && (
                         <Button
-                            variant="destructive"
+                            variant="ghost"
                             size="icon"
-                            className="absolute top-2 right-2 h-8 w-8"
+                            className="h-8 w-8"
                             onClick={() => handleDeletePost(post.id)}
                         >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                     )}
-                </div>
-                <CardContent className="p-4 flex-grow">
-                    <p className="text-sm font-semibold">{post.author}</p>
-                    <p className="text-muted-foreground">{post.story}</p>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 flex-grow">
+                    <p className="text-muted-foreground whitespace-pre-wrap">{post.story}</p>
                 </CardContent>
                 <CardFooter className="flex flex-col items-start gap-4 p-4 border-t bg-background/20">
                     <div className="w-full space-y-2 max-h-32 overflow-y-auto">

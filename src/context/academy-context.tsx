@@ -12,7 +12,8 @@ import {
     doc,
     Timestamp,
     arrayUnion,
-    arrayRemove
+    arrayRemove,
+    onSnapshot
 } from "firebase/firestore";
 
 interface AcademyContextType {
@@ -20,7 +21,7 @@ interface AcademyContextType {
   addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status?: AcademyRegistration['status']) => Promise<void>;
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
   validateAccessCode: (code: string) => AcademyRegistration | null;
-  addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>, photoDataUrl: string) => Promise<void>;
+  addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>) => Promise<void>;
   getPosts: (memberId?: string) => MemberPost[];
   addComment: (postId: string, comment: Omit<PostComment, 'createdAt'>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
@@ -40,6 +41,15 @@ const generateAccessCode = (length = 6) => {
 
 export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
+
+  useEffect(() => {
+    const q = collection(db, "academyRegistrations");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const fetchedRegistrations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AcademyRegistration));
+        setRegistrations(fetchedRegistrations);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const addRegistration = useCallback(async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status: AcademyRegistration['status'] = 'pending') => {
     
@@ -84,17 +94,13 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     return registrations.find(r => r.accessCode === code && r.status === 'accepted') || null;
   };
 
-  const addPost = async (memberId: string, postData: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>, photoDataUrl: string) => {
-    const { url: photoUrl, path: storagePath } = await uploadFile(photoDataUrl, 'public/academy-posts');
-    
+  const addPost = async (memberId: string, postData: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>) => {
     const memberDocRef = doc(db, "academyRegistrations", memberId);
     const newPost: MemberPost = {
       ...postData,
       id: doc(collection(db, 'dummy')).id, // Generate a random ID
       createdAt: Timestamp.now(),
       comments: [],
-      photoUrl,
-      storagePath
     };
     await updateDoc(memberDocRef, {
       posts: arrayUnion(newPost)
