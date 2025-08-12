@@ -27,16 +27,17 @@ import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users } from "lucide-react";
+import { Users, Loader2 } from "lucide-react";
 import { useFindATeam } from "@/context/find-a-team-context";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 
 export default function FindATeamPage() {
   const { t, lang } = useLanguage();
   const { toast } = useToast();
-  const { addRegistration } = useFindATeam();
-  const { user } = useAuth();
+  const { addRegistration, isRegistered, isLoading: isTeamContextLoading } = useFindATeam();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
 
   const formSchema = z.object({
@@ -54,6 +55,20 @@ export default function FindATeamPage() {
       availability: "",
     },
   });
+
+  useEffect(() => {
+    if (user) {
+        form.setValue('name', user.displayName || "");
+        form.setValue('phone', user.phone || "");
+    }
+  }, [user, form]);
+  
+  useEffect(() => {
+      // Redirect if user is already registered to find a team.
+      if (!isTeamContextLoading && isRegistered) {
+          router.replace('/find-a-team/players');
+      }
+  }, [isRegistered, isTeamContextLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
      if (!user) {
@@ -85,6 +100,15 @@ export default function FindATeamPage() {
         variant: "destructive",
       });
     }
+  }
+  
+  // Show a loading state while we check auth and registration status
+  if (isAuthLoading || isTeamContextLoading || isRegistered) {
+      return (
+          <div className="flex justify-center items-center min-h-[60vh]">
+              <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+      );
   }
 
   return (
