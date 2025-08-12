@@ -12,11 +12,11 @@ import {
     Timestamp,
     query,
     where,
-    getDocs
+    getDocs,
+    onSnapshot
 } from "firebase/firestore";
 import { useAuth } from "./auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { getTeamRegistrations } from "@/ai/flows/find-a-team-flow";
 
 interface FindATeamContextType {
   registrations: TeamRegistration[];
@@ -35,50 +35,49 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
   const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchRegistrations = useCallback(async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      const fetchedRegistrations = await getTeamRegistrations();
-      // Handle the serialized Timestamp from the flow
-      const formattedRegs = fetchedRegistrations.map(r => ({
-          ...r,
-          submittedAt: new Timestamp(r.submittedAt.seconds, r.submittedAt.nanoseconds)
-      })) as TeamRegistration[];
+  useEffect(() => {
+    let unsubscribe: () => void = () => {};
 
-      setRegistrations(formattedRegs);
-    } catch (error) {
-        console.error("Error fetching team registrations:", error);
-        toast({
-            title: "Error",
-            description: "Could not fetch player list. You may not have permission.",
-            variant: "destructive"
-        });
-    } finally {
-        setIsLoading(false);
-    }
-  }, [user, toast]);
-
-  const checkRegistrationStatus = useCallback(async () => {
+    const checkRegistrationStatus = async () => {
       if (user) {
+        setIsLoading(true);
         const q = query(collection(db, "findATeamRegistrations"), where("userId", "==", user.uid));
         const querySnapshot = await getDocs(q);
         const registered = !querySnapshot.empty;
         setIsRegistered(registered);
+
         if (registered) {
             // If user is registered, fetch the full list for them to see.
-            fetchRegistrations();
+            // This requires a security rule allowing authenticated users to read the collection.
+            const listQuery = collection(db, "findATeamRegistrations");
+            unsubscribe = onSnapshot(listQuery, (snapshot) => {
+                const fetchedRegistrations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamRegistration));
+                setRegistrations(fetchedRegistrations);
+                setIsLoading(false);
+            }, (error) => {
+                console.error("Error fetching team registrations:", error);
+                toast({
+                    title: "Error",
+                    description: "Could not fetch player list. You may not have permission.",
+                    variant: "destructive"
+                });
+                setIsLoading(false);
+            });
+        } else {
+          setRegistrations([]);
+          setIsLoading(false);
         }
       } else {
         setRegistrations([]);
         setIsRegistered(false);
+        setIsLoading(false);
       }
-  }, [user, fetchRegistrations]);
+    };
 
-
-  useEffect(() => {
     checkRegistrationStatus();
-  }, [user, checkRegistrationStatus]);
+    
+    return () => unsubscribe();
+  }, [user, toast]);
 
 
   const addRegistration = useCallback(async (newRegistrationData: Omit<TeamRegistration, "id" | "status" | "submittedAt">) => {
@@ -87,14 +86,12 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
       status: 'pending', // 'pending' means they are on the list
       submittedAt: Timestamp.now(),
     });
-    // After adding, check status which will trigger a fetch
-    await checkRegistrationStatus();
-  }, [checkRegistrationStatus]);
+    // The useEffect will react to the change and update the state
+  }, []);
   
   const deleteRegistration = async (id: string) => {
     await deleteDoc(doc(db, "findATeamRegistrations", id));
-    // After deleting, check status which will trigger a fetch
-    await checkRegistrationStatus();
+     // The useEffect will react to the change and update the state
   };
 
   return (

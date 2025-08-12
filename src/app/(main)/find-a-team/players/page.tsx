@@ -71,7 +71,7 @@ export default function PlayersListPage() {
   }
   
   // Wait for both authentication and registration status to be resolved
-  if (isAuthLoading || isRegistered === null) {
+  if (isAuthLoading || isRegistered === null || (isRegistered && isListLoading)) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
