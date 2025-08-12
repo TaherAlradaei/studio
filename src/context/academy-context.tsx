@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from "react";
 import type { AcademyRegistration, MemberPost, PostComment } from "@/lib/types";
 import { db } from "@/lib/firebase";
-import { uploadFile, deleteFile } from "@/app/(main)/admin/actions";
+import { deleteFile } from "@/app/(main)/admin/actions";
 import { 
     collection, 
     addDoc, 
@@ -13,17 +13,22 @@ import {
     Timestamp,
     arrayUnion,
     arrayRemove,
-    onSnapshot
+    getDocs,
+    onSnapshot,
+    query,
+    where
 } from "firebase/firestore";
+import { useAuth } from "./auth-context";
 
 interface AcademyContextType {
   registrations: AcademyRegistration[];
   addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status?: AcademyRegistration['status']) => Promise<void>;
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
-  addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>) => Promise<void>;
+  addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt'>) => Promise<void>;
   getPosts: (memberId?: string) => MemberPost[];
   addComment: (postId: string, comment: Omit<PostComment, 'createdAt'>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
+  myRegistrations: AcademyRegistration[];
 }
 
 const AcademyContext = createContext<AcademyContextType | undefined>(undefined);
@@ -39,8 +44,12 @@ const generateAccessCode = (length = 6) => {
 };
 
 export const AcademyProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
   const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
+  const [myRegistrations, setMyRegistrations] = useState<AcademyRegistration[]>([]);
 
+  // This effect fetches all registrations. It should ONLY be used by an admin.
+  // The AdminPage component now fetches its own data. This is kept for context, but is unused.
   useEffect(() => {
     const q = collection(db, "academyRegistrations");
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -49,6 +58,21 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     });
     return () => unsubscribe();
   }, []);
+
+  // This effect fetches only the registrations for the currently logged-in user.
+  useEffect(() => {
+    if (user) {
+        const q = query(collection(db, "academyRegistrations"), where("userId", "==", user.uid));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const userRegs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AcademyRegistration));
+            setMyRegistrations(userRegs);
+        });
+        return () => unsubscribe();
+    } else {
+        setMyRegistrations([]);
+    }
+  }, [user]);
+
 
   const addRegistration = useCallback(async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status: AcademyRegistration['status'] = 'pending') => {
     
@@ -80,7 +104,9 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     const registrationDocRef = doc(db, "academyRegistrations", id);
     const updates: Partial<AcademyRegistration> = { status };
 
-    const currentReg = registrations.find(r => r.id === id);
+    const regRef = (await getDocs(query(collection(db, "academyRegistrations"), where("id", "==", id)))).docs[0];
+    const currentReg = regRef?.data() as AcademyRegistration;
+    
     if (status === 'accepted' && currentReg && !currentReg.accessCode) {
         updates.accessCode = generateAccessCode();
     }
@@ -88,7 +114,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     await updateDoc(registrationDocRef, updates as any);
   };
 
-  const addPost = async (memberId: string, postData: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>) => {
+  const addPost = async (memberId: string, postData: Omit<MemberPost, 'id' | 'createdAt'>) => {
     const memberDocRef = doc(db, "academyRegistrations", memberId);
     const newPost: MemberPost = {
       ...postData,
@@ -145,7 +171,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AcademyContext.Provider value={{ registrations, addRegistration, updateRegistrationStatus, addPost, getPosts, addComment, deletePost }}>
+    <AcademyContext.Provider value={{ registrations, myRegistrations, addRegistration, updateRegistrationStatus, addPost, getPosts, addComment, deletePost }}>
       {children}
     </AcademyContext.Provider>
   );
@@ -158,3 +184,5 @@ export const useAcademy = () => {
   }
   return context;
 };
+
+    

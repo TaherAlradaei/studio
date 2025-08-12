@@ -42,6 +42,7 @@ export interface AcademyRegistration {
   submittedAt: Timestamp;
   accessCode?: string;
   posts?: MemberPost[];
+  creationMethod?: 'user' | 'admin';
 }
 
 export interface TeamRegistration {
@@ -82,3 +83,5 @@ export interface WelcomePageContent {
   coachImageUrlPath?: string;
   galleryImages?: GalleryImage[];
 }
+
+    

@@ -98,6 +98,7 @@ const AddMemberForm = () => {
         talentName: values.talentName,
         ageGroup: values.ageGroup,
         birthDate: new Date(values.birthDate),
+        creationMethod: 'admin'
       }, 'accepted'); // Automatically accept members added by admin
       toast({
         title: t.adminPage.memberAddedSuccessTitle,
@@ -213,10 +214,11 @@ export default function AdminPage() {
   const { t, lang } = useLanguage();
   const { unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings } = useBookings();
   const { updateBooking } = useBookings();
-  const { registrations, updateRegistrationStatus } = useAcademy();
+  const { updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
   
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
 
   const [welcomePageContent, setWelcomePageContent] = useState<WelcomePageContent | null>(null);
   const [isWelcomePageLoading, setIsWelcomePageLoading] = useState(true);
@@ -278,8 +280,19 @@ export default function AdminPage() {
       setBookings(bookingsData);
     });
 
+    const registrationsQuery = query(collection(db, "academyRegistrations"));
+    const registrationsUnsubscribe = onSnapshot(registrationsQuery, (querySnapshot) => {
+      const regs: AcademyRegistration[] = [];
+      querySnapshot.forEach((doc) => {
+        regs.push({ id: doc.id, ...doc.data() } as AcademyRegistration);
+      });
+      setRegistrations(regs);
+    });
+
+
     return () => {
         bookingsUnsubscribe();
+        registrationsUnsubscribe();
     }
   }, []);
 
@@ -351,8 +364,8 @@ export default function AdminPage() {
     }
 
     return bookingsWithDates
-      .filter(booking => isWithinInterval(booking.date, interval) && booking.status !== 'cancelled')
-      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.time.localeCompare(b.time));
+      .filter(booking => booking.date && isWithinInterval(booking.date, interval) && booking.status !== 'cancelled')
+      .sort((a, b) => (a.date?.getTime() || 0) - (b.date?.getTime() || 0) || a.time.localeCompare(b.time));
   }, [bookingsWithDates, filterDate, filterType, isClient]);
 
   const handleAnalyze = async () => {
@@ -863,7 +876,7 @@ export default function AdminPage() {
     for (const booking of bookings) {
       if (booking.status !== 'confirmed' && booking.status !== 'blocked') continue;
       
-      if (booking.date.toDateString() === date.toDateString()) {
+      if (booking.date?.toDateString() === date.toDateString()) {
         const existingBookingStartMinutes = timeToMinutes(booking.time);
         const existingBookingEndMinutes = existingBookingStartMinutes + booking.duration * 60;
         
@@ -956,9 +969,11 @@ export default function AdminPage() {
                         </TableHeader>
                         <TableBody>
                           {filteredBookings.length > 0 ? (
-                            filteredBookings.map((booking) => (
+                            filteredBookings.map((booking) => {
+                               const bookingDate = booking.date instanceof Timestamp ? booking.date.toDate() : booking.date;
+                               return (
                               <TableRow key={booking.id}>
-                                <TableCell>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</TableCell>
+                                <TableCell>{bookingDate ? format(bookingDate, 'PP', { locale: lang === 'ar' ? arSA : undefined }) : 'N/A'}</TableCell>
                                 <TableCell>{booking.time}</TableCell>
                                 <TableCell>{booking.name}<br/><span className="text-sm text-muted-foreground">{booking.phone}</span></TableCell>
                                 <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
@@ -990,7 +1005,8 @@ export default function AdminPage() {
                                   </div>
                                 </TableCell>
                               </TableRow>
-                            ))
+                               )
+                            })
                           ) : (
                             <TableRow>
                               <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noBookingsInView}</TableCell>
@@ -1003,7 +1019,9 @@ export default function AdminPage() {
                     {/* Mobile Card View */}
                     <div className="grid md:hidden gap-4">
                        {filteredBookings.length > 0 ? (
-                            filteredBookings.map((booking) => (
+                            filteredBookings.map((booking) => {
+                                const bookingDate = booking.date instanceof Timestamp ? booking.date.toDate() : booking.date;
+                                return (
                                 <Card key={booking.id} className="bg-background/50">
                                     <CardHeader>
                                         <div className="flex justify-between items-start">
@@ -1017,7 +1035,7 @@ export default function AdminPage() {
                                     <CardContent className="space-y-3 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">{t.bookingHistoryTable.date}</span>
-                                            <span>{format(booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}</span>
+                                            <span>{bookingDate ? format(bookingDate, 'PP', { locale: lang === 'ar' ? arSA : undefined }) : 'N/A'}</span>
                                         </div>
                                          <div className="flex justify-between">
                                             <span className="text-muted-foreground">{t.bookingHistoryTable.time}</span>
@@ -1058,7 +1076,8 @@ export default function AdminPage() {
                                         </div>
                                     </CardContent>
                                 </Card>
-                            ))
+                                )
+                            })
                        ) : (
                          <div className="text-center text-muted-foreground py-12">{t.adminPage.noBookingsInView}</div>
                        )}
@@ -1139,7 +1158,7 @@ export default function AdminPage() {
         
                                         const occupyingBooking = bookingsWithDates.find(b => {
                                           if (b.status === 'cancelled') return false;
-                                          if (b.date.toDateString() !== slotDateTime.toDateString()) return false;
+                                          if (!b.date || b.date.toDateString() !== slotDateTime.toDateString()) return false;
                                           
                                           const bookingStartMinutes = timeToMinutes(b.time);
                                           const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
@@ -1767,3 +1786,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
