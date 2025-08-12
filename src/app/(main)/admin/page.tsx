@@ -341,7 +341,7 @@ export default function AdminPage() {
   const bookingsWithDates = useMemo(() => {
     return bookings.map(b => ({
       ...b,
-      date: (b.date as Timestamp).toDate()
+      date: b.date instanceof Timestamp ? b.date.toDate() : b.date
     }));
   }, [bookings]);
 
@@ -868,15 +868,13 @@ export default function AdminPage() {
   };
   
   const isSlotBooked = (date: Date, time: string, duration: number, bookings: {date: Date, time: string, duration: number, status: string}[]): boolean => {
-    const slotStartMinutes = timeToMinutes(time);
-    const newBookingStartMinutes = slotStartMinutes;
+    const newBookingStartMinutes = timeToMinutes(time);
     const newBookingEndMinutes = newBookingStartMinutes + duration * 60;
 
     for (const booking of bookings) {
       if (booking.status !== 'confirmed' && booking.status !== 'blocked') continue;
       
-      const bookingDate = new Date(booking.date);
-      if (bookingDate.toDateString() === date.toDateString()) {
+      if (booking.date.toDateString() === date.toDateString()) {
         const existingBookingStartMinutes = timeToMinutes(booking.time);
         const existingBookingEndMinutes = existingBookingStartMinutes + booking.duration * 60;
         
@@ -1152,8 +1150,7 @@ export default function AdminPage() {
         
                                         const occupyingBooking = bookingsWithDates.find(b => {
                                           if (b.status === 'cancelled') return false;
-                                          const bookingDate = new Date(b.date);
-                                          if (bookingDate.toDateString() !== slotDateTime.toDateString()) return false;
+                                          if (b.date.toDateString() !== slotDateTime.toDateString()) return false;
                                           
                                           const bookingStartMinutes = timeToMinutes(b.time);
                                           const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
@@ -1260,10 +1257,12 @@ export default function AdminPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {registrations.length > 0 ? (
-                                        registrations.map((reg) => (
+                                        registrations.map((reg) => {
+                                          const birthDate = reg.birthDate instanceof Timestamp ? reg.birthDate.toDate() : reg.birthDate;
+                                          return (
                                             <TableRow key={reg.id}>
                                                 <TableCell>{reg.talentName}</TableCell>
-                                                <TableCell>{isClient && reg.birthDate ? differenceInYears(new Date(), (reg.birthDate as Timestamp).toDate()) : '-'}</TableCell>
+                                                <TableCell>{isClient && birthDate ? differenceInYears(new Date(), birthDate) : '-'}</TableCell>
                                                 <TableCell>{reg.ageGroup}</TableCell>
                                                 <TableCell>{reg.parentName}<br /><span className="text-sm text-muted-foreground">{reg.phone}</span></TableCell>
                                                 <TableCell>
@@ -1284,7 +1283,8 @@ export default function AdminPage() {
                                                     )}
                                                 </TableCell>
                                             </TableRow>
-                                        ))
+                                          )
+                                        })
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={7} className="text-center h-24">{t.adminPage.noRegistrations}</TableCell>

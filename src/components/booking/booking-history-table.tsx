@@ -54,7 +54,8 @@ export function BookingHistoryTable() {
             querySnapshot.forEach((doc) => {
                 bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
             });
-            const userBookings = bookingsData.filter(b => (b.date as Timestamp).toDate() >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled');
+            const userBookings = bookingsData.filter(b => (b.date as Timestamp).toDate() >= new Date(new Date().setHours(0,0,0,0)) && b.status !== 'cancelled')
+                                          .sort((a, b) => (a.date as Timestamp).toMillis() - (b.date as Timestamp).toMillis());
             setBookings(userBookings);
         });
         return () => unsubscribe();
@@ -81,10 +82,11 @@ export function BookingHistoryTable() {
       } else if (result === 'requires-admin') {
           setShowPaymentDialog(true);
       } else if (result === 'accepted') {
+          const bookingDate = booking.date instanceof Timestamp ? booking.date.toDate() : booking.date;
           toast({
               title: t.toasts.bookingConfirmedTitle,
               description: t.toasts.bookingConfirmedDesc
-                  .replace('{date}', (booking.date as Timestamp).toDate().toLocaleDateString(lang))
+                  .replace('{date}', bookingDate.toLocaleDateString(lang))
                   .replace('{time}', booking.time),
           });
       }
@@ -161,7 +163,7 @@ export function BookingHistoryTable() {
               bookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium">
-                    {format((booking.date as Timestamp).toDate(), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
+                    {format(booking.date instanceof Timestamp ? booking.date.toDate() : booking.date, 'PP', { locale: lang === 'ar' ? arSA : undefined })}
                   </TableCell>
                   <TableCell>{booking.time}</TableCell>
                   <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
@@ -193,13 +195,15 @@ export function BookingHistoryTable() {
       {/* Mobile Card View */}
       <div className="grid md:hidden gap-4">
         {bookings.length > 0 ? (
-            bookings.map((booking) => (
+            bookings.map((booking) => {
+              const bookingDate = booking.date instanceof Timestamp ? booking.date.toDate() : booking.date;
+              return (
                 <Card key={booking.id} className="bg-card/80 backdrop-blur-sm">
                     <CardHeader>
                         <div className="flex justify-between items-start">
                              <div>
                                 <CardTitle className="text-lg">
-                                  {format((booking.date as Timestamp).toDate(), 'PPP', { locale: lang === 'ar' ? arSA : undefined })}
+                                  {format(bookingDate, 'PPP', { locale: lang === 'ar' ? arSA : undefined })}
                                 </CardTitle>
                                 <CardDescription>{t.bookingHistoryTable.time}: {booking.time}</CardDescription>
                             </div>
@@ -223,7 +227,8 @@ export function BookingHistoryTable() {
                          )}
                     </CardContent>
                 </Card>
-            ))
+              )
+            })
         ) : (
             <div className="text-center text-muted-foreground py-12">{t.bookingHistoryTable.noBookings}</div>
         )}
@@ -237,7 +242,7 @@ export function BookingHistoryTable() {
                   <div>
                     <p>
                       {currentBooking && t.bookingHistoryTable.paymentDialogDescription
-                          .replace('{date}', (currentBooking.date as Timestamp).toDate().toLocaleDateString(lang))
+                          .replace('{date}', (currentBooking.date instanceof Timestamp ? currentBooking.date.toDate() : currentBooking.date).toLocaleDateString(lang))
                           .replace('{time}', currentBooking.time)}
                     </p>
                     <div className="mt-4 p-4 bg-muted/50 rounded-md border text-sm text-foreground">

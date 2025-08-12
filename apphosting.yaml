@@ -7,7 +7,7 @@ runConfig:
   maxInstances: 1
 
 environmentVariables:
-  FIREBASE_WEBAPP_CONFIG: |
+  NEXT_PUBLIC_FIREBASE_WEBAPP_CONFIG: |
     {
       "projectId": "al-maidan-arena",
       "appId": "1:183587615468:web:f291f692ed021ca1e22bc9",

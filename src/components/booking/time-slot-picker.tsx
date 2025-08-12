@@ -14,12 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLanguage } from "@/context/language-context";
+import type { Booking } from "@/lib/types";
+import { Timestamp } from "firebase/firestore";
 
-// This interface is needed because the Booking type in types.ts now has a Timestamp
-// but this component receives a JS Date from its parent.
-interface BookingWithDate extends Omit<import("@/lib/types").Booking, 'date'> {
-    date: Date;
-}
 
 const generateAvailableTimes = () => {
     const times = [];
@@ -40,7 +37,7 @@ const availableTimes = generateAvailableTimes();
 
 interface TimeSlotPickerProps {
   selectedDate: Date;
-  bookings: BookingWithDate[];
+  bookings: Booking[];
   onTimeSelect: (time: string, duration: number) => void;
   selectedTime: string | null;
 }
@@ -82,7 +79,7 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
         continue;
       }
 
-      const bookingDate = new Date(booking.date);
+      const bookingDate = booking.date instanceof Timestamp ? booking.date.toDate() : booking.date;
       if (bookingDate.toDateString() === selectedDate.toDateString()) {
         const existingBookingStartMinutes = timeToMinutes(booking.time);
         const existingBookingEndMinutes = existingBookingStartMinutes + booking.duration * 60;
@@ -98,7 +95,6 @@ export function TimeSlotPicker({ selectedDate, bookings, onTimeSelect, selectedT
 
     // Check if the selected duration exceeds the field's closing time or break time
     const endHour = Math.floor(newBookingEndMinutes / 60);
-    const endMinute = newBookingEndMinutes % 60;
     
     // Check break time (12:00 to 14:00)
     const breakStartMinutes = 12 * 60;
