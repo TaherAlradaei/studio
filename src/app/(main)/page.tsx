@@ -39,7 +39,7 @@ export default function WelcomePage() {
          <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary mb-4">
             {t.welcomePage.welcomeTitle}
          </h1>
-         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+         <p className="text-lg md:text-xl text-white max-w-3xl mx-auto">
             {t.welcomePage.welcomeMessage}
          </p>
       </div>
@@ -196,5 +196,3 @@ export default function WelcomePage() {
     </div>
   );
 }
-
-    

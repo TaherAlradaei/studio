@@ -15,7 +15,7 @@ import { arSA } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import type { Booking } from "@/lib/types";
-import { Timestamp, collection, onSnapshot, query } from "firebase/firestore";
+import { Timestamp, collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const pricingData = [
@@ -37,6 +37,12 @@ export default function BookingPage() {
   useEffect(() => {
     // Set initial date only on client to avoid hydration errors
     setSelectedDate(new Date());
+
+    if (!user?.isAdmin) {
+      setBookings([]);
+      return;
+    }
+    
      const q = query(collection(db, "bookings"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const bookingsData: Booking[] = [];
@@ -46,7 +52,7 @@ export default function BookingPage() {
       setBookings(bookingsData);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user?.isAdmin]);
   
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -91,7 +97,7 @@ export default function BookingPage() {
               {t.bookingPage.title}
             </h1>
         </div>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-lg md:text-xl text-white max-w-2xl mx-auto">
           {t.bookingPage.description}
         </p>
       </div>

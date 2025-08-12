@@ -36,7 +36,7 @@ export default function BookingsPage() {
                 {t.bookingsPage.title}
             </h1>
         </div>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-lg md:text-xl text-white max-w-2xl mx-auto">
           {t.bookingsPage.description}
         </p>
       </div>
