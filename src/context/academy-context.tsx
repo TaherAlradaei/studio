@@ -10,6 +10,7 @@ import {
     addDoc, 
     updateDoc, 
     doc,
+    getDoc,
     Timestamp,
     arrayUnion,
     arrayRemove,
@@ -48,16 +49,19 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<AcademyRegistration[]>([]);
 
-  // This effect fetches all registrations. It should ONLY be used by an admin.
-  // The AdminPage component now fetches its own data. This is kept for context, but is unused.
+  // This effect fetches all registrations for the admin page.
   useEffect(() => {
-    const q = collection(db, "academyRegistrations");
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const fetchedRegistrations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AcademyRegistration));
-        setRegistrations(fetchedRegistrations);
-    });
-    return () => unsubscribe();
-  }, []);
+    if (user?.isAdmin) {
+        const q = query(collection(db, "academyRegistrations"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedRegistrations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AcademyRegistration));
+            setRegistrations(fetchedRegistrations);
+        });
+        return () => unsubscribe();
+    } else {
+        setRegistrations([]);
+    }
+  }, [user?.isAdmin]);
 
   // This effect fetches only the registrations for the currently logged-in user.
   useEffect(() => {
@@ -104,11 +108,12 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     const registrationDocRef = doc(db, "academyRegistrations", id);
     const updates: Partial<AcademyRegistration> = { status };
 
-    const regRef = (await getDocs(query(collection(db, "academyRegistrations"), where("id", "==", id)))).docs[0];
-    const currentReg = regRef?.data() as AcademyRegistration;
-    
-    if (status === 'accepted' && currentReg && !currentReg.accessCode) {
+    // If accepting, generate an access code if one doesn't exist.
+    if (status === 'accepted') {
+      const regDoc = await getDoc(registrationDocRef);
+      if (regDoc.exists() && !regDoc.data().accessCode) {
         updates.accessCode = generateAccessCode();
+      }
     }
     
     await updateDoc(registrationDocRef, updates as any);
@@ -128,11 +133,17 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getPosts = (memberId?: string): MemberPost[] => {
-    const allPosts = registrations.flatMap(r => (r.posts || []));
+    // This function will now use the state fetched for either admin or user,
+    // ensuring data is sourced correctly based on permissions.
+    const sourceRegistrations = user?.isAdmin ? registrations : myRegistrations;
+    
+    const allPosts = sourceRegistrations.flatMap(r => (r.posts || []));
+
     if (memberId) {
-        const member = registrations.find(r => r.id === memberId);
+        const member = sourceRegistrations.find(r => r.id === memberId);
         return member?.posts || [];
     }
+    
     return allPosts.sort((a,b) => (b.createdAt as Timestamp).toMillis() - (a.createdAt as Timestamp).toMillis());
   };
 
@@ -141,6 +152,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
         ...commentData,
         createdAt: Timestamp.now()
      };
+     // Since only admins can comment, we can safely iterate through the admin's 'registrations' state
      for (const reg of registrations) {
         const post = (reg.posts || []).find(p => p.id === postId);
         if (post) {
@@ -155,6 +167,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deletePost = async (postId: string) => {
+      // Since only admins can delete, we can safely iterate through the admin's 'registrations' state
       for (const reg of registrations) {
         const postToDelete = (reg.posts || []).find(p => p.id === postId);
         if (postToDelete) {
@@ -184,5 +197,3 @@ export const useAcademy = () => {
   }
   return context;
 };
-
-    
