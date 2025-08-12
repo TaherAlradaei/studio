@@ -288,7 +288,9 @@ export const arStrings: Dictionary = {
     leaveListButton: "مغادرة القائمة",
     leaveListConfirmTitle: "هل أنت متأكد؟",
     leaveListConfirmDesc: "سيؤدي هذا إلى إزالة اسمك من القائمة العامة. يمكنك دائمًا التسجيل مرة أخرى لاحقًا.",
-    leaveListSuccess: "تمت إزالتك من القائمة بنجاح."
+    leaveListSuccess: "تمت إزالتك من القائمة بنجاح.",
+    managementMessageTitle: "هيا نكوّن فريقًا!",
+    managementMessageDesc: "إدارة الميدان تشجعكم على التواصل مع زملائكم اللاعبين. تواصلوا، شكلوا فريقًا، وتقاسموا التكاليف. ليس لديكم ما تخسرونه، بل مباراة رائعة ستكسبونها!"
   },
   toasts: {
     bookingConfirmedTitle: "تم تأكيد الحجز!",

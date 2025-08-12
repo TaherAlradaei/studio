@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { useWelcomePage } from "@/context/welcome-page-context";
 import { FieldIcon } from "@/components/icons";
-import { Shield, User, Loader2, Eye, Target, Heart } from "lucide-react";
+import { Shield, User, Loader2, Eye, Target, Heart, Users } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -17,10 +17,12 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useFindATeam } from "@/context/find-a-team-context";
 
 export default function WelcomePage() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { isRegistered } = useFindATeam();
   const { welcomePageContent, isWelcomePageLoading } = useWelcomePage();
 
   if (isWelcomePageLoading) {
@@ -43,43 +45,25 @@ export default function WelcomePage() {
               {t.welcomePage.welcomeMessage}
            </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          <div className="relative group overflow-hidden rounded-lg">
-            {welcomePageContent?.fieldImageUrl && <Image
-              src={welcomePageContent.fieldImageUrl}
-              alt="Football Field"
-              width={600}
-              height={400}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              data-ai-hint="football field"
-            />}
-             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 p-6">
-              <h2 className="text-2xl font-bold text-white font-headline">{t.welcomePage.fieldTitle}</h2>
-              <p className="text-white/90 mt-2">{t.welcomePage.fieldDesc}</p>
-              <Button asChild className="mt-4">
-                <Link href="/booking">{t.header.bookField}</Link>
-              </Button>
-            </div>
-          </div>
-          <div className="relative group overflow-hidden rounded-lg">
-            {welcomePageContent?.coachImageUrl && <Image
-              src={welcomePageContent.coachImageUrl}
-              alt="Academy Coach"
-              width={600}
-              height={400}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              data-ai-hint="football coach"
-            />}
-             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-             <div className="absolute bottom-0 left-0 p-6">
-              <h2 className="text-2xl font-bold text-white font-headline">{t.welcomePage.coachTitle}</h2>
-              <p className="text-white/90 mt-2">{t.welcomePage.coachDesc}</p>
-              <Button asChild variant="secondary" className="mt-4">
-                <Link href="/academy">{t.header.academy}</Link>
-              </Button>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 mb-12">
+            <Button asChild size="lg">
+              <Link href="/booking">
+                <FieldIcon className="mr-2" />
+                {t.header.bookField}
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary">
+              <Link href="/academy">
+                <Shield className="mr-2"/>
+                {t.header.academy}
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href={isRegistered ? "/find-a-team/players" : "/find-a-team"}>
+                <Users className="mr-2"/>
+                {t.header.findTeam}
+              </Link>
+            </Button>
         </div>
          <div className="text-center">
            {user ? (

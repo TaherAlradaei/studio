@@ -5,7 +5,7 @@ import { useFindATeam } from "@/context/find-a-team-context";
 import { useLanguage } from "@/context/language-context";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserMinus, Phone, ShieldCheck, Loader2 } from "lucide-react";
+import { Users, UserMinus, Phone, ShieldCheck, Loader2, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -92,6 +92,18 @@ export default function PlayersListPage() {
           {t.findATeamPage.playerListDesc}
         </p>
       </div>
+        
+      <Card className="mb-8 bg-card/80 backdrop-blur-sm border-accent">
+          <CardHeader>
+              <div className="flex flex-col items-center text-center gap-2">
+                 <Handshake className="w-10 h-10 text-primary"/>
+                 <CardTitle className="font-headline text-2xl">{t.findATeamPage.managementMessageTitle}</CardTitle>
+              </div>
+          </CardHeader>
+          <CardContent>
+              <p className="text-center text-muted-foreground">{t.findATeamPage.managementMessageDesc}</p>
+          </CardContent>
+      </Card>
 
        <div className="text-center mb-12">
            <Button variant="destructive" onClick={() => setShowConfirmDialog(true)}>

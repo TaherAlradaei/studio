@@ -286,7 +286,9 @@ export const enStrings = {
     leaveListButton: "Leave List",
     leaveListConfirmTitle: "Are you sure?",
     leaveListConfirmDesc: "This will remove you from the public listing. You can always register again later.",
-    leaveListSuccess: "You have been successfully removed from the list."
+    leaveListSuccess: "You have been successfully removed from the list.",
+    managementMessageTitle: "Let's Build a Team!",
+    managementMessageDesc: "Al Maidan management encourages you to connect with fellow players. Reach out, form a team, and share the cost. You have nothing to lose and a great game to gain!"
   },
   toasts: {
     bookingConfirmedTitle: "Booking Confirmed!",
