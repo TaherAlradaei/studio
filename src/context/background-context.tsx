@@ -80,7 +80,10 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const currentBackground = useMemo(() => {
-      if (isBackgroundsLoading || backgrounds.length === 0) {
+      if (isBackgroundsLoading) {
+          return undefined; // Return nothing while loading
+      }
+      if (backgrounds.length === 0) {
           // Provide a default fallback background if none are loaded
           return {
               url: "https://placehold.co/1920x1080.png",
