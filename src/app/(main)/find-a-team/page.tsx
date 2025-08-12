@@ -31,6 +31,7 @@ import { Users, Loader2 } from "lucide-react";
 import { useFindATeam } from "@/context/find-a-team-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Image from "next/image";
 
 
 export default function FindATeamPage() {
@@ -125,7 +126,17 @@ export default function FindATeamPage() {
         </p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-4xl mx-auto">
+        <div className="hidden md:block">
+            <Image 
+                src="https://placehold.co/600x800.png" 
+                alt="Players shaking hands"
+                width={600}
+                height={800}
+                className="rounded-lg object-cover w-full h-full"
+                data-ai-hint="football players handshake"
+            />
+        </div>
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="font-headline text-2xl">{t.findATeamPage.formTitle}</CardTitle>
