@@ -12,7 +12,7 @@ import {
     Timestamp,
     query,
     where,
-    onSnapshot
+    getDocs
 } from "firebase/firestore";
 import { useAuth } from "./auth-context";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,8 @@ import { getTeamRegistrations } from "@/ai/flows/find-a-team-flow";
 
 interface FindATeamContextType {
   registrations: TeamRegistration[];
-  isRegistered: boolean;
+  isRegistered: boolean | null; // null means we haven't checked yet
+  isLoading: boolean;
   addRegistration: (registration: Omit<TeamRegistration, "id" | "status" | "submittedAt">) => Promise<void>;
   deleteRegistration: (id: string) => Promise<void>;
 }
@@ -31,10 +32,12 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [registrations, setRegistrations] = useState<TeamRegistration[]>([]);
-  const [isRegistered, setIsRegistered] = useState(false);
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchRegistrations = useCallback(async () => {
     if (!user) return;
+    setIsLoading(true);
     try {
       const fetchedRegistrations = await getTeamRegistrations();
       // Handle the serialized Timestamp from the flow
@@ -44,10 +47,6 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
       })) as TeamRegistration[];
 
       setRegistrations(formattedRegs);
-      
-      const userFound = formattedRegs.some(reg => reg.userId === user.uid);
-      setIsRegistered(userFound);
-
     } catch (error) {
         console.error("Error fetching team registrations:", error);
         toast({
@@ -55,28 +54,31 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
             description: "Could not fetch player list. You may not have permission.",
             variant: "destructive"
         });
+    } finally {
+        setIsLoading(false);
     }
   }, [user, toast]);
 
-  useEffect(() => {
-    // This listener only checks if the current user is registered.
-    // The full list is fetched on demand when needed.
-    if (user) {
+  const checkRegistrationStatus = useCallback(async () => {
+      if (user) {
         const q = query(collection(db, "findATeamRegistrations"), where("userId", "==", user.uid));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            setIsRegistered(!querySnapshot.empty);
-            if (!querySnapshot.empty) {
-                // If user is registered, fetch the full list for them to see.
-                fetchRegistrations();
-            }
-        });
-
-        return () => unsubscribe();
-    } else {
+        const querySnapshot = await getDocs(q);
+        const registered = !querySnapshot.empty;
+        setIsRegistered(registered);
+        if (registered) {
+            // If user is registered, fetch the full list for them to see.
+            fetchRegistrations();
+        }
+      } else {
         setRegistrations([]);
         setIsRegistered(false);
-    }
+      }
   }, [user, fetchRegistrations]);
+
+
+  useEffect(() => {
+    checkRegistrationStatus();
+  }, [user, checkRegistrationStatus]);
 
 
   const addRegistration = useCallback(async (newRegistrationData: Omit<TeamRegistration, "id" | "status" | "submittedAt">) => {
@@ -85,18 +87,18 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
       status: 'pending', // 'pending' means they are on the list
       submittedAt: Timestamp.now(),
     });
-    // After adding, fetch the new list
-    await fetchRegistrations();
-  }, [fetchRegistrations]);
+    // After adding, check status which will trigger a fetch
+    await checkRegistrationStatus();
+  }, [checkRegistrationStatus]);
   
   const deleteRegistration = async (id: string) => {
     await deleteDoc(doc(db, "findATeamRegistrations", id));
-    // After deleting, fetch the new list
-    await fetchRegistrations();
+    // After deleting, check status which will trigger a fetch
+    await checkRegistrationStatus();
   };
 
   return (
-    <FindATeamContext.Provider value={{ registrations, isRegistered, addRegistration, deleteRegistration }}>
+    <FindATeamContext.Provider value={{ registrations, isRegistered, isLoading, addRegistration, deleteRegistration }}>
       {children}
     </FindATeamContext.Provider>
   );

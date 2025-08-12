@@ -25,15 +25,12 @@ import type { TeamRegistration } from "@/lib/types";
 export default function PlayersListPage() {
   const { t } = useLanguage();
   const { user, isLoading: isAuthLoading } = useAuth();
-  const { registrations, isRegistered, deleteRegistration } = useFindATeam();
+  const { registrations, isLoading: isListLoading, isRegistered, deleteRegistration } = useFindATeam();
   const router = useRouter();
   const { toast } = useToast();
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
-  // This state is to track loading of the player list itself
-  const [isListLoading, setIsListLoading] = useState(true);
-
   useEffect(() => {
     if (!isAuthLoading) {
       if (!user) {
@@ -41,20 +38,12 @@ export default function PlayersListPage() {
         return;
       }
       // If a user lands here but isn't registered, send them to the registration form.
-      if (!isRegistered) {
+      if (isRegistered === false) { // Check for explicit false, as initial state might be null/undefined
         router.push('/find-a-team');
       }
     }
   }, [isRegistered, user, isAuthLoading, router]);
 
-  useEffect(() => {
-    // Determine loading state for the list based on registrations
-    if (isRegistered && registrations.length === 0) {
-        setIsListLoading(true);
-    } else {
-        setIsListLoading(false);
-    }
-  }, [registrations, isRegistered]);
 
   const handleLeaveList = async () => {
     if (!user) return;
@@ -81,7 +70,8 @@ export default function PlayersListPage() {
     return positionMap[position] || position;
   }
   
-  if (isAuthLoading || !isRegistered) {
+  // Wait for both authentication and registration status to be resolved
+  if (isAuthLoading || isRegistered === null) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
