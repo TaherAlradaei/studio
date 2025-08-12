@@ -172,7 +172,7 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
 
 export default function MemberAreaPage() {
   const { t } = useLanguage();
-  const { registrations } = useAcademy();
+  const { myRegistrations } = useAcademy(); // Use myRegistrations for the current user
   const { user, checkAdminStatus } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -203,7 +203,8 @@ export default function MemberAreaPage() {
     }
 
     // A user can only access the member area of a registration that is linked to their UID.
-    const validatedMember = registrations.find(r => r.accessCode === accessCode && r.userId === user.uid && r.status === 'accepted');
+    // Use the `myRegistrations` state which is already scoped to the logged-in user.
+    const validatedMember = myRegistrations.find(r => r.accessCode === accessCode && r.status === 'accepted');
 
     if (validatedMember) {
       setMember(validatedMember);
