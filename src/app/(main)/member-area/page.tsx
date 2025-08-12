@@ -34,6 +34,10 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
         toast({ title: "Story cannot be empty", variant: "destructive" });
         return;
     }
+    if (!user) {
+        toast({ title: "Error", description: "You must be logged in to post.", variant: "destructive" });
+        return;
+    }
     try {
         await addPost(member.id, { story, author: member.talentName, comments: [] });
         setStory("");
@@ -168,7 +172,7 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
 
 export default function MemberAreaPage() {
   const { t } = useLanguage();
-  const { validateAccessCode } = useAcademy();
+  const { registrations } = useAcademy();
   const { user, checkAdminStatus } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -179,20 +183,28 @@ export default function MemberAreaPage() {
   const handleLogin = async () => {
     setIsLoading(true);
 
+    if (!user) {
+        toast({ title: t.auth.notLoggedInTitle, description: t.auth.notLoggedInDesc, variant: "destructive" });
+        setIsLoading(false);
+        return;
+    }
+
     const settingsDocRef = doc(db, 'settings', 'admin');
     const docSnap = await getDoc(settingsDocRef);
     const adminCode = docSnap.exists() ? docSnap.data().accessCode : 'almaidan';
 
-    if (user && accessCode === adminCode) {
+    if (accessCode === adminCode) {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, {isAdmin: true}, {merge: true});
-        await checkAdminStatus(); // Re-fetch user data to get admin status
+        await checkAdminStatus();
         router.push('/admin');
         setIsLoading(false);
         return;
     }
 
-    const validatedMember = validateAccessCode(accessCode);
+    // A user can only access the member area of a registration that is linked to their UID.
+    const validatedMember = registrations.find(r => r.accessCode === accessCode && r.userId === user.uid && r.status === 'accepted');
+
     if (validatedMember) {
       setMember(validatedMember);
     } else {

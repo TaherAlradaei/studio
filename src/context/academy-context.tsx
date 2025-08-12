@@ -20,7 +20,6 @@ interface AcademyContextType {
   registrations: AcademyRegistration[];
   addRegistration: (registration: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status?: AcademyRegistration['status']) => Promise<void>;
   updateRegistrationStatus: (id: string, status: AcademyRegistration['status']) => Promise<void>;
-  validateAccessCode: (code: string) => AcademyRegistration | null;
   addPost: (memberId: string, post: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>) => Promise<void>;
   getPosts: (memberId?: string) => MemberPost[];
   addComment: (postId: string, comment: Omit<PostComment, 'createdAt'>) => Promise<void>;
@@ -89,11 +88,6 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     await updateDoc(registrationDocRef, updates as any);
   };
 
-  const validateAccessCode = (code: string): AcademyRegistration | null => {
-    if (!code) return null;
-    return registrations.find(r => r.accessCode === code && r.status === 'accepted') || null;
-  };
-
   const addPost = async (memberId: string, postData: Omit<MemberPost, 'id' | 'createdAt' | 'photoUrl' | 'storagePath'>) => {
     const memberDocRef = doc(db, "academyRegistrations", memberId);
     const newPost: MemberPost = {
@@ -151,7 +145,7 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AcademyContext.Provider value={{ registrations, addRegistration, updateRegistrationStatus, validateAccessCode, addPost, getPosts, addComment, deletePost }}>
+    <AcademyContext.Provider value={{ registrations, addRegistration, updateRegistrationStatus, addPost, getPosts, addComment, deletePost }}>
       {children}
     </AcademyContext.Provider>
   );
