@@ -38,12 +38,8 @@ export default function BookingPage() {
     // Set initial date only on client to avoid hydration errors
     setSelectedDate(new Date());
 
-    if (!user?.isAdmin) {
-      setBookings([]);
-      return;
-    }
-    
-     const q = query(collection(db, "bookings"));
+    // Fetch all confirmed/blocked bookings for availability checks
+    const q = query(collection(db, "bookings"), where("status", "in", ["confirmed", "blocked"]));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const bookingsData: Booking[] = [];
       querySnapshot.forEach((doc) => {
@@ -52,7 +48,7 @@ export default function BookingPage() {
       setBookings(bookingsData);
     });
     return () => unsubscribe();
-  }, [user?.isAdmin]);
+  }, []);
   
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -85,7 +81,7 @@ export default function BookingPage() {
   // Convert Firestore Timestamps to JS Dates for the calendar components
   const bookingsWithDates = bookings.map(b => ({
       ...b,
-      date: (b.date as Timestamp).toDate()
+      date: b.date instanceof Timestamp ? b.date.toDate() : b.date
   }));
 
   return (

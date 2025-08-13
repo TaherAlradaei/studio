@@ -1383,7 +1383,7 @@ export default function AdminPage() {
                                     alt="Current Logo"
                                     width={80}
                                     height={88}
-                                    className="h-20 w-auto object-contain rounded-md p-2 bg-white/80"
+                                    className="h-20 w-auto object-contain rounded-md"
                                 />
                             )
                         )}
@@ -1415,7 +1415,7 @@ export default function AdminPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {isBackgroundsLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (backgrounds ?? []).map((bg, index) => (
+                        {(isBackgroundsLoading || !backgrounds) ? <Loader2 className="h-8 w-8 animate-spin" /> : backgrounds.map((bg, index) => (
                             bg.url && (
                                 <div key={index} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-background/50">
                                     <Image
@@ -1709,7 +1709,7 @@ export default function AdminPage() {
             <div className="grid gap-4 py-4 text-sm">
                 <div className="grid grid-cols-[100px_1fr] items-center gap-4">
                     <Label className={cn("text-right", lang === 'ar' && "text-left")}>{t.adminPage.bookingDetailsName}</Label>
-                    <span className="font-semibold">{infoBooking?.name}</span>
+                    <span className="font-semibold">{(infoBooking?.name === 'Blocked Slot' && lang === 'ar') ? t.adminPage.blocked : infoBooking?.name}</span>
                 </div>
                 <div className="grid grid-cols-[100px_1fr] items-center gap-4">
                     <Label className={cn("text-right", lang === 'ar' && "text-left")}>{t.adminPage.bookingDetailsPhone}</Label>

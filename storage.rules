@@ -3,28 +3,36 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to all files in the 'public/' directory.
-    // This is useful for images that are meant to be seen by everyone, like logos and backgrounds.
-    match /public/{allPaths=**} {
+    // Allow public read access to all files
+    match /{allPaths=**} {
       allow read;
     }
-
-    // Allow authenticated users to write to their own private folders.
-    // Example: a user could upload a profile picture to /users/{userId}/profile.jpg
-    match /users/{userId}/{allPaths=**} {
+    
+    // Allow authenticated users to write to specific folders
+    match /public/{userId}/{allPaths=**} {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // For academy posts, allow write access for authenticated users.
-    // This assumes you might have user-specific folders for their posts.
-    match /academy-posts/{allPaths=**} {
+    // Looser rules for posts, any authenticated user can post to their member folder
+    // This assumes the memberId is validated in security rules for firestore
+    match /public/posts/{memberId}/{allPaths=**} {
       allow write: if request.auth != null;
     }
 
-    // Disallow all other reads and writes by default.
-    // Make sure to add specific rules for any other paths you need.
-    match /{allPaths=**} {
-      allow read, write: if false;
+    match /public/logo/{allPaths=**} {
+        allow write: if request.auth != null;
+    }
+
+    match /public/backgrounds/{allPaths=**} {
+        allow write: if request.auth != null;
+    }
+
+     match /public/welcome/{allPaths=**} {
+        allow write: if request.auth != null;
+    }
+
+     match /public/gallery/{allPaths=**} {
+        allow write: if request.auth != null;
     }
   }
 }
