@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomerUIDs, updateTrustedCustomerUIDs, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers } from "./actions";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -245,7 +245,6 @@ export default function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [trustedCustomerUIDs, setTrustedCustomerUIDs] = useState<string[]>([]);
   const [isUsersLoading, setIsUsersLoading] = useState(true);
 
   const { backgrounds, updateBackground, isBackgroundsLoading, deleteBackground } = useBackground();
@@ -299,8 +298,6 @@ export default function AdminPage() {
             setIsUsersLoading(true);
             const instructions = await getPaymentInstructions();
             setPaymentInstructions(instructions);
-            const customers = await getTrustedCustomerUIDs();
-            setTrustedCustomerUIDs(customers);
             const users = await getAllUsers();
             setAllUsers(users);
             const code = await getAdminAccessCode();
@@ -518,32 +515,22 @@ export default function AdminPage() {
     }
   };
   
-    const handleTrustedChange = async (uid: string, isTrusted: boolean) => {
-        const originalUIDs = [...trustedCustomerUIDs];
-        let updatedUIDs;
-
-        if (isTrusted) {
-            updatedUIDs = [...originalUIDs, uid];
-        } else {
-            updatedUIDs = originalUIDs.filter(id => id !== uid);
-        }
-
-        // Optimistically update UI
-        setTrustedCustomerUIDs(updatedUIDs);
-
-        try {
-            await updateTrustedCustomerUIDs(updatedUIDs);
-            toast({
-                title: isTrusted ? t.adminPage.trustedCustomerAddedToastTitle : t.adminPage.trustedCustomerRemovedToastTitle,
-                description: isTrusted ? "User added to trusted list." : "User removed from trusted list.",
-            });
-        } catch (err) {
-            // Revert UI on error
-            setTrustedCustomerUIDs(originalUIDs);
-            const message = err instanceof Error ? err.message : "Failed to update trusted customer list.";
-            toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
-        }
-    };
+  const handleTrustedChange = async (uid: string, isTrusted: boolean) => {
+      // Optimistically update UI
+      setAllUsers(prevUsers => prevUsers.map(u => u.uid === uid ? { ...u, isTrusted } : u));
+      try {
+          await updateUserTrustedStatus(uid, isTrusted);
+          toast({
+              title: isTrusted ? t.adminPage.trustedCustomerAddedToastTitle : t.adminPage.trustedCustomerRemovedToastTitle,
+              description: isTrusted ? "User added to trusted list." : "User removed from trusted list.",
+          });
+      } catch (err) {
+          // Revert UI on error
+          setAllUsers(prevUsers => prevUsers.map(u => u.uid === uid ? { ...u, isTrusted: !isTrusted } : u));
+          const message = err instanceof Error ? err.message : "Failed to update trusted customer list.";
+          toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
+      }
+  };
 
   const handleHintChange = (index: number, value: string) => {
     const newHints = [...hintInputs];
@@ -1534,7 +1521,7 @@ export default function AdminPage() {
                                                 <TableCell>{user.phone || 'N/A'}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Switch
-                                                        checked={trustedCustomerUIDs.includes(user.uid)}
+                                                        checked={user.isTrusted || false}
                                                         onCheckedChange={(isChecked) => handleTrustedChange(user.uid, isChecked)}
                                                         aria-label={`Toggle trusted status for ${user.displayName}`}
                                                     />

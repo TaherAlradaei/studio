@@ -63,14 +63,8 @@ export interface User {
     photoURL: string | null;
     phone: string | null;
     isAdmin?: boolean;
+    isTrusted?: boolean;
 }
-
-export interface TrustedCustomer {
-    uid: string;
-    email: string;
-    name: string;
-}
-
 
 export interface Background {
   url: string;

@@ -4,7 +4,7 @@
 import { analyzeBookingPatterns, type AnalyzeBookingPatternsInput } from "@/ai/flows/scheduling-recommendations";
 import { db, storage } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from "firebase/firestore";
-import type { Background, WelcomePageContent, User, TrustedCustomer } from "@/lib/types";
+import type { Background, WelcomePageContent, User } from "@/lib/types";
 import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -59,6 +59,11 @@ export async function getAllUsers(): Promise<User[]> {
     return userList;
 }
 
+export async function updateUserTrustedStatus(uid: string, isTrusted: boolean): Promise<void> {
+    const userDocRef = doc(db, 'users', uid);
+    await updateDoc(userDocRef, { isTrusted });
+}
+
 export async function getPaymentInstructions(): Promise<string> {
   const docRef = doc(db, 'settings', 'payment');
   const docSnap = await getDoc(docRef);
@@ -71,20 +76,6 @@ export async function getPaymentInstructions(): Promise<string> {
 export async function updatePaymentInstructions(instructions: string): Promise<void> {
     const docRef = doc(db, 'settings', 'payment');
     await setDoc(docRef, { instructions });
-}
-
-export async function getTrustedCustomerUIDs(): Promise<string[]> {
-    const docRef = doc(db, 'settings', 'trustedCustomers');
-    const docSnap = await getDoc(docRef);
-    if(docSnap.exists()){
-        return docSnap.data().uids || [];
-    }
-    return [];
-}
-
-export async function updateTrustedCustomerUIDs(uids: string[]): Promise<void> {
-    const docRef = doc(db, 'settings', 'trustedCustomers');
-    await setDoc(docRef, { uids });
 }
 
 export async function getAdminAccessCode(): Promise<string> {

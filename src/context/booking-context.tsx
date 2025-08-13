@@ -21,7 +21,6 @@ import {
 } from "firebase/firestore";
 import { getDefaultPrice } from "@/lib/pricing";
 import { useAuth } from "./auth-context";
-import { getTrustedCustomerUIDs } from "@/app/(main)/admin/actions";
 
 interface BookingContextType {
   bookings: Booking[];
@@ -210,21 +209,24 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     };
 
   const acceptBooking = async (bookingToAccept: Booking): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
-      const trustedUIDs = await getTrustedCustomerUIDs();
-      const isTrusted = bookingToAccept.userId ? trustedUIDs.includes(bookingToAccept.userId) : false;
-
-      if (!isTrusted) {
-        return 'requires-admin';
-      }
     
-      const result = await confirmBooking(bookingToAccept);
-      
-      if (result === 'slot-taken') {
-          await updateDoc(doc(db, "bookings", bookingToAccept.id), { status: 'cancelled' });
-          return 'slot-taken';
-      }
+    if (!user || !bookingToAccept.userId) return 'requires-admin';
 
-      return 'accepted';
+    // Check if the user making the booking is trusted
+    const userDocRef = doc(db, "users", bookingToAccept.userId);
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists() || !userDoc.data()?.isTrusted) {
+        return 'requires-admin';
+    }
+  
+    const result = await confirmBooking(bookingToAccept);
+    
+    if (result === 'slot-taken') {
+        await updateDoc(doc(db, "bookings", bookingToAccept.id), { status: 'cancelled' });
+        return 'slot-taken';
+    }
+
+    return 'accepted';
   };
 
   return (
