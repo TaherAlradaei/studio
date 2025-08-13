@@ -34,9 +34,11 @@ export const enStrings = {
     ourHistoryTitle: "Our History",
     ourHistoryText: "Established in 1990 as the first football field in the city of Sana'a, Al Maidan Sporting Club has a rich history of serving the community and fostering a love for the game. Over the decades, we have grown from a single pitch to a modern facility, always dedicated to providing an exceptional environment for players of all ages.",
     captainSpeechTitle: "A Word from Our Captain",
-    captainSpeechText: "Captain Hafth, a certified coach dedicated to nurturing new talent, believes every player holds unique potential. 'My mission is to ignite the passion for football in our youth. We don't just train athletes; we build future leaders, instilling discipline, respect, and a relentless drive for excellence.'",
+    captainSpeechText: "Captain Hafidh, a certified coach dedicated to nurturing new talent, believes every player holds unique potential. 'My mission is to ignite the passion for football in our youth. We don't just train athletes; we build future leaders, instilling discipline, respect, and a relentless drive for excellence.'",
     managerWordTitle: "From the Manager's Desk",
     managerWordText: "Waheeb Hameed believes the club is special and will be special for those interested in joining the academy or booking the field to play. 'Our club is more than just a field; it's a community. We are committed to providing an unparalleled experience, whether you're an aspiring professional or just looking for a great game with friends. Welcome home.'",
+    sponsorsTitle: "Our Official Sponsors",
+    sponsorsText: "We are proud to be supported by leading organizations that share our commitment to community and sport. Their partnership is vital in helping us nurture the next generation of athletes.",
   },
   bookingPage: {
     title: "Book Your Field",
@@ -341,3 +343,5 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
+
+    

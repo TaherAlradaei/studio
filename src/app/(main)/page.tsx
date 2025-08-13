@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { useWelcomePage } from "@/context/welcome-page-context";
 import { FieldIcon } from "@/components/icons";
-import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History } from "lucide-react";
+import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History, Building } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -106,85 +106,107 @@ export default function WelcomePage() {
             </Button>
         </div>
 
-        {/* Desktop Content Sections */}
-        <div className="hidden md:grid grid-cols-1 gap-12 mb-16 max-w-4xl mx-auto">
-            <Card className="text-center bg-card/80 backdrop-blur-sm p-6">
+        {/* ----- Desktop Content Sections ----- */}
+        <div className="hidden md:block space-y-24">
+            {/* Mission, Vision, Goals */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <Card className="text-center bg-card/80 backdrop-blur-sm p-6">
                 <CardHeader>
                   <div className="flex justify-center items-center mb-4">
-                      <History className="w-12 h-12 text-primary" />
+                      <Heart className="w-12 h-12 text-primary" />
                   </div>
-                  <CardTitle className="font-headline text-3xl">{t.welcomePage.ourHistoryTitle}</CardTitle>
+                  <CardTitle className="font-headline text-2xl">{t.welcomePage.ourMissionTitle}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-lg">{t.welcomePage.ourHistoryText}</p>
-                </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-               <Card className="text-center bg-card/80 backdrop-blur-sm p-4">
-                <CardHeader>
-                  <div className="flex justify-center items-center mb-4">
-                      <Award className="w-12 h-12 text-primary" />
-                  </div>
-                  <CardTitle className="font-headline text-2xl">{t.welcomePage.captainSpeechTitle}</CardTitle>
-                  <CardDescription>Captain Hafth</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{t.welcomePage.captainSpeechText}</p>
+                  <p className="text-muted-foreground leading-relaxed">{t.welcomePage.ourMissionText}</p>
                 </CardContent>
               </Card>
-               <Card className="text-center bg-card/80 backdrop-blur-sm p-4">
+               <Card className="text-center bg-card/80 backdrop-blur-sm p-6">
                 <CardHeader>
                   <div className="flex justify-center items-center mb-4">
-                      <User className="w-12 h-12 text-primary" />
+                      <Eye className="w-12 h-12 text-primary" />
                   </div>
-                  <CardTitle className="font-headline text-2xl">{t.welcomePage.managerWordTitle}</CardTitle>
-                  <CardDescription>Waheeb Hameed</CardDescription>
+                  <CardTitle className="font-headline text-2xl">{t.welcomePage.ourVisionTitle}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{t.welcomePage.managerWordText}</p>
+                  <p className="text-muted-foreground leading-relaxed">{t.welcomePage.ourVisionText}</p>
+                </CardContent>
+              </Card>
+               <Card className="text-center bg-card/80 backdrop-blur-sm p-6">
+                <CardHeader>
+                  <div className="flex justify-center items-center mb-4">
+                      <Target className="w-12 h-12 text-primary" />
+                  </div>
+                  <CardTitle className="font-headline text-2xl">{t.welcomePage.ourGoalsTitle}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground leading-relaxed">{t.welcomePage.ourGoalsText}</p>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Our History */}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                     <Image
+                      src={welcomePageContent?.fieldImageUrl || "https://placehold.co/600x400.png"}
+                      alt="Al Maidan Field"
+                      width={600}
+                      height={400}
+                      className="w-full h-auto object-cover rounded-lg shadow-xl"
+                      data-ai-hint="football field"
+                    />
+                </div>
+                <div className="space-y-4">
+                    <History className="w-12 h-12 text-primary" />
+                    <h2 className="text-4xl font-bold font-headline text-primary">{t.welcomePage.ourHistoryTitle}</h2>
+                    <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.ourHistoryText}</p>
+                </div>
+            </div>
+
+            {/* Manager's Word */}
+             <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div className="space-y-4 md:order-2">
+                    <User className="w-12 h-12 text-primary" />
+                    <h2 className="text-4xl font-bold font-headline text-primary">{t.welcomePage.managerWordTitle}</h2>
+                    <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.managerWordText}</p>
+                    <p className="font-semibold text-primary text-lg">Waheeb Hameed</p>
+                </div>
+                <div className="md:order-1">
+                     <Image
+                      src={"https://placehold.co/600x400.png"}
+                      alt="Waheeb Hameed - Manager"
+                      width={600}
+                      height={400}
+                      className="w-full h-auto object-cover rounded-lg shadow-xl"
+                      data-ai-hint="portrait man"
+                    />
+                </div>
+            </div>
+
+            {/* Captain's Speech */}
+             <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                     <Image
+                      src={welcomePageContent?.coachImageUrl || "https://placehold.co/600x400.png"}
+                      alt="Captain Hafidh"
+                      width={600}
+                      height={400}
+                      className="w-full h-auto object-cover rounded-lg shadow-xl"
+                      data-ai-hint="football coach portrait"
+                    />
+                </div>
+                <div className="space-y-4">
+                    <Award className="w-12 h-12 text-primary" />
+                    <h2 className="text-4xl font-bold font-headline text-primary">{t.welcomePage.captainSpeechTitle}</h2>
+                    <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.captainSpeechText}</p>
+                    <p className="font-semibold text-primary text-lg">Captain Hafidh</p>
+                </div>
+            </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-          <Card className="text-center bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex justify-center items-center mb-4">
-                  <Heart className="w-12 h-12 text-primary" />
-              </div>
-              <CardTitle className="font-headline text-2xl">{t.welcomePage.ourMissionTitle}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{t.welcomePage.ourMissionText}</p>
-            </CardContent>
-          </Card>
-           <Card className="text-center bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex justify-center items-center mb-4">
-                  <Eye className="w-12 h-12 text-primary" />
-              </div>
-              <CardTitle className="font-headline text-2xl">{t.welcomePage.ourVisionTitle}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{t.welcomePage.ourVisionText}</p>
-            </CardContent>
-          </Card>
-           <Card className="text-center bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex justify-center items-center mb-4">
-                  <Target className="w-12 h-12 text-primary" />
-              </div>
-              <CardTitle className="font-headline text-2xl">{t.welcomePage.ourGoalsTitle}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{t.welcomePage.ourGoalsText}</p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="mb-12">
+        {/* Gallery - visible on all sizes */}
+        <div className="my-16">
             <h2 className="text-4xl font-bold font-headline text-primary text-center mb-8">{t.welcomePage.galleryTitle}</h2>
             <Carousel className="w-full max-w-4xl mx-auto">
               <CarouselContent>
@@ -212,7 +234,22 @@ export default function WelcomePage() {
             </Carousel>
         </div>
 
+        {/* Sponsors Section - visible on all sizes */}
         <div className="text-center bg-card/50 backdrop-blur-sm p-8 rounded-lg">
+            <div className="flex justify-center items-center mb-4">
+                <Building className="w-12 h-12 text-primary" />
+            </div>
+            <h3 className="text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.sponsorsTitle}</h3>
+            <p className="text-muted-foreground mb-6 text-lg max-w-2xl mx-auto">{t.welcomePage.sponsorsText}</p>
+            <div className="flex justify-center items-center gap-8 opacity-70">
+                <Image src="https://placehold.co/150x80.png" alt="Sponsor 1" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
+                <Image src="https://placehold.co/150x80.png" alt="Sponsor 2" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
+                <Image src="https://placehold.co/150x80.png" alt="Sponsor 3" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
+            </div>
+        </div>
+
+        {/* Final CTA - visible on all sizes */}
+        <div className="text-center bg-card/80 backdrop-blur-sm p-8 rounded-lg mt-16">
            {user ? (
             <>
               <h3 className="text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.alreadyMember}</h3>
@@ -239,3 +276,5 @@ export default function WelcomePage() {
     </div>
   );
 }
+
+    
