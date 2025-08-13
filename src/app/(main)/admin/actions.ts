@@ -117,9 +117,7 @@ export async function getBackgrounds(): Promise<Background[]> {
     const docRef = doc(db, 'settings', 'backgrounds');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists() && docSnap.data().items) {
-        const backgrounds = docSnap.data().items as Background[];
-        // Filter out invalid Facebook photo page URLs
-        return backgrounds.filter(bg => !bg.url.includes("facebook.com/photo"));
+        return docSnap.data().items as Background[];
     }
     // Return empty array to allow for clean testing
     return [];
