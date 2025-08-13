@@ -34,6 +34,26 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<TeamRegistration[]>([]);
   const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const fetchAllRegistrations = useCallback(() => {
+    setIsLoading(true);
+    const listQuery = collection(db, "findATeamRegistrations");
+    const unsubscribe = onSnapshot(listQuery, (snapshot) => {
+        const fetchedRegistrations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamRegistration));
+        setRegistrations(fetchedRegistrations);
+        setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching team registrations:", error);
+        toast({
+            title: "Error",
+            description: "Could not fetch player list. You may not have permission.",
+            variant: "destructive"
+        });
+        setIsLoading(false);
+    });
+    return unsubscribe;
+  }, [toast]);
+
 
   useEffect(() => {
     let unsubscribe: () => void = () => {};
@@ -47,22 +67,7 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
         setIsRegistered(registered);
 
         if (registered) {
-            // If user is registered, fetch the full list for them to see.
-            // This requires a security rule allowing authenticated users to read the collection.
-            const listQuery = collection(db, "findATeamRegistrations");
-            unsubscribe = onSnapshot(listQuery, (snapshot) => {
-                const fetchedRegistrations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamRegistration));
-                setRegistrations(fetchedRegistrations);
-                setIsLoading(false);
-            }, (error) => {
-                console.error("Error fetching team registrations:", error);
-                toast({
-                    title: "Error",
-                    description: "Could not fetch player list. You may not have permission.",
-                    variant: "destructive"
-                });
-                setIsLoading(false);
-            });
+            unsubscribe = fetchAllRegistrations();
         } else {
           setRegistrations([]);
           setIsLoading(false);
@@ -77,7 +82,7 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
     checkRegistrationStatus();
     
     return () => unsubscribe();
-  }, [user, toast]);
+  }, [user, toast, fetchAllRegistrations]);
 
 
   const addRegistration = useCallback(async (newRegistrationData: Omit<TeamRegistration, "id" | "status" | "submittedAt">) => {
@@ -86,12 +91,14 @@ export const FindATeamProvider = ({ children }: { children: ReactNode }) => {
       status: 'pending', // 'pending' means they are on the list
       submittedAt: Timestamp.now(),
     });
-    // The useEffect will react to the change and update the state
-  }, []);
+    setIsRegistered(true);
+    fetchAllRegistrations();
+  }, [fetchAllRegistrations]);
   
   const deleteRegistration = async (id: string) => {
     await deleteDoc(doc(db, "findATeamRegistrations", id));
-     // The useEffect will react to the change and update the state
+    setIsRegistered(false);
+    setRegistrations([]);
   };
 
   return (
