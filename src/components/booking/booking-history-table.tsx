@@ -64,17 +64,16 @@ export function BookingHistoryTable() {
 
   const handleAccept = async (booking: Booking) => {
     try {
+      setCurrentBooking(booking);
       const result = await acceptBooking(booking);
       
-      setCurrentBooking(booking);
-
       if (result === 'slot-taken') {
           toast({
               title: t.toasts.slotUnavailableTitle,
               description: t.toasts.slotUnavailableDesc,
               variant: "destructive",
           });
-          router.push('/');
+          router.push('/booking'); // Redirect to try again
       } else if (result === 'requires-admin') {
           setShowPaymentDialog(true);
       } else if (result === 'accepted') {
@@ -132,6 +131,11 @@ export function BookingHistoryTable() {
       return `${booking.price.toLocaleString()} YR`;
     }
     if (booking.status === 'pending') {
+      // For pending, we show the price that was quoted.
+      if (typeof booking.price === 'number') {
+        return `${booking.price.toLocaleString()} YR`;
+      }
+      // Fallback if price isn't set for some reason
       const estimatedPrice = getDefaultPrice(booking.time) * booking.duration;
       const formattedPrice = t.bookingHistoryTable.priceEstimated.replace('{price}', estimatedPrice.toLocaleString());
       return <span className="text-muted-foreground" title={t.bookingHistoryTable.priceTBD}>{formattedPrice}</span>;
@@ -168,11 +172,14 @@ export function BookingHistoryTable() {
                     {getStatusBadge(booking.status)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {booking.status === 'awaiting-confirmation' && (
+                    {(booking.status === 'awaiting-confirmation' || (booking.status === 'pending' && user?.isTrusted)) && (
                       <div className="flex gap-2 justify-end">
                         <Button size="sm" onClick={() => handleAccept(booking)}>{t.actions.accept}</Button>
                         <Button size="sm" variant="destructive" onClick={() => handleDecline(booking)}>{t.actions.decline}</Button>
                       </div>
+                    )}
+                     {booking.status === 'pending' && !user?.isTrusted && (
+                      <p className="text-xs text-muted-foreground text-right">{t.bookingHistoryTable.statusPending}</p>
                     )}
                   </TableCell>
                 </TableRow>
@@ -215,12 +222,15 @@ export function BookingHistoryTable() {
                             <span className="text-muted-foreground">{t.bookingHistoryTable.price}</span>
                             <span>{formatPrice(booking)}</span>
                         </div>
-                         {booking.status === 'awaiting-confirmation' && (
+                         {(booking.status === 'awaiting-confirmation' || (booking.status === 'pending' && user?.isTrusted)) && (
                             <div className="pt-3 border-t flex gap-2 justify-end flex-wrap">
                                <Button size="sm" onClick={() => handleAccept(booking)} className="flex-1">{t.actions.accept}</Button>
                                <Button size="sm" variant="destructive" onClick={() => handleDecline(booking)} className="flex-1">{t.actions.decline}</Button>
                             </div>
                          )}
+                          {booking.status === 'pending' && !user?.isTrusted && (
+                              <p className="text-xs text-muted-foreground text-center pt-3 border-t">{t.bookingHistoryTable.statusPending}</p>
+                          )}
                     </CardContent>
                 </Card>
               )

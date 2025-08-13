@@ -942,10 +942,7 @@ export default function AdminPage() {
                                 <TableCell>{getStatusBadge(booking.status)}</TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex gap-2 justify-end flex-wrap">
-                                     {booking.status === 'pending' && (
-                                      <Button size="sm" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.setPriceButton}</Button>
-                                    )}
-                                    {booking.status === 'awaiting-confirmation' && (
+                                     {(booking.status === 'pending' || booking.status === 'awaiting-confirmation') && (
                                         <>
                                             <Button size="sm" variant="default" onClick={() => handleAdminConfirmBooking(booking)}>{t.adminPage.confirmButton}</Button>
                                             <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
@@ -961,7 +958,7 @@ export default function AdminPage() {
                                         </>
                                     )}
                                     {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
-                                        <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
+                                        <Button size="sm" variant={'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
                                     )}
                                   </div>
                                 </TableCell>
@@ -1012,10 +1009,7 @@ export default function AdminPage() {
                                         </div>
                                         <div className="pt-3 border-t">
                                              <div className="flex gap-2 justify-end flex-wrap">
-                                                 {booking.status === 'pending' && (
-                                                  <Button size="sm" onClick={() => handleSetPriceClick(booking)} className="flex-1">{t.adminPage.setPriceButton}</Button>
-                                                )}
-                                                {booking.status === 'awaiting-confirmation' && (
+                                                 {(booking.status === 'pending' || booking.status === 'awaiting-confirmation') && (
                                                     <>
                                                         <Button size="sm" variant="default" onClick={() => handleAdminConfirmBooking(booking)} className="flex-1">{t.adminPage.confirmButton}</Button>
                                                         <Button size="sm" variant="outline" onClick={() => handleSetPriceClick(booking)}>{t.adminPage.edit}</Button>
@@ -1031,7 +1025,7 @@ export default function AdminPage() {
                                                     </>
                                                 )}
                                                 {(booking.status !== 'cancelled' && booking.status !== 'blocked') && (
-                                                    <Button size="sm" variant={booking.status === 'pending' ? 'outline' : 'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
+                                                    <Button size="sm" variant={'destructive'} onClick={() => handleCancelBooking(booking)}>{t.adminPage.cancel}</Button>
                                                 )}
                                               </div>
                                         </div>
@@ -1389,7 +1383,7 @@ export default function AdminPage() {
                                     alt="Current Logo"
                                     width={80}
                                     height={88}
-                                    className="h-20 w-auto object-contain rounded-md p-2"
+                                    className="h-20 w-auto object-contain rounded-md p-2 bg-white/80"
                                 />
                             )
                         )}
@@ -1421,7 +1415,7 @@ export default function AdminPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {isBackgroundsLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : backgrounds.map((bg, index) => (
+                        {isBackgroundsLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (backgrounds ?? []).map((bg, index) => (
                             bg.url && (
                                 <div key={index} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-background/50">
                                     <Image

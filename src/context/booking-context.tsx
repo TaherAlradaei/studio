@@ -68,7 +68,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     await addDoc(collection(db, "bookings"), {
       ...newBookingData,
       date: Timestamp.fromDate(newBookingData.date),
-      status: 'awaiting-confirmation',
+      status: 'pending',
       price,
     });
   };
@@ -210,12 +210,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
   const acceptBooking = async (bookingToAccept: Booking): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
     
-    if (!user || !bookingToAccept.userId) return 'requires-admin';
-
-    // Check if the user making the booking is trusted
-    const userDocRef = doc(db, "users", bookingToAccept.userId);
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists() || !userDoc.data()?.isTrusted) {
+    if (!user || !user.isTrusted) {
         return 'requires-admin';
     }
   
