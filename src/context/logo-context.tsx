@@ -39,17 +39,14 @@ export const LogoProvider = ({ children }: { children: ReactNode }) => {
 
   const updateLogo = async (newUrl: string, newPath: string) => {
     try {
-      setLogo({ url: newUrl, path: newPath }); // Optimistic update
       await updateLogoAction(newUrl, newPath);
+      setLogo({ url: newUrl, path: newPath }); // Update state after successful db update
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to update logo.",
         variant: "destructive",
       });
-      // Revert on error by re-fetching
-      const fetchedLogo = await getLogo();
-      setLogo(fetchedLogo);
     }
   };
 
