@@ -135,14 +135,14 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
     const docRef = doc(db, 'settings', 'welcomePage');
     const docSnap = await getDoc(docRef);
     const defaults: WelcomePageContent = {
-        fieldImageUrl: "https://images.unsplash.com/photo-1557174949-3b1f5b2e8fac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmb290YmFsbCUyMGZpZWxkfGVufDB8fHx8MTc1MjI2NjI3OHww&ixlib=rb-4.1.0&q=80&w=1080",
-        coachImageUrl: "https://images.unsplash.com/photo-1603683180670-89e591ecf86a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmb290YmFsbCUyMGNvYWNofGVufDB8fHx8MTc1MjI2NjI3OXww&ixlib=rb-4.1.0&q=80&w=1080",
+        fieldImageUrl: "https://images.unsplash.com/photo-1719160378017-ebf72bff2813?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Zm9vdGJhbGwlMjBmaWVsZCUyMHdpdGglMjBwbGF5ZXJzfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+        coachImageUrl: "https://images.unsplash.com/photo-1631490238089-dd6f432133be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Zm9vdGJhbGwlMjBjb2FjaHxlbnwwfHx8fDE3NTUwOTQwNDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
         galleryImages: [
-            { url: "https://placehold.co/800x600.png", path: ""},
-            { url: "https://placehold.co/800x600.png", path: ""},
-            { url: "https://placehold.co/800x600.png", path: ""},
-            { url: "https://placehold.co/800x600.png", path: ""},
-            { url: "https://placehold.co/800x600.png", path: ""}
+            { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
+            { url: "https://images.unsplash.com/photo-1565483276107-8a1fbf01ab03?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
+            { url: "https://images.unsplash.com/photo-1473976345543-9ffc928e648d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
+            { url: "https://images.unsplash.com/photo-1430232324554-8f4aebd06683?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
+            { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080", path: ""}
         ]
     };
     

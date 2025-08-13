@@ -54,7 +54,7 @@ export default function WelcomePage() {
                       width={600}
                       height={400}
                       className="w-full h-48 object-cover"
-                       data-ai-hint="football field with players"
+                       data-ai-hint="football field players"
                     />
                 }
             </CardHeader>
