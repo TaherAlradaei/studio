@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { getDefaultPrice } from "@/lib/pricing";
 import { useAuth } from "./auth-context";
+import { getTrustedCustomerUIDs } from "@/app/(main)/admin/actions";
 
 interface BookingContextType {
   bookings: Booking[];
@@ -28,7 +29,7 @@ interface BookingContextType {
   updateBooking: (id: string, updates: Partial<Omit<Booking, 'id'>>) => Promise<void>;
   blockSlot: (date: Date, time: string, duration: number) => Promise<void>;
   unblockSlot: (id: string) => Promise<void>;
-  acceptBooking: (booking: Booking, isTrusted: boolean) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
+  acceptBooking: (booking: Booking) => Promise<'accepted' | 'slot-taken' | 'requires-admin'>;
   confirmBooking: (bookingToConfirm: Booking) => Promise<'confirmed' | 'slot-taken'>;
   createConfirmedBooking: (bookingData: Omit<Booking, "id" | "status" | "userId" | "isRecurring" | "date"> & { date: Date }) => Promise<'confirmed' | 'slot-taken'>;
   createRecurringBookings: (booking: Booking) => Promise<void>;
@@ -46,22 +47,20 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Only admins should listen to all bookings for the admin panel.
-    // Regular users will get their own bookings on the "My Bookings" page.
-    if (user?.isAdmin) {
-      const q = query(collection(db, "bookings"));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const bookingsData: Booking[] = [];
-        querySnapshot.forEach((doc) => {
-          bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
-        });
-        setBookings(bookingsData);
-      });
-      return () => unsubscribe();
-    } else {
-      // Clear bookings if user is not admin
+    if (!user?.isAdmin) {
       setBookings([]);
+      return;
     }
+    
+     const q = query(collection(db, "bookings"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const bookingsData: Booking[] = [];
+      querySnapshot.forEach((doc) => {
+        bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
+      });
+      setBookings(bookingsData);
+    });
+    return () => unsubscribe();
   }, [user?.isAdmin]);
 
   const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price" | "date" | "isRecurring"> & {date: Date}) => {
@@ -210,7 +209,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
     };
 
-  const acceptBooking = async (bookingToAccept: Booking, isTrusted: boolean): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
+  const acceptBooking = async (bookingToAccept: Booking): Promise<'accepted' | 'slot-taken' | 'requires-admin'> => {
+      const trustedUIDs = await getTrustedCustomerUIDs();
+      const isTrusted = bookingToAccept.userId ? trustedUIDs.includes(bookingToAccept.userId) : false;
+
       if (!isTrusted) {
         return 'requires-admin';
       }

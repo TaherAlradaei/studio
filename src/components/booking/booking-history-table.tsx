@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getDefaultPrice } from "@/lib/pricing";
 import { getPaymentInstructions } from "@/app/(main)/admin/actions";
-import { getDoc, doc, collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Timestamp } from "firebase/firestore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -64,11 +64,7 @@ export function BookingHistoryTable() {
 
   const handleAccept = async (booking: Booking) => {
     try {
-      const trustedCustomersDoc = await getDoc(doc(db, "settings", "trustedCustomers"));
-      const trustedCustomers = trustedCustomersDoc.exists() ? trustedCustomersDoc.data().names : [];
-      const isTrusted = trustedCustomers.includes(booking.name || "");
-        
-      const result = await acceptBooking(booking, isTrusted);
+      const result = await acceptBooking(booking);
       
       setCurrentBooking(booking);
 

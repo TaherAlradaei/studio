@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomers, updateTrustedCustomers, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile } from "./actions";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, getTrustedCustomerUIDs, updateTrustedCustomerUIDs, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
-import type { Booking, AcademyRegistration, GalleryImage, WelcomePageContent } from "@/lib/types";
+import type { Booking, AcademyRegistration, GalleryImage, WelcomePageContent, User } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfDay, endOfDay, addDays, startOfMonth, endOfMonth, isWithinInterval, differenceInYears } from "date-fns";
@@ -34,6 +34,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
 import { Timestamp } from "firebase/firestore";
+import { Switch } from "@/components/ui/switch";
 
 
 const generateAvailableTimes = () => {
@@ -243,8 +244,9 @@ export default function AdminPage() {
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   
-  const [trustedCustomers, setTrustedCustomers] = useState<string[]>([]);
-  const [newTrustedCustomer, setNewTrustedCustomer] = useState("");
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [trustedCustomerUIDs, setTrustedCustomerUIDs] = useState<string[]>([]);
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
 
   const { backgrounds, updateBackground, isBackgroundsLoading, deleteBackground } = useBackground();
   const { logo, updateLogo, isLogoLoading } = useLogo();
@@ -294,10 +296,13 @@ export default function AdminPage() {
   useEffect(() => {
     async function fetchSettings() {
         try {
+            setIsUsersLoading(true);
             const instructions = await getPaymentInstructions();
             setPaymentInstructions(instructions);
-            const customers = await getTrustedCustomers();
-            setTrustedCustomers(customers);
+            const customers = await getTrustedCustomerUIDs();
+            setTrustedCustomerUIDs(customers);
+            const users = await getAllUsers();
+            setAllUsers(users);
             const code = await getAdminAccessCode();
             setAdminAccessCode(code);
         } catch (err) {
@@ -306,6 +311,8 @@ export default function AdminPage() {
                 description: "Failed to load settings from server.",
                 variant: "destructive",
             });
+        } finally {
+            setIsUsersLoading(false);
         }
     }
     fetchSettings();
@@ -511,38 +518,32 @@ export default function AdminPage() {
     }
   };
   
-  const handleAddTrustedCustomer = async () => {
-    if (!newTrustedCustomer.trim()) return;
-    try {
-        const updatedCustomers = [...trustedCustomers, newTrustedCustomer.trim()];
-        await updateTrustedCustomers(updatedCustomers);
-        setTrustedCustomers(updatedCustomers);
-        setNewTrustedCustomer("");
-        toast({
-            title: t.adminPage.trustedCustomerAddedToastTitle,
-            description: t.adminPage.trustedCustomerAddedToastDesc.replace('{name}', newTrustedCustomer),
-        });
-    } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to add trusted customer.";
-        toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
-    }
-  };
-  
-  const handleRemoveTrustedCustomer = async (customerName: string) => {
-    try {
-        const updatedCustomers = trustedCustomers.filter(customer => customer !== customerName);
-        await updateTrustedCustomers(updatedCustomers);
-        setTrustedCustomers(updatedCustomers);
-        toast({
-            title: t.adminPage.trustedCustomerRemovedToastTitle,
-            description: t.adminPage.trustedCustomerRemovedToastDesc.replace('{name}', customerName),
-            variant: "destructive",
-        });
-    } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to remove trusted customer.";
-        toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
-    }
-  };
+    const handleTrustedChange = async (uid: string, isTrusted: boolean) => {
+        const originalUIDs = [...trustedCustomerUIDs];
+        let updatedUIDs;
+
+        if (isTrusted) {
+            updatedUIDs = [...originalUIDs, uid];
+        } else {
+            updatedUIDs = originalUIDs.filter(id => id !== uid);
+        }
+
+        // Optimistically update UI
+        setTrustedCustomerUIDs(updatedUIDs);
+
+        try {
+            await updateTrustedCustomerUIDs(updatedUIDs);
+            toast({
+                title: isTrusted ? t.adminPage.trustedCustomerAddedToastTitle : t.adminPage.trustedCustomerRemovedToastTitle,
+                description: isTrusted ? "User added to trusted list." : "User removed from trusted list.",
+            });
+        } catch (err) {
+            // Revert UI on error
+            setTrustedCustomerUIDs(originalUIDs);
+            const message = err instanceof Error ? err.message : "Failed to update trusted customer list.";
+            toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
+        }
+    };
 
   const handleHintChange = (index: number, value: string) => {
     const newHints = [...hintInputs];
@@ -1511,36 +1512,39 @@ export default function AdminPage() {
                         </div>
                         <CardDescription>{t.adminPage.trustedCustomersCardDescription}</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                          <Label htmlFor="new-trusted-customer">{t.adminPage.addTrustedCustomerLabel}</Label>
-                          <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                              <Input 
-                                  id="new-trusted-customer"
-                                  value={newTrustedCustomer}
-                                  onChange={(e) => setNewTrustedCustomer(e.target.value)}
-                                  placeholder={t.adminPage.trustedCustomerNamePlaceholder}
-                              />
-                              <Button onClick={handleAddTrustedCustomer} className="w-full sm:w-auto">{t.adminPage.addCustomerButton}</Button>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-sm">{t.adminPage.trustedCustomersListTitle}</h4>
-                            {trustedCustomers.length > 0 ? (
-                                <div className="border rounded-lg p-2 space-y-2 max-h-48 overflow-y-auto">
-                                    {trustedCustomers.map(customer => (
-                                        <div key={customer} className="flex justify-between items-center bg-background/50 p-2 rounded-md">
-                                            <span>{customer}</span>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveTrustedCustomer(customer)}>
-                                                <Trash2 className="w-4 h-4 text-destructive"/>
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">{t.adminPage.noTrustedCustomers}</p>
-                            )}
-                        </div>
+                    <CardContent>
+                        {isUsersLoading ? (
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                        ) : (
+                            <div className="border rounded-lg overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t.adminPage.customer}</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead>{t.bookingForm.phoneLabel}</TableHead>
+                                            <TableHead className="text-right">{t.adminPage.trustedStatusLabel}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {allUsers.filter(u => !u.isAdmin).map(user => (
+                                            <TableRow key={user.uid}>
+                                                <TableCell>{user.displayName}</TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell>{user.phone || 'N/A'}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Switch
+                                                        checked={trustedCustomerUIDs.includes(user.uid)}
+                                                        onCheckedChange={(isChecked) => handleTrustedChange(user.uid, isChecked)}
+                                                        aria-label={`Toggle trusted status for ${user.displayName}`}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
                 <Card className="bg-card/80 backdrop-blur-sm">

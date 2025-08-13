@@ -3,8 +3,8 @@
 
 import { analyzeBookingPatterns, type AnalyzeBookingPatternsInput } from "@/ai/flows/scheduling-recommendations";
 import { db, storage } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import type { Background, WelcomePageContent } from "@/lib/types";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from "firebase/firestore";
+import type { Background, WelcomePageContent, User, TrustedCustomer } from "@/lib/types";
 import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -52,7 +52,12 @@ export async function getSchedulingRecommendations(input: AnalyzeBookingPatterns
     return await analyzeBookingPatterns(input);
 }
 
-// Admin settings are now managed in Firestore.
+export async function getAllUsers(): Promise<User[]> {
+    const usersCollection = collection(db, 'users');
+    const userSnapshot = await getDocs(usersCollection);
+    const userList = userSnapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id } as User));
+    return userList;
+}
 
 export async function getPaymentInstructions(): Promise<string> {
   const docRef = doc(db, 'settings', 'payment');
@@ -68,18 +73,18 @@ export async function updatePaymentInstructions(instructions: string): Promise<v
     await setDoc(docRef, { instructions });
 }
 
-export async function getTrustedCustomers(): Promise<string[]> {
+export async function getTrustedCustomerUIDs(): Promise<string[]> {
     const docRef = doc(db, 'settings', 'trustedCustomers');
     const docSnap = await getDoc(docRef);
     if(docSnap.exists()){
-        return docSnap.data().names || [];
+        return docSnap.data().uids || [];
     }
     return [];
 }
 
-export async function updateTrustedCustomers(customers: string[]): Promise<void> {
+export async function updateTrustedCustomerUIDs(uids: string[]): Promise<void> {
     const docRef = doc(db, 'settings', 'trustedCustomers');
-    await setDoc(docRef, { names: customers });
+    await setDoc(docRef, { uids });
 }
 
 export async function getAdminAccessCode(): Promise<string> {
@@ -117,9 +122,10 @@ export async function getBackgrounds(): Promise<Background[]> {
     const docRef = doc(db, 'settings', 'backgrounds');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists() && docSnap.data().items) {
-        return docSnap.data().items as Background[];
+        const backgrounds = docSnap.data().items as Background[];
+        // A simple filter to ensure we don't use invalid URLs.
+        return backgrounds.filter(bg => bg.url && typeof bg.url === 'string' && (bg.url.startsWith('http') || bg.url.startsWith('data:')));
     }
-    // Return empty array to allow for clean testing
     return [];
 }
 

@@ -65,6 +65,13 @@ export interface User {
     isAdmin?: boolean;
 }
 
+export interface TrustedCustomer {
+    uid: string;
+    email: string;
+    name: string;
+}
+
+
 export interface Background {
   url: string;
   hint: string;
