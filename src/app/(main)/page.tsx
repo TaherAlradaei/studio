@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { useWelcomePage } from "@/context/welcome-page-context";
 import { FieldIcon } from "@/components/icons";
-import { Shield, User, Loader2, Eye, Target, Heart, Users } from "lucide-react";
+import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -44,7 +44,8 @@ export default function WelcomePage() {
          </p>
       </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        {/* Mobile-only Quick Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 md:hidden">
           <Card className="overflow-hidden bg-card/50 backdrop-blur-sm">
             <CardHeader className="p-0">
                 {welcomePageContent?.fieldImageUrl &&
@@ -105,7 +106,49 @@ export default function WelcomePage() {
             </Button>
         </div>
 
-        <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+        {/* Desktop Content Sections */}
+        <div className="hidden md:grid grid-cols-1 gap-12 mb-16 max-w-4xl mx-auto">
+            <Card className="text-center bg-card/80 backdrop-blur-sm p-6">
+                <CardHeader>
+                  <div className="flex justify-center items-center mb-4">
+                      <History className="w-12 h-12 text-primary" />
+                  </div>
+                  <CardTitle className="font-headline text-3xl">{t.welcomePage.ourHistoryTitle}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-lg">{t.welcomePage.ourHistoryText}</p>
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+               <Card className="text-center bg-card/80 backdrop-blur-sm p-4">
+                <CardHeader>
+                  <div className="flex justify-center items-center mb-4">
+                      <Award className="w-12 h-12 text-primary" />
+                  </div>
+                  <CardTitle className="font-headline text-2xl">{t.welcomePage.captainSpeechTitle}</CardTitle>
+                  <CardDescription>Captain Hafth</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{t.welcomePage.captainSpeechText}</p>
+                </CardContent>
+              </Card>
+               <Card className="text-center bg-card/80 backdrop-blur-sm p-4">
+                <CardHeader>
+                  <div className="flex justify-center items-center mb-4">
+                      <User className="w-12 h-12 text-primary" />
+                  </div>
+                  <CardTitle className="font-headline text-2xl">{t.welcomePage.managerWordTitle}</CardTitle>
+                  <CardDescription>Waheeb Hameed</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{t.welcomePage.managerWordText}</p>
+                </CardContent>
+              </Card>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
           <Card className="text-center bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <div className="flex justify-center items-center mb-4">

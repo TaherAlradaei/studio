@@ -13,7 +13,7 @@ export function AppBackground() {
   }
 
   return (
-    <div className="fixed inset-0 -z-50 overflow-hidden">
+    <div className="fixed inset-0 -z-50 overflow-hidden md:bg-transparent">
         <AnimatePresence>
             <motion.div
                 key={currentBackground.url + currentBackground.hint}
