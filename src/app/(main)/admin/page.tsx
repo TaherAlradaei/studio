@@ -1401,7 +1401,7 @@ export default function AdminPage() {
                                     alt="Current Logo"
                                     width={80}
                                     height={88}
-                                    className="h-20 w-auto object-contain rounded-md bg-white/80 p-2"
+                                    className="h-20 w-auto object-contain rounded-md p-2"
                                 />
                             )
                         )}
