@@ -7,7 +7,7 @@ import { useLanguage } from "@/context/language-context";
 import type { AcademyRegistration, MemberPost } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { KeyRound, BookOpen, Trash2, Send } from "lucide-react";
+import { KeyRound, BookOpen, Trash2, Send, ImageUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +17,8 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { uploadFile } from "../admin/actions";
+
 
 function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
   const { t } = useLanguage();
@@ -25,25 +27,67 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
   const { toast } = useToast();
   const [story, setStory] = useState("");
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [postImage, setPostImage] = useState<File | null>(null);
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
+  const postImageInputRef = useRef<HTMLInputElement>(null);
 
   const allPosts = getPosts();
   const isAdmin = user?.isAdmin || false;
 
+  const handlePostImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setPostImage(file);
+    }
+  };
+
   const handleAddPost = async () => {
-    if (!story.trim()) {
-        toast({ title: "Story cannot be empty", variant: "destructive" });
+    if (!story.trim() && !postImage) {
+        toast({ title: t.memberArea.postEmpty, variant: "destructive" });
         return;
     }
     if (!user) {
         toast({ title: "Error", description: "You must be logged in to post.", variant: "destructive" });
         return;
     }
+    
+    setIsSubmittingPost(true);
+
     try {
-        await addPost(member.id, { story, author: member.talentName, comments: [] });
+        let photoUrl = "";
+        let storagePath = "";
+        
+        if (postImage) {
+            const reader = new FileReader();
+            // Using a Promise to handle the async FileReader operation
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+                reader.onload = e => resolve(e.target?.result as string);
+                reader.onerror = e => reject(e);
+                reader.readAsDataURL(postImage);
+            });
+            const uploadedFile = await uploadFile(dataUrl, `public/posts/${member.id}`);
+            photoUrl = uploadedFile.url;
+            storagePath = uploadedFile.path;
+        }
+
+        await addPost(member.id, { 
+            story, 
+            author: member.talentName, 
+            comments: [], 
+            photoUrl, 
+            storagePath 
+        });
+        
         setStory("");
+        setPostImage(null);
+        if(postImageInputRef.current) postImageInputRef.current.value = "";
+        
         toast({ title: t.memberArea.postAddedSuccess });
     } catch (err) {
-        toast({ title: "Error", description: "Failed to add story.", variant: "destructive" });
+        const errorMessage = err instanceof Error ? err.message : "Failed to add story.";
+        toast({ title: "Error", description: errorMessage, variant: "destructive" });
+    } finally {
+        setIsSubmittingPost(false);
     }
   };
 
@@ -92,9 +136,23 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
                 placeholder={t.memberArea.storyPlaceholder}
                 rows={4}
             />
-            <Button onClick={handleAddPost} className="w-full sm:w-auto">
-                {t.memberArea.addPostButton}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+                 <Button onClick={() => postImageInputRef.current?.click()} variant="outline" className="w-full sm:w-auto">
+                    <ImageUp className="mr-2 h-4 w-4" />
+                    {postImage ? t.memberArea.changeImage : t.memberArea.addImage}
+                </Button>
+                <input
+                    type="file"
+                    accept="image/*"
+                    ref={postImageInputRef}
+                    onChange={handlePostImageSelect}
+                    className="hidden"
+                />
+                {postImage && <span className="text-sm text-muted-foreground truncate">{postImage.name}</span>}
+                <Button onClick={handleAddPost} className="w-full sm:w-auto sm:ml-auto" disabled={isSubmittingPost}>
+                    {isSubmittingPost ? t.adminPage.savingButton : t.memberArea.addPostButton}
+                </Button>
+            </div>
             </CardContent>
         </Card>
       )}
@@ -109,6 +167,16 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {allPosts.map((post) => (
               <Card key={post.id} className="flex flex-col overflow-hidden bg-card/80 backdrop-blur-sm">
+                {post.photoUrl && (
+                    <div className="aspect-video relative">
+                         <Image 
+                            src={post.photoUrl} 
+                            alt={`Story by ${post.author}`}
+                            layout="fill"
+                            objectFit="cover"
+                         />
+                    </div>
+                )}
                 <CardHeader className="flex-row justify-between items-center">
                     <div className="flex items-center gap-2">
                         <Avatar className="w-8 h-8">

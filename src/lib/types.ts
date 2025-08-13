@@ -26,7 +26,7 @@ export interface MemberPost {
   story: string;
   comments?: PostComment[];
   createdAt: Timestamp;
-  photoUrl?: string; // Optional for any legacy data
+  photoUrl?: string;
   storagePath?: string;
 }
 
@@ -83,5 +83,3 @@ export interface WelcomePageContent {
   coachImageUrlPath?: string;
   galleryImages?: GalleryImage[];
 }
-
-    
