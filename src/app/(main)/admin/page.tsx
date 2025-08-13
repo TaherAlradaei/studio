@@ -271,7 +271,7 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (!isBackgroundsLoading) {
+    if (!isBackgroundsLoading && backgrounds && backgrounds.length > 0) {
         setHintInputs(backgrounds.map(b => b.hint));
         fileInputRefs.current = backgrounds.map(() => null);
     }
