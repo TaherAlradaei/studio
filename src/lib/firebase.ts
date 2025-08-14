@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, linkWithCredential, onAuthStateChanged as onFirebaseAuthStateChanged, type UserCredential } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -60,4 +60,4 @@ try {
 }
 
 
-export { db, auth, storage, googleProvider, signInWithPopup };
+export { db, auth, storage, googleProvider, signInWithPopup, signInAnonymously, linkWithCredential, onFirebaseAuthStateChanged, type UserCredential };

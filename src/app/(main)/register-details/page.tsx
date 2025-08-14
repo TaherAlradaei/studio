@@ -21,6 +21,7 @@ import { useLanguage } from "@/context/language-context";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function RegisterDetailsPage() {
   const { t } = useLanguage();
@@ -51,7 +52,8 @@ export default function RegisterDetailsPage() {
   // Redirect if user is not logged in or already has details
   useEffect(() => {
     if (!isLoading) {
-      if (!user) {
+      if (!user || user.isAnonymous) {
+        // If user is anonymous or not logged in, they shouldn't be here.
         router.push('/login');
       } else if (isUserRegistered) {
         // If user somehow lands here but already has details, send them away
@@ -67,14 +69,16 @@ export default function RegisterDetailsPage() {
       title: t.auth.detailsUpdatedTitle,
       description: t.auth.detailsUpdatedDesc,
     });
-    // The main redirect is handled by the useEffect, but we push here as a fallback.
     router.push('/booking');
     setIsSubmitting(false);
   }
 
-  if (isLoading || !user || isUserRegistered) {
-    // Show a loader or null while redirecting
-    return null;
+  if (isLoading || !user || isUserRegistered || user.isAnonymous) {
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-background p-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
   }
 
   return (

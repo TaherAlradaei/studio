@@ -211,6 +211,7 @@ export const enStrings = {
     manageWelcomePageCardDescription: "Edit the images displayed on the public welcome page.",
     welcomePageFieldImageLabel: "Field Image",
     welcomePageCoachImageLabel: "Coach Image",
+    welcomePageManagerImageLabel: "Manager Image",
     welcomePageContentUpdatedTitle: "Content Updated",
     welcomePageTextUpdatedDesc: "The welcome page text has been updated successfully.",
     welcomePageImageUpdatedDesc: "The welcome page image has been updated successfully.",
@@ -328,13 +329,18 @@ export const enStrings = {
       getStartedDesc: "Create your account to start booking fields and join our community.",
       createAccountAction: "Create an Account",
       login: "Login",
+      adminLogin: "Admin/Trusted Login",
+      adminLoginTitle: "Admin & Trusted Customer Login",
+      adminLoginDesc: "Use your registered Google account to access privileged features.",
       logout: "Logout",
       continue: "Continue",
       continueWithGoogle: "Continue with Google",
       completeProfileTitle: "Complete Your Profile",
       completeProfileDesc: "Please provide your name and phone number to continue.",
       detailsUpdatedTitle: "Profile Updated",
-      detailsUpdatedDesc: "Your details have been saved successfully."
+      detailsUpdatedDesc: "Your details have been saved successfully.",
+      anonBookingTitle: "Just a Moment!",
+      anonBookingDesc: "Your bookings are saved on this device. Log in with Google to access them anywhere and unlock more features."
   },
   actions: {
       accept: "Accept",
@@ -344,5 +350,3 @@ export const enStrings = {
 };
 
 export type Dictionary = typeof enStrings;
-
-    

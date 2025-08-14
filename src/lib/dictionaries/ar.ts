@@ -209,6 +209,7 @@ export const arStrings: Dictionary = {
     manageWelcomePageCardDescription: "تحرير الصور المعروضة في صفحة الترحيب العامة.",
     welcomePageFieldImageLabel: "صورة الملعب",
     welcomePageCoachImageLabel: "صورة المدرب",
+    welcomePageManagerImageLabel: "صورة المدير",
     welcomePageContentUpdatedTitle: "تم تحديث المحتوى",
     welcomePageTextUpdatedDesc: "تم تحديث نصوص صفحة الترحيب بنجاح.",
     welcomePageImageUpdatedDesc: "تم تحديث صورة صفحة الترحيب بنجاح.",
@@ -326,13 +327,18 @@ export const arStrings: Dictionary = {
       getStartedDesc: "أنشئ حسابك لبدء حجز الملاعب والانضمام إلى مجتمعنا.",
       createAccountAction: "إنشاء حساب",
       login: "تسجيل الدخول",
+      adminLogin: "دخول المسؤول/العميل الموثوق",
+      adminLoginTitle: "دخول المسؤول والعميل الموثوق",
+      adminLoginDesc: "استخدم حساب جوجل المسجل لديك للوصول إلى الميزات المخصصة.",
       logout: "تسجيل الخروج",
       continue: "متابعة",
       continueWithGoogle: "المتابعة باستخدام جوجل",
       completeProfileTitle: "أكمل ملفك الشخصي",
       completeProfileDesc: "يرجى تقديم اسمك ورقم هاتفك للمتابعة.",
       detailsUpdatedTitle: "تم تحديث الملف الشخصي",
-      detailsUpdatedDesc: "تم حفظ بياناتك بنجاح."
+      detailsUpdatedDesc: "تم حفظ بياناتك بنجاح.",
+      anonBookingTitle: "لحظة من فضلك!",
+      anonBookingDesc: "يتم حفظ حجوزاتك على هذا الجهاز. سجل الدخول باستخدام جوجل للوصول إليها من أي مكان والحصول على ميزات إضافية."
   },
   actions: {
       accept: "قبول",
@@ -340,5 +346,3 @@ export const arStrings: Dictionary = {
       ok: "موافق",
   }
 };
-
-    

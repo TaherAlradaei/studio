@@ -9,7 +9,6 @@ import { useAuth } from '@/context/auth-context';
 import { KeyRound, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-// Using a simple SVG for the Google icon to avoid extra dependencies
 const GoogleIcon = () => (
     <svg className="mr-2 h-5 w-5" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <title>Google</title>
@@ -26,7 +25,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Only redirect when auth state is no longer loading
-    if (!isLoading && user) {
+    if (!isLoading && user && !user.isAnonymous) {
         if (isUserRegistered) {
             router.push('/booking');
         } else {
@@ -39,27 +38,19 @@ export default function LoginPage() {
     setIsLoggingIn(true);
     try {
       await loginWithGoogle();
-      // The onAuthStateChanged listener and the useEffect will handle redirection.
+      // The useEffect hook will handle redirection upon successful login.
     } catch (error) {
       console.error("Login failed:", error);
       setIsLoggingIn(false);
     }
   };
   
-  // If we are loading auth state from server, or if the login button has been clicked,
-  // show a full page loader.
-  if (isLoading || isLoggingIn) {
+  if (isLoading) {
     return (
        <div className="flex min-h-screen items-center justify-center bg-background p-4">
           <Loader2 className="h-8 w-8 animate-spin" />
        </div>
     );
-  }
-  
-  // If user is already logged in, the useEffect will handle redirection,
-  // so we can render nothing to prevent a flash of the login page.
-  if (user) {
-    return null;
   }
 
   return (
@@ -68,8 +59,8 @@ export default function LoginPage() {
         <div className="flex justify-center items-center gap-4 mb-2">
             <KeyRound className="w-12 h-12 text-primary"/>
         </div>
-        <CardTitle className="text-3xl font-bold font-headline text-primary">{t.auth.createAccountTitle}</CardTitle>
-        <CardDescription>{t.auth.createAccountDesc}</CardDescription>
+        <CardTitle className="text-3xl font-bold font-headline text-primary">{t.auth.adminLoginTitle}</CardTitle>
+        <CardDescription>{t.auth.adminLoginDesc}</CardDescription>
       </CardHeader>
       <CardContent>
         <Button onClick={handleGoogleLogin} className="w-full" variant="outline" disabled={isLoggingIn}>

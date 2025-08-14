@@ -3,8 +3,8 @@
 
 import { analyzeBookingPatterns, type AnalyzeBookingPatternsInput } from "@/ai/flows/scheduling-recommendations";
 import { db, storage } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from "firebase/firestore";
-import type { Background, WelcomePageContent, User, GalleryImage, SponsorImage } from "@/lib/types";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, where, query } from "firebase/firestore";
+import type { Background, WelcomePageContent, User, GalleryImage, SponsorImage, Booking } from "@/lib/types";
 import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -30,17 +30,20 @@ export async function uploadFile(base64DataUrl: string, folder: string): Promise
     return { url: downloadURL, path: filePath };
 }
 
-export async function deleteFile(filePath: string): Promise<void> {
-    if (!filePath) {
-        console.log("No file path provided for deletion, skipping.");
+export async function deleteFileByUrl(fileUrl: string): Promise<void> {
+    if (!fileUrl) {
+        console.log("No file URL provided for deletion, skipping.");
         return;
     }
-    const storageRef = ref(storage, filePath);
     try {
+        const storageRef = ref(storage, fileUrl);
         await deleteObject(storageRef);
     } catch (error: any) {
-        // If the file doesn't exist, Firebase throws an error. We can ignore it.
-        if (error.code !== 'storage/object-not-found') {
+        if (error.code === 'storage/object-not-found') {
+            console.warn("File not found in storage, could not delete:", fileUrl);
+        } else if (error.code === 'storage/invalid-argument') {
+             console.warn("Invalid URL provided for file deletion:", fileUrl);
+        } else {
             console.error("Error deleting file from storage:", error);
             throw error;
         }
@@ -58,6 +61,22 @@ export async function getAllUsers(): Promise<User[]> {
     const userList = userSnapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id } as User));
     return userList;
 }
+
+export async function getPublicBookings(): Promise<Omit<Booking, 'id' | 'userId' | 'name' | 'phone' | 'status' | 'price' | 'isRecurring'>[]> {
+    const q = query(collection(db, "bookings"), where("status", "in", ["confirmed", "blocked"]));
+    const querySnapshot = await getDocs(q);
+    const bookingsData: Omit<Booking, 'id' | 'userId' | 'name' | 'phone' | 'status' | 'price' | 'isRecurring'>[] = [];
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        bookingsData.push({
+            date: data.date.toDate(),
+            time: data.time,
+            duration: data.duration,
+        });
+    });
+    return bookingsData;
+}
+
 
 export async function updateUserTrustedStatus(uid: string, isTrusted: boolean): Promise<void> {
     const userDocRef = doc(db, 'users', uid);
@@ -131,15 +150,15 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
     const docSnap = await getDoc(docRef);
     const defaults: WelcomePageContent = {
         fieldImageUrl: "https://images.unsplash.com/photo-1551958214-2d5e23a4c053?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmb290YmFsbCUyMHBsYXllcnN8ZW58MHx8fHwxNzU1MDk0MDMwfDA&ixlib=rb-4.1.0&q=80&w=1080",
-        coachImageUrl: "https://images.unsplash.com/photo-1551958214-2d5e23a4c053?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmb290YmFsbCUyMHBsYXllcnN8ZW58MHx8fHwxNzU1MDk0MDMwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+        coachImageUrl: "https://scontent.fsah1-1.fna.fbcdn.net/v/t39.30808-6/448981428_876644267838531_2111867807758356942_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=f68bGsRqzT0Q7kNvgE44uJe&_nc_ht=scontent.fsah1-1.fna&oh=00_AYB42wSnH-s_D-e_3oXF28ZJ6B9XpC3s-L33vOQAnS_33w&oe=66B386C5",
         managerImageUrl: "https://placehold.co/600x400.png",
         sponsors: [
-            { url: "https://placehold.co/150x80.png", path: ""},
-            { url: "https://placehold.co/150x80.png", path: ""},
-            { url: "https://placehold.co/150x80.png", path: ""},
-            { url: "https://placehold.co/150x80.png", path: ""},
-            { url: "https://placehold.co/150x80.png", path: ""}
-        ]
+            { url: "https://placehold.co/150x80.png"},
+            { url: "https://placehold.co/150x80.png"},
+            { url: "https://placehold.co/150x80.png"},
+            { url: "https://placehold.co/150x80.png"},
+            { url: "https://placehold.co/150x80.png"},
+        ],
     };
     
     if (docSnap.exists()) {
@@ -155,8 +174,6 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
 
 export async function updateWelcomePageContent(content: Partial<WelcomePageContent>): Promise<void> {
     const docRef = doc(db, 'settings', 'welcomePage');
-    // Using updateDoc with merge:true is safer as it won't overwrite the entire document
-    // if only partial data is sent. Let's switch to setDoc with merge.
     await setDoc(docRef, content, { merge: true });
 }
 
@@ -170,16 +187,16 @@ export async function getGalleryImages(): Promise<GalleryImage[]> {
     }
     // Return default gallery if not set
     return [
-        { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1565483276107-8a1fbf01ab03?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1473976345543-9ffc928e648d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1430232324554-8f4aebd06683?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1511886921337-16ecd3be34b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1594465598235-e5982362b1a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-        { url: "https://images.unsplash.com/photo-1626233405494-a3ebb495476a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""}
+        { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1565483276107-8a1fbf01ab03?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1473976345543-9ffc928e648d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1430232324554-8f4aebd06683?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1511886921337-16ecd3be34b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1594465598235-e5982362b1a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1626233405494-a3ebb495476a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"}
     ];
 }
 

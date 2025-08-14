@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from "react";
 import type { AcademyRegistration, MemberPost, PostComment } from "@/lib/types";
 import { db } from "@/lib/firebase";
-import { deleteFile } from "@/app/(main)/admin/actions";
+import { deleteFileByUrl } from "@/app/(main)/admin/actions";
 import { 
     collection, 
     addDoc, 
@@ -171,8 +171,8 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
       for (const reg of registrations) {
         const postToDelete = (reg.posts || []).find(p => p.id === postId);
         if (postToDelete) {
-            if (postToDelete.storagePath) {
-                await deleteFile(postToDelete.storagePath);
+            if (postToDelete.photoUrl) {
+                await deleteFileByUrl(postToDelete.photoUrl);
             }
             const memberDocRef = doc(db, "academyRegistrations", reg.id);
             await updateDoc(memberDocRef, {

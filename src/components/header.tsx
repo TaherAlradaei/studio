@@ -11,7 +11,7 @@ import { useAuth } from "@/context/auth-context";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { Badge } from "@/components/ui/badge";
-import { User, LogOut, Menu } from "lucide-react";
+import { User, LogOut, Menu, LogIn } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -78,6 +78,7 @@ export function Header() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const isAdmin = user?.isAdmin;
+  const isAnonymous = user?.isAnonymous;
 
   const navLinks = [
     { href: "/booking", label: t.header.bookField },
@@ -119,7 +120,7 @@ export function Header() {
           <div className="hidden sm:block">
             <LanguageSwitcher />
           </div>
-           {user ? (
+           {user && !isAnonymous ? (
              <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
@@ -134,7 +135,8 @@ export function Header() {
            ) : (
             <Button asChild variant="default" size="sm">
                 <Link href="/login">
-                    {t.auth.login}
+                   <LogIn className="mr-2 h-4 w-4" />
+                   {t.auth.adminLogin}
                 </Link>
             </Button>
            )}
@@ -172,7 +174,7 @@ export function Header() {
                            {isAdmin && <AdminNavWithNotifications />}
                         </nav>
                         <div className="mt-auto space-y-4">
-                           {user && (
+                           {user && !isAnonymous && (
                              <div className="flex flex-col gap-2">
                                 <Button onClick={() => {logout(); setIsSheetOpen(false);}} variant="outline" size="sm">
                                   <LogOut className="mr-2 h-4 w-4" />

@@ -15,8 +15,9 @@ import { arSA } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import type { Booking } from "@/lib/types";
-import { Timestamp, collection, onSnapshot, query, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { Timestamp } from "firebase/firestore";
+import { getPublicBookings } from "../admin/actions";
+
 
 const pricingData = [
     { slot: "07:00 - 11:00", price: "6,000" },
@@ -32,30 +33,25 @@ export default function BookingPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<Omit<Booking, 'id' | 'userId' | 'name' | 'phone' | 'status' | 'price' | 'isRecurring'>[]>([]);
   
   useEffect(() => {
     // Set initial date only on client to avoid hydration errors
     setSelectedDate(new Date());
 
-    // Fetch all confirmed/blocked bookings for availability checks
-    const q = query(collection(db, "bookings"), where("status", "in", ["confirmed", "blocked"]));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const bookingsData: Booking[] = [];
-      querySnapshot.forEach((doc) => {
-        bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
-      });
-      setBookings(bookingsData);
-    });
-    return () => unsubscribe();
+    const fetchBookings = async () => {
+        const publicBookings = await getPublicBookings();
+        setBookings(publicBookings);
+    };
+
+    fetchBookings();
+    
+    // We don't need a real-time listener for public bookings.
+    // A snapshot at page load is sufficient.
+    // A listener would also cause permission issues for non-admins.
+
   }, []);
   
-  useEffect(() => {
-    if (!isAuthLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isAuthLoading, router]);
-
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     setSelectedTime(null);
@@ -68,6 +64,11 @@ export default function BookingPage() {
 
   const handleBookingComplete = () => {
     setSelectedTime(null);
+     const fetchBookings = async () => {
+        const publicBookings = await getPublicBookings();
+        setBookings(publicBookings);
+    };
+    fetchBookings();
   };
 
   if (isAuthLoading || !user) {

@@ -6,8 +6,12 @@ service cloud.firestore {
 
     // Helper function to check if a user is an admin
     function isAdmin(userId) {
-      return exists(/databases/$(database)/documents/users/$(userId)) &&
-             get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true;
+      // Admin status is checked against the user's document in Firestore.
+      // The two provided UIDs are also hardcoded as admins for failsafe access.
+      return (exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true) ||
+             userId == "vQF7GtgIRNeq66ktYosLQtk9W9w2" ||
+             userId == "WG8c2fN7Z9cEoHj8nebLEktLM332";
     }
 
     // Users can only read their own document.
@@ -15,17 +19,19 @@ service cloud.firestore {
     // Only an admin can grant admin or trusted status.
     match /users/{userId} {
       allow read: if request.auth.uid == userId || isAdmin(request.auth.uid);
+      // Allow creation for any authenticated user (including anonymous)
       allow create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId && 
+      // Allow non-anonymous users to update their own non-privileged fields.
+      allow update: if request.auth.uid == userId && !request.auth.token.is_anonymous &&
                        !('isAdmin' in request.resource.data) && 
                        !('isTrusted' in request.resource.data);
-      allow update: if isAdmin(request.auth.uid); // Admin can update any field
+      // Allow admins to update any field on any user.
+      allow update: if isAdmin(request.auth.uid);
       allow delete: if isAdmin(request.auth.uid);
     }
     
-    // Anyone can create a booking request (pending).
-    // Users can read/update their own bookings.
-    // Admins can read/write all bookings.
+    // Bookings can be read by the user who created them or by an admin.
+    // Any authenticated user (including anonymous) can create a booking.
     match /bookings/{bookingId} {
       allow read: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
       allow create: if request.auth.uid != null;
@@ -33,26 +39,24 @@ service cloud.firestore {
       allow delete: if isAdmin(request.auth.uid);
     }
     
-    // Public can submit registrations.
-    // Admins can manage all registrations.
-    // Users can read their own registrations.
+    // Academy registrations can be read by the user who created them or by an admin.
+    // Any authenticated user (including anonymous) can create a registration.
     match /academyRegistrations/{registrationId} {
         allow read: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
         allow create: if request.auth.uid != null;
         allow update, delete: if isAdmin(request.auth.uid);
     }
 
-    // Public can submit their name to find a team.
-    // Only authenticated users can read the list (to prevent scraping).
-    // Users can delete their own entry. Admins can delete any.
+    // Find-a-team registrations can be read by any authenticated user.
+    // Any authenticated user (including anonymous) can create an entry.
+    // Users can delete their own entry, and admins can delete any entry.
     match /findATeamRegistrations/{registrationId} {
         allow read: if request.auth.uid != null;
         allow create: if request.auth.uid != null;
         allow delete: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
     }
 
-    // Settings can be read by anyone (for backgrounds, logo, etc.)
-    // but only written to by admins.
+    // Settings are public-read for all, but only admins can write.
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin(request.auth.uid);
