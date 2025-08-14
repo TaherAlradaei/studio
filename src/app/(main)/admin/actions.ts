@@ -4,7 +4,7 @@
 import { analyzeBookingPatterns, type AnalyzeBookingPatternsInput } from "@/ai/flows/scheduling-recommendations";
 import { db, storage } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from "firebase/firestore";
-import type { Background, WelcomePageContent, User } from "@/lib/types";
+import type { Background, WelcomePageContent, User, GalleryImage } from "@/lib/types";
 import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -132,22 +132,10 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
     const defaults: WelcomePageContent = {
         fieldImageUrl: "https://images.unsplash.com/photo-1719160378017-ebf72bff2813?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Zm9vdGJhbGwlMjBmaWVsZCUyMHdpdGglMjBwbGF5ZXJzfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080",
         coachImageUrl: "https://images.unsplash.com/photo-1631490238089-dd6f432133be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Zm9vdGJhbGwlMjBjb2FjaHxlbnwwfHx8fDE3NTUwOTQwNDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-        galleryImages: [
-            { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-            { url: "https://images.unsplash.com/photo-1565483276107-8a1fbf01ab03?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-            { url: "https://images.unsplash.com/photo-1473976345543-9ffc928e648d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-            { url: "https://images.unsplash.com/photo-1430232324554-8f4aebd06683?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
-            { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080", path: ""}
-        ]
     };
     
     if (docSnap.exists()) {
-        const data = docSnap.data() as WelcomePageContent;
-        // Ensure galleryImages has a default value if it's missing from the database
-        if (!data.galleryImages) {
-            data.galleryImages = defaults.galleryImages;
-        }
-        return data;
+        return docSnap.data() as WelcomePageContent;
     }
     
     // Return defaults if document doesn't exist
@@ -160,4 +148,27 @@ export async function updateWelcomePageContent(content: Partial<WelcomePageConte
     // Using updateDoc with merge:true is safer as it won't overwrite the entire document
     // if only partial data is sent. Let's switch to setDoc with merge.
     await setDoc(docRef, content, { merge: true });
+}
+
+
+// Gallery Settings
+export async function getGalleryImages(): Promise<GalleryImage[]> {
+    const docRef = doc(db, 'settings', 'gallery');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().images) {
+        return docSnap.data().images as GalleryImage[];
+    }
+    // Return default gallery if not set
+    return [
+        { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
+        { url: "https://images.unsplash.com/photo-1565483276107-8a1fbf01ab03?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
+        { url: "https://images.unsplash.com/photo-1473976345543-9ffc928e648d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
+        { url: "https://images.unsplash.com/photo-1430232324554-8f4aebd06683?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080", path: ""},
+        { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080", path: ""}
+    ];
+}
+
+export async function updateGalleryImages(images: GalleryImage[]): Promise<void> {
+    const docRef = doc(db, 'settings', 'gallery');
+    await setDoc(docRef, { images });
 }

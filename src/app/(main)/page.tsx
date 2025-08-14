@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
-import { useWelcomePage } from "@/context/welcome-page-context";
 import { FieldIcon } from "@/components/icons";
 import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History, Building } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
@@ -18,14 +17,40 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useFindATeam } from "@/context/find-a-team-context";
+import { WelcomePageContent, GalleryImage } from "@/lib/types";
+import { getWelcomePageContent, getGalleryImages } from "./admin/actions";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+
 
 export default function WelcomePage() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { isRegistered } = useFindATeam();
-  const { welcomePageContent, isWelcomePageLoading } = useWelcomePage();
+  const { toast } = useToast();
+  
+  const [welcomePageContent, setWelcomePageContent] = useState<WelcomePageContent | null>(null);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (isWelcomePageLoading) {
+  useEffect(() => {
+    async function fetchContent() {
+      try {
+        setIsLoading(true);
+        const [welcomeData, galleryData] = await Promise.all([getWelcomePageContent(), getGalleryImages()]);
+        setWelcomePageContent(welcomeData);
+        setGalleryImages(galleryData);
+      } catch (err) {
+        toast({ title: "Error", description: "Failed to load page content", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchContent();
+  }, [toast]);
+
+
+  if (isLoading) {
     return (
        <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -210,7 +235,7 @@ export default function WelcomePage() {
             <h2 className="text-4xl font-bold font-headline text-primary text-center mb-8">{t.welcomePage.galleryTitle}</h2>
             <Carousel className="w-full max-w-4xl mx-auto">
               <CarouselContent>
-                {welcomePageContent?.galleryImages?.map((image, index) => (
+                {galleryImages?.map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="p-1">
                       <Card>

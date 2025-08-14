@@ -27,7 +27,9 @@ export const WelcomePageProvider = ({ children }: { children: ReactNode }) => {
         const fetchedContent = await getWelcomePageContent();
         setContent(fetchedContent);
       } catch (error) {
-        toast({ title: "Error", description: "Failed to load welcome page content.", variant: "destructive" });
+        // This context is now only for welcome page specific content, not the whole page.
+        // Let's adjust the error message to be more specific.
+        toast({ title: "Error", description: "Failed to load page image content.", variant: "destructive" });
       } finally {
         setIsLoading(false);
       }

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers } from "./actions";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers, getGalleryImages, updateGalleryImages } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -217,7 +217,8 @@ export default function AdminPage() {
   const { toast } = useToast();
   
   const [welcomePageContent, setWelcomePageContent] = useState<WelcomePageContent | null>(null);
-  const [isWelcomePageLoading, setIsWelcomePageLoading] = useState(true);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [isContentLoading, setIsContentLoading] = useState(true);
 
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState("");
@@ -277,18 +278,22 @@ export default function AdminPage() {
   }, [backgrounds, isBackgroundsLoading]);
   
   useEffect(() => {
-    async function fetchWelcomeContent() {
+    async function fetchContent() {
       try {
-        setIsWelcomePageLoading(true);
-        const content = await getWelcomePageContent();
-        setWelcomePageContent(content);
+        setIsContentLoading(true);
+        const [welcomeContent, galleryData] = await Promise.all([
+          getWelcomePageContent(),
+          getGalleryImages()
+        ]);
+        setWelcomePageContent(welcomeContent);
+        setGalleryImages(galleryData);
       } catch (err) {
         toast({ title: "Error", description: "Failed to load page content.", variant: "destructive" });
       } finally {
-        setIsWelcomePageLoading(false);
+        setIsContentLoading(false);
       }
     }
-    fetchWelcomeContent();
+    fetchContent();
   }, [toast]);
 
 
@@ -702,10 +707,9 @@ export default function AdminPage() {
                 const dataUrl = e.target?.result as string;
                 try {
                     const { url, path } = await uploadFile(dataUrl, 'public/gallery');
-                    const currentImages = welcomePageContent?.galleryImages || [];
-                    const newImages = [...currentImages, { url, path }];
-                    await updateWelcomeContentAction({ galleryImages: newImages });
-                    setWelcomePageContent(prev => prev ? ({...prev, galleryImages: newImages}) : null);
+                    const newImages = [...galleryImages, { url, path }];
+                    await updateGalleryImages(newImages);
+                    setGalleryImages(newImages);
                     toast({ title: "Gallery Image Added" });
                 } catch (err) {
                     toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
@@ -725,10 +729,9 @@ export default function AdminPage() {
         }
         try {
             await deleteFile(imageToDelete.path);
-            const currentImages = welcomePageContent?.galleryImages || [];
-            const newImages = currentImages.filter(img => img.path !== imageToDelete.path);
-            await updateWelcomeContentAction({ galleryImages: newImages });
-            setWelcomePageContent(prev => prev ? ({...prev, galleryImages: newImages}) : null);
+            const newImages = galleryImages.filter(img => img.path !== imageToDelete.path);
+            await updateGalleryImages(newImages);
+            setGalleryImages(newImages);
             toast({ title: "Gallery Image Deleted", variant: "destructive" });
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete gallery image.", variant: "destructive" });
@@ -1271,7 +1274,7 @@ export default function AdminPage() {
                         <CardDescription>{t.adminPage.manageWelcomePageCardDescription}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {isWelcomePageLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
+                        {isContentLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
                             <div className="grid md:grid-cols-2 gap-6 pt-6">
                                 <div className="space-y-4">
                                     <Label>{t.adminPage.welcomePageFieldImageLabel}</Label>
@@ -1341,8 +1344,8 @@ export default function AdminPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {isWelcomePageLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
-                            welcomePageContent?.galleryImages?.map((image, index) => (
+                        {isContentLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
+                            galleryImages?.map((image, index) => (
                                 image.url && (
                                     <div key={index} className="relative group">
                                         <Image
