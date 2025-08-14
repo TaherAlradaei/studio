@@ -241,7 +241,7 @@ export default function WelcomePage() {
             </div>
             <h3 className="text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.sponsorsTitle}</h3>
             <p className="text-muted-foreground mb-6 text-lg max-w-2xl mx-auto">{t.welcomePage.sponsorsText}</p>
-            <div className="flex justify-center items-center gap-8 opacity-70">
+            <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
                 <Image src="https://placehold.co/150x80.png" alt="Sponsor 1" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
                 <Image src="https://placehold.co/150x80.png" alt="Sponsor 2" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
                 <Image src="https://placehold.co/150x80.png" alt="Sponsor 3" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
