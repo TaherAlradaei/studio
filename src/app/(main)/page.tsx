@@ -199,7 +199,7 @@ export default function WelcomePage() {
                 </div>
                 <div className="md:order-1">
                      <Image
-                      src={"https://placehold.co/600x400.png"}
+                      src={welcomePageContent?.managerImageUrl || "https://placehold.co/600x400.png"}
                       alt="Waheeb Hameed - Manager"
                       width={600}
                       height={400}
@@ -267,9 +267,9 @@ export default function WelcomePage() {
             <h3 className="text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.sponsorsTitle}</h3>
             <p className="text-muted-foreground mb-6 text-lg max-w-2xl mx-auto">{t.welcomePage.sponsorsText}</p>
             <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
-                <Image src="https://placehold.co/150x80.png" alt="Sponsor 1" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
-                <Image src="https://placehold.co/150x80.png" alt="Sponsor 2" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
-                <Image src="https://placehold.co/150x80.png" alt="Sponsor 3" width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
+                {welcomePageContent?.sponsors?.map((sponsor, index) => (
+                    <Image key={index} src={sponsor.url} alt={`Sponsor ${index + 1}`} width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
+                ))}
             </div>
         </div>
 

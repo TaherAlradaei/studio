@@ -7,12 +7,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone, Building, User } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers, getGalleryImages, updateGalleryImages } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
-import type { Booking, AcademyRegistration, GalleryImage, WelcomePageContent, User } from "@/lib/types";
+import type { Booking, AcademyRegistration, GalleryImage, WelcomePageContent, User as UserType, SponsorImage } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfDay, endOfDay, addDays, startOfMonth, endOfMonth, isWithinInterval, differenceInYears } from "date-fns";
@@ -245,7 +245,7 @@ export default function AdminPage() {
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<UserType[]>([]);
   const [isUsersLoading, setIsUsersLoading] = useState(true);
 
   const { backgrounds, updateBackground, isBackgroundsLoading, deleteBackground } = useBackground();
@@ -256,7 +256,10 @@ export default function AdminPage() {
   
   const welcomePageFieldImageInputRef = useRef<HTMLInputElement | null>(null);
   const welcomePageCoachImageInputRef = useRef<HTMLInputElement | null>(null);
+  const welcomePageManagerImageInputRef = useRef<HTMLInputElement | null>(null);
   const galleryImageInputRef = useRef<HTMLInputElement | null>(null);
+  const sponsorImageInputRef = useRef<HTMLInputElement | null>(null);
+
 
   const [adminAccessCode, setAdminAccessCode] = useState("");
   const [newAdminCode, setNewAdminCode] = useState("");
@@ -655,7 +658,7 @@ export default function AdminPage() {
 
     const handleWelcomePageImageChange = async (
       event: React.ChangeEvent<HTMLInputElement>,
-      imageType: 'fieldImageUrl' | 'coachImageUrl'
+      imageType: 'fieldImageUrl' | 'coachImageUrl' | 'managerImageUrl'
     ) => {
       const file = event.target.files?.[0];
       if (file && welcomePageContent) {
@@ -735,6 +738,50 @@ export default function AdminPage() {
             toast({ title: "Gallery Image Deleted", variant: "destructive" });
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete gallery image.", variant: "destructive" });
+        }
+    };
+    
+    const handleAddSponsorImage = () => {
+        sponsorImageInputRef.current?.click();
+    };
+
+    const handleSponsorFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && welcomePageContent) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const dataUrl = e.target?.result as string;
+                try {
+                    const { url, path } = await uploadFile(dataUrl, 'public/sponsors');
+                    const newSponsors = [...(welcomePageContent.sponsors || []), { url, path }];
+                    await updateWelcomeContentAction({ sponsors: newSponsors });
+                    setWelcomePageContent(prev => prev ? { ...prev, sponsors: newSponsors } : null);
+                    toast({ title: "Sponsor Image Added" });
+                } catch (err) {
+                    toast({ title: "Upload Error", description: "Failed to upload image.", variant: "destructive" });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        if(event.target){
+            event.target.value = '';
+        }
+    };
+
+    const handleDeleteSponsorImage = async (sponsorToDelete: SponsorImage) => {
+        if (!sponsorToDelete.path) {
+            toast({ title: "Error", description: "Image path not found, cannot delete from storage.", variant: "destructive" });
+            return;
+        }
+        if (!welcomePageContent) return;
+        try {
+            await deleteFile(sponsorToDelete.path);
+            const newSponsors = (welcomePageContent.sponsors || []).filter(img => img.path !== sponsorToDelete.path);
+            await updateWelcomeContentAction({ sponsors: newSponsors });
+            setWelcomePageContent(prev => prev ? { ...prev, sponsors: newSponsors } : null);
+            toast({ title: "Sponsor Image Deleted", variant: "destructive" });
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to delete sponsor image.", variant: "destructive" });
         }
     };
 
@@ -1298,7 +1345,7 @@ export default function AdminPage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {isContentLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
-                            <div className="grid md:grid-cols-2 gap-6 pt-6">
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
                                 <div className="space-y-4">
                                     <Label>{t.adminPage.welcomePageFieldImageLabel}</Label>
                                     {welcomePageContent?.fieldImageUrl && (
@@ -1345,6 +1392,29 @@ export default function AdminPage() {
                                         className="hidden"
                                     />
                                 </div>
+                                <div className="space-y-4">
+                                    <Label>{t.adminPage.welcomePageManagerImageLabel}</Label>
+                                    {welcomePageContent?.managerImageUrl && (
+                                        <Image
+                                            src={welcomePageContent.managerImageUrl}
+                                            alt="Club Manager"
+                                            width={200}
+                                            height={150}
+                                            className="w-full h-auto object-cover rounded-md aspect-video border"
+                                            data-ai-hint="portrait man"
+                                        />
+                                    )}
+                                    <Button onClick={() => welcomePageManagerImageInputRef.current?.click()} className="w-full">
+                                        {t.adminPage.replaceImageButton}
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        ref={welcomePageManagerImageInputRef}
+                                        onChange={(e) => handleWelcomePageImageChange(e, 'managerImageUrl')}
+                                        className="hidden"
+                                    />
+                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -1383,6 +1453,50 @@ export default function AdminPage() {
                                                 variant="destructive"
                                                 size="icon"
                                                 onClick={() => handleDeleteGalleryImage(image)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )
+                            ))
+                        )}
+                    </CardContent>
+                </Card>
+                 <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Building className="w-6 h-6 text-primary" />
+                                <CardTitle>{t.welcomePage.sponsorsTitle}</CardTitle>
+                            </div>
+                            <Button onClick={handleAddSponsorImage}>{t.adminPage.addCustomerButton}</Button>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={sponsorImageInputRef}
+                                onChange={handleSponsorFileChange}
+                                className="hidden"
+                            />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {isContentLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
+                            welcomePageContent?.sponsors?.map((image, index) => (
+                                image.url && (
+                                    <div key={index} className="relative group">
+                                        <Image
+                                            src={image.url}
+                                            alt={`Sponsor image ${index + 1}`}
+                                            width={150}
+                                            height={80}
+                                            className="w-full h-auto object-contain rounded-md aspect-[3/2] bg-white p-2"
+                                        />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Button
+                                                variant="destructive"
+                                                size="icon"
+                                                onClick={() => handleDeleteSponsorImage(image)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>

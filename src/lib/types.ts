@@ -77,9 +77,17 @@ export interface GalleryImage {
     path: string;
 }
 
+export interface SponsorImage {
+    url: string;
+    path: string;
+}
+
 export interface WelcomePageContent {
   fieldImageUrl: string;
   fieldImageUrlPath?: string;
   coachImageUrl: string;
   coachImageUrlPath?: string;
+  managerImageUrl: string;
+  managerImageUrlPath?: string;
+  sponsors: SponsorImage[];
 }
