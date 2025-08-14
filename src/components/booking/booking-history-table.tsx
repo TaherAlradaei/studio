@@ -252,7 +252,7 @@ export function BookingHistoryTable() {
                           .replace('{time}', currentBooking.time)}
                     </p>
                     <div className="mt-4 p-4 bg-muted/50 rounded-md border text-sm text-foreground">
-                        <p className="whitespace-pre-wrap font-sans">{paymentInstructions}</p>
+                        <p className="whitespace-pre-wrap font-sans">{t.bookingHistoryTable.paymentDialogInstructions.replace("{phone}", "+967 736 333 328")}</p>
                     </div>
                   </div>
                 </AlertDialogDescription>

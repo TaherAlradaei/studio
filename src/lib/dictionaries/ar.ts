@@ -100,6 +100,7 @@ export const arStrings: Dictionary = {
     durationValue: "{duration} ساعة (ساعات)",
     paymentDialogTitle: "تم تأكيد الحجز وبانتظار الدفع",
     paymentDialogDescription: "حجزك بتاريخ {date} في الساعة {time} يتطلب الدفع المسبق. يرجى اتباع التعليمات أدناه لإتمام عملية الدفع وتأمين حجزك.",
+    paymentDialogInstructions: "يرجى الاتصال بالإدارة على الرقم <a href=\"tel:{phone}\" class=\"text-primary underline\">{phone}</a> لترتيب عملية الدفع.",
   },
   adminPage: {
     title: "مساعد الجدولة الذكي",

@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers, getGalleryImages, updateGalleryImages } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
@@ -939,7 +939,16 @@ export default function AdminPage() {
                               <TableRow key={booking.id}>
                                 <TableCell>{bookingDate ? format(bookingDate, 'PP', { locale: lang === 'ar' ? arSA : undefined }) : 'N/A'}</TableCell>
                                 <TableCell>{booking.time}</TableCell>
-                                <TableCell>{booking.name}<br/><span className="text-sm text-muted-foreground">{booking.phone}</span></TableCell>
+                                <TableCell>
+                                  {booking.name}
+                                  <br/>
+                                  {booking.phone && (
+                                    <a href={`tel:${booking.phone}`} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1" dir="ltr">
+                                        <Phone className="w-3 h-3" />
+                                        {booking.phone}
+                                    </a>
+                                  )}
+                                </TableCell>
                                 <TableCell>{t.bookingHistoryTable.durationValue.replace('{duration}', booking.duration.toString())}</TableCell>
                                 <TableCell>{booking.price ? `${booking.price.toLocaleString()} YR` : '-'}</TableCell>
                                 <TableCell>{getStatusBadge(booking.status)}</TableCell>
@@ -988,7 +997,12 @@ export default function AdminPage() {
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <CardTitle className="text-lg">{booking.name}</CardTitle>
-                                                <CardDescription>{booking.phone}</CardDescription>
+                                                 {booking.phone && (
+                                                    <a href={`tel:${booking.phone}`} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1" dir="ltr">
+                                                        <Phone className="w-3 h-3" />
+                                                        {booking.phone}
+                                                    </a>
+                                                  )}
                                             </div>
                                             {getStatusBadge(booking.status)}
                                         </div>
@@ -1230,7 +1244,16 @@ export default function AdminPage() {
                                                 <TableCell>{reg.talentName}</TableCell>
                                                 <TableCell>{isClient && birthDate ? differenceInYears(new Date(), birthDate) : '-'}</TableCell>
                                                 <TableCell>{reg.ageGroup}</TableCell>
-                                                <TableCell>{reg.parentName}<br /><span className="text-sm text-muted-foreground">{reg.phone}</span></TableCell>
+                                                <TableCell>
+                                                    {reg.parentName}
+                                                    <br/>
+                                                    {reg.phone && (
+                                                        <a href={`tel:${reg.phone}`} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1" dir="ltr">
+                                                            <Phone className="w-3 h-3" />
+                                                            {reg.phone}
+                                                        </a>
+                                                    )}
+                                                </TableCell>
                                                 <TableCell>
                                                     {reg.status === 'accepted' && reg.accessCode && (
                                                         <div className="flex items-center gap-2 font-mono text-sm">
@@ -1716,7 +1739,11 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-[100px_1fr] items-center gap-4">
                     <Label className={cn("text-right", lang === 'ar' && "text-left")}>{t.adminPage.bookingDetailsPhone}</Label>
-                    <span className="font-semibold" dir="ltr">{infoBooking?.phone}</span>
+                    {infoBooking?.phone ? (
+                         <a href={`tel:${infoBooking.phone}`} className="font-semibold text-primary hover:underline" dir="ltr">{infoBooking.phone}</a>
+                    ) : (
+                        <span className="font-semibold" dir="ltr">N/A</span>
+                    )}
                 </div>
             </div>
             <AlertDialogFooter>

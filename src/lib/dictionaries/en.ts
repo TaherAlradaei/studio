@@ -98,6 +98,7 @@ export const enStrings = {
     durationValue: "{duration} hr(s)",
     paymentDialogTitle: "Booking Awaiting Payment",
     paymentDialogDescription: "Your booking for {date} at {time} requires pre-payment. Please follow the instructions below to complete your payment and secure your spot.",
+    paymentDialogInstructions: "Please contact administration at <a href=\"tel:{phone}\" class=\"text-primary underline\">{phone}</a> to arrange payment.",
   },
   adminPage: {
     title: "Smart Scheduling Assistant",
