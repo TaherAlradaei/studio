@@ -268,7 +268,7 @@ export default function WelcomePage() {
             <p className="text-muted-foreground mb-6 text-lg max-w-2xl mx-auto">{t.welcomePage.sponsorsText}</p>
             <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
                 {welcomePageContent?.sponsors?.map((sponsor, index) => (
-                    <Image key={index} src={sponsor.url} alt={`Sponsor ${index + 1}`} width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
+                    sponsor.url && <Image key={index} src={sponsor.url} alt={`Sponsor ${index + 1}`} width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
                 ))}
             </div>
         </div>
