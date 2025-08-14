@@ -1,0 +1,61 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if a user is an admin
+    function isAdmin(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true;
+    }
+
+    // Users can only read their own document.
+    // They can update their own info, but cannot make themselves an admin or trusted.
+    // Only an admin can grant admin or trusted status.
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId || isAdmin(request.auth.uid);
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId && 
+                       !('isAdmin' in request.resource.data) && 
+                       !('isTrusted' in request.resource.data);
+      allow update: if isAdmin(request.auth.uid); // Admin can update any field
+      allow delete: if isAdmin(request.auth.uid);
+    }
+    
+    // Anyone can create a booking request (pending).
+    // Users can read/update their own bookings.
+    // Admins can read/write all bookings.
+    match /bookings/{bookingId} {
+      allow read: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
+      allow create: if request.auth.uid != null;
+      allow update: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
+      allow delete: if isAdmin(request.auth.uid);
+    }
+    
+    // Public can submit registrations.
+    // Admins can manage all registrations.
+    // Users can read their own registrations.
+    match /academyRegistrations/{registrationId} {
+        allow read: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
+        allow create: if request.auth.uid != null;
+        allow update, delete: if isAdmin(request.auth.uid);
+    }
+
+    // Public can submit their name to find a team.
+    // Only authenticated users can read the list (to prevent scraping).
+    // Users can delete their own entry. Admins can delete any.
+    match /findATeamRegistrations/{registrationId} {
+        allow read: if request.auth.uid != null;
+        allow create: if request.auth.uid != null;
+        allow delete: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
+    }
+
+    // Settings can be read by anyone, but only changed by admins.
+    match /settings/{settingId} {
+      // Allow public read for all settings documents.
+      allow read: if true;
+      allow write: if isAdmin(request.auth.uid);
+    }
+  }
+}

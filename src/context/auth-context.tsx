@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { auth, db, googleProvider, signInWithPopup } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { getAdminAccessCode } from "@/app/(main)/admin/actions";
+import { getAdminAccessCode, updateAdminAccessCode as updateAdminAccessCodeAction } from "@/app/(main)/admin/actions";
 
 
 // Custom User type definition
@@ -17,6 +17,7 @@ export interface User {
     photoURL: string | null;
     phone: string | null;
     isAdmin?: boolean;
+    isTrusted?: boolean;
 }
 
 interface AuthContextType {
@@ -41,8 +42,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const fetchAdminCode = async () => {
-        const code = await getAdminAccessCode();
-        setAdminAccessCode(code);
+        try {
+            const code = await getAdminAccessCode();
+            setAdminAccessCode(code);
+        } catch (error) {
+            console.warn("Could not fetch admin access code. This is expected for unauthenticated users.");
+        }
     };
     fetchAdminCode();
 
@@ -63,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             photoURL: firebaseUser.photoURL,
             phone: null, // Phone will be added later
             isAdmin: false,
+            isTrusted: false,
           };
           await setDoc(userDocRef, newUser);
           setUser(newUser);
@@ -111,8 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const updateAdminAccessCode = async (code: string) => {
-    const adminSettingsRef = doc(db, 'settings', 'admin');
-    await setDoc(adminSettingsRef, { accessCode: code });
+    await updateAdminAccessCodeAction(code);
     setAdminAccessCode(code);
   };
 

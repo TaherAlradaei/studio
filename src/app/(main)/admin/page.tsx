@@ -293,7 +293,7 @@ export default function AdminPage() {
 
 
   useEffect(() => {
-    async function fetchSettings() {
+    async function fetchAdminSettings() {
         try {
             setIsUsersLoading(true);
             const instructions = await getPaymentInstructions();
@@ -305,14 +305,14 @@ export default function AdminPage() {
         } catch (err) {
             toast({
                 title: t.adminPage.errorTitle,
-                description: "Failed to load settings from server.",
+                description: "Failed to load admin settings from server.",
                 variant: "destructive",
             });
         } finally {
             setIsUsersLoading(false);
         }
     }
-    fetchSettings();
+    fetchAdminSettings();
   }, [toast, t]);
 
 
