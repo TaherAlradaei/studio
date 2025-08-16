@@ -44,6 +44,7 @@ export default function BookingPage() {
             date: data.date.toDate(),
             time: data.time,
             duration: data.duration,
+            status: data.status,
         }
     })
     setBookings(publicBookings as any);
