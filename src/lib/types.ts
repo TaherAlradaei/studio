@@ -38,7 +38,7 @@ export interface AcademyRegistration {
   talentName: string;
   birthDate: Timestamp | Date; // Allow both
   ageGroup: "U10" | "U14";
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted' | 'rejected' | 'archived';
   submittedAt: Timestamp;
   accessCode?: string;
   posts?: MemberPost[];
@@ -69,15 +69,20 @@ export interface User {
 
 export interface GalleryImage {
     url: string;
+    path?: string;
 }
 
 export interface SponsorImage {
     url: string;
+    path?: string;
 }
 
 export interface WelcomePageContent {
   fieldImageUrl: string;
+  fieldImageUrlPath?: string;
   coachImageUrl: string;
+  coachImageUrlPath?: string;
   managerImageUrl: string;
+  managerImageUrlPath?: string;
   sponsors: SponsorImage[];
 }

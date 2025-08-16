@@ -7,8 +7,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone, Building, User } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers, getGalleryImages, updateGalleryImages } from "./actions";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone, Building, User, Download, Archive } from "lucide-react";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers, getGalleryImages, updateGalleryImages, exportBookings, exportAcademyRegistrations } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
@@ -241,6 +241,9 @@ export default function AdminPage() {
   
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
   const [filterType, setFilterType] = useState<"week" | "day" | "month">("week");
+  const [exportStartDate, setExportStartDate] = useState<Date | undefined>();
+  const [exportEndDate, setExportEndDate] = useState<Date | undefined>();
+
 
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -785,14 +788,15 @@ export default function AdminPage() {
         }
     };
 
-    const handleRegistrationStatusUpdate = async (registration: AcademyRegistration, status: 'accepted' | 'rejected') => {
+    const handleRegistrationStatusUpdate = async (registration: AcademyRegistration, status: 'accepted' | 'rejected' | 'archived') => {
         try {
             await updateRegistrationStatus(registration.id, status);
+            const statusText = status === 'accepted' ? t.academyPage.statusAccepted : status === 'rejected' ? t.academyPage.statusRejected : t.adminPage.statusArchived;
             toast({
                 title: t.toasts.registrationUpdateTitle,
                 description: t.toasts.registrationUpdateDesc
                     .replace('{name}', registration.talentName)
-                    .replace('{status}', status === 'accepted' ? t.academyPage.statusAccepted : t.academyPage.statusRejected),
+                    .replace('{status}', statusText),
             });
         } catch (err) {
             toast({
@@ -843,6 +847,45 @@ export default function AdminPage() {
             });
         }
     };
+    
+    const handleExportBookings = async () => {
+        try {
+            const csvString = await exportBookings(
+                exportStartDate && exportEndDate
+                ? { from: startOfDay(exportStartDate), to: endOfDay(exportEndDate) }
+                : undefined
+            );
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "bookings_export.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            toast({ title: t.adminPage.errorTitle, description: "Failed to export bookings.", variant: "destructive" });
+        }
+    };
+
+    const handleExportRegistrations = async () => {
+        try {
+            const csvString = await exportAcademyRegistrations();
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "academy_registrations.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            toast({ title: t.adminPage.errorTitle, description: "Failed to export registrations.", variant: "destructive" });
+        }
+    };
+
 
   const getStatusBadge = (status: Booking['status']) => {
     switch (status) {
@@ -869,6 +912,8 @@ export default function AdminPage() {
         return <Badge variant="default">{t.academyPage.statusAccepted}</Badge>;
       case 'rejected':
         return <Badge variant="destructive">{t.academyPage.statusRejected}</Badge>;
+      case 'archived':
+        return <Badge variant="outline">{t.adminPage.statusArchived}</Badge>;
       default:
         return null;
     }
@@ -938,30 +983,50 @@ export default function AdminPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-col md:flex-row gap-6 mb-6 p-4 border rounded-lg bg-background/50">
-                      <div className="flex-shrink-0">
-                        <Label className="px-1">{t.adminPage.filterByDate}</Label>
-                        <Calendar
-                          mode="single"
-                          selected={filterDate}
-                          onSelect={setFilterDate}
-                          className="rounded-md border w-full sm:w-auto mt-2"
-                          locale={lang === 'ar' ? arSA : undefined}
-                          dir={lang === 'ar' ? 'rtl' : 'ltr'}
-                          weekStartsOn={6}
-                          disabled={(date) => isClient && date < new Date(new Date().setHours(0, 0, 0, 0))}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Label>{t.adminPage.filterByRange}</Label>
-                        <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)} className="mt-2">
-                          <TabsList>
-                            <TabsTrigger value="day">{t.adminPage.day}</TabsTrigger>
-                            <TabsTrigger value="week">{t.adminPage.week}</TabsTrigger>
-                            <TabsTrigger value="month">{t.adminPage.month}</TabsTrigger>
-                          </TabsList>
-                        </Tabs>
-                        <p className="text-sm text-muted-foreground mt-4">{t.adminPage.filterDescription}</p>
-                      </div>
+                        <div className="flex-1 space-y-2">
+                           <Label>{t.adminPage.filterByDate}</Label>
+                           <div className="flex gap-2">
+                               <Calendar
+                                  mode="single"
+                                  selected={filterDate}
+                                  onSelect={setFilterDate}
+                                  className="rounded-md border w-auto"
+                                  locale={lang === 'ar' ? arSA : undefined}
+                                  dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                                  weekStartsOn={6}
+                                />
+                                <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)} className="mt-2">
+                                  <TabsList className="flex-col h-auto">
+                                    <TabsTrigger value="day">{t.adminPage.day}</TabsTrigger>
+                                    <TabsTrigger value="week">{t.adminPage.week}</TabsTrigger>
+                                    <TabsTrigger value="month">{t.adminPage.month}</TabsTrigger>
+                                  </TabsList>
+                                </Tabs>
+                           </div>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                            <Label>{t.adminPage.exportBookingsTitle}</Label>
+                             <div className="flex flex-col sm:flex-row gap-2 items-center">
+                                <Calendar
+                                  mode="single"
+                                  selected={exportStartDate}
+                                  onSelect={setExportStartDate}
+                                  className="rounded-md border w-full sm:w-auto"
+                                  placeholder={t.adminPage.exportStartDate}
+                                />
+                                <Calendar
+                                  mode="single"
+                                  selected={exportEndDate}
+                                  onSelect={setExportEndDate}
+                                  className="rounded-md border w-full sm:w-auto"
+                                  placeholder={t.adminPage.exportEndDate}
+                                />
+                                <Button onClick={handleExportBookings} className="w-full sm:w-auto">
+                                    <Download className="mr-2 h-4 w-4"/>
+                                    {t.adminPage.exportButton}
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                     
                      {/* Desktop Table View */}
@@ -1258,9 +1323,15 @@ export default function AdminPage() {
                 {/* Academy Registrations Card */}
                 <Card className="bg-card/80 backdrop-blur-sm">
                     <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-6 h-6 text-primary" />
-                            <CardTitle>{t.adminPage.academyRegistrationsTitle}</CardTitle>
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-2">
+                                <ShieldCheck className="w-6 h-6 text-primary" />
+                                <CardTitle>{t.adminPage.academyRegistrationsTitle}</CardTitle>
+                           </div>
+                           <Button onClick={handleExportRegistrations} variant="outline">
+                               <Download className="mr-2 h-4 w-4" />
+                               {t.adminPage.exportButton}
+                           </Button>
                         </div>
                         <CardDescription>{t.adminPage.academyRegistrationsDesc}</CardDescription>
                     </CardHeader>
@@ -1279,8 +1350,8 @@ export default function AdminPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {registrations.length > 0 ? (
-                                        registrations.map((reg) => {
+                                    {registrations.filter(r => r.status !== 'rejected').length > 0 ? (
+                                        registrations.filter(r => r.status !== 'rejected').map((reg) => {
                                           const birthDate = reg.birthDate instanceof Timestamp ? reg.birthDate.toDate() : reg.birthDate;
                                           return (
                                             <TableRow key={reg.id}>
@@ -1312,6 +1383,12 @@ export default function AdminPage() {
                                                             <Button size="sm" onClick={() => handleRegistrationStatusUpdate(reg, 'accepted')}>{t.actions.accept}</Button>
                                                             <Button size="sm" variant="destructive" onClick={() => handleRegistrationStatusUpdate(reg, 'rejected')}>{t.actions.decline}</Button>
                                                         </div>
+                                                    )}
+                                                    {reg.status === 'accepted' && (
+                                                        <Button size="sm" variant="outline" onClick={() => handleRegistrationStatusUpdate(reg, 'archived')}>
+                                                            <Archive className="mr-2 h-4 w-4" />
+                                                            {t.adminPage.archiveButton}
+                                                        </Button>
                                                     )}
                                                 </TableCell>
                                             </TableRow>

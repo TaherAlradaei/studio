@@ -224,6 +224,12 @@ export const enStrings = {
     securityCodeUpdatedTitle: "Code Updated",
     securityCodeUpdatedDesc: "Admin access code has been updated successfully.",
     securityCodeEmpty: "New admin code cannot be empty.",
+    exportButton: "Export",
+    exportBookingsTitle: "Export Bookings (CSV)",
+    exportStartDate: "Start Date",
+    exportEndDate: "End Date",
+    archiveButton: "Archive",
+    statusArchived: "Archived",
   },
   academyPage: {
     title: "Join the Academy",

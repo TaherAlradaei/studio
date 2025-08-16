@@ -3,8 +3,8 @@
 
 import { analyzeBookingPatterns, type AnalyzeBookingPatternsInput } from "@/ai/flows/scheduling-recommendations";
 import { db, storage } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, where, query } from "firebase/firestore";
-import type { Background, WelcomePageContent, User, GalleryImage, SponsorImage, Booking } from "@/lib/types";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, where, query, orderBy, Timestamp } from "firebase/firestore";
+import type { Background, WelcomePageContent, User, GalleryImage, SponsorImage, Booking, AcademyRegistration } from "@/lib/types";
 import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -193,10 +193,10 @@ export async function getGalleryImages(): Promise<GalleryImage[]> {
         { url: "https://images.unsplash.com/photo-1430232324554-8f4aebd06683?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
         { url: "https://images.unsplash.com/photo-1556816214-fda351e4a7fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3RhZGl1bSUyMGZvb3RiYWxsfGVufDB8fHx8MTc1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080"},
         { url: "https://images.unsplash.com/photo-1511886921337-16ecd3be34b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
-        { url: "https://images.unsplash.com/photo-1594465598235-e5982362b1a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
-        { url: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
-        { url: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"},
-        { url: "https://images.unsplash.com/photo-1626233405494-a3ebb495476a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1MDk0MDQ2fDA&ixlib=rb-4.1.0&q=80&w=1080"}
+        { url: "https://images.unsplash.com/photo-1594465598235-e5982362b1a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080"},
+        { url: "https://images.unsplash.com/photo-1626233405494-a3ebb495476a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdGFkaXVtJTIwZm9vdGJhbGx8ZW58MHx8fHwxNzU1NTA5NDA0Nnww&ixlib=rb-4.1.0&q=80&w=1080"}
     ];
 }
 
@@ -205,4 +205,95 @@ export async function updateGalleryImages(images: GalleryImage[]): Promise<void>
     await setDoc(docRef, { images });
 }
 
+// Helper to convert data to CSV format
+function convertToCSV(data: any[], headers: string[]): string {
+  const headerRow = headers.join(',');
+  const rows = data.map(row => 
+    headers.map(header => JSON.stringify(row[header] || '')).join(',')
+  );
+  return [headerRow, ...rows].join('\n');
+}
+
+export async function exportBookings(dateRange?: { from: Date; to: Date }): Promise<string> {
+    let bookingsQuery;
+    if (dateRange) {
+        bookingsQuery = query(
+            collection(db, "bookings"),
+            where("date", ">=", Timestamp.fromDate(dateRange.from)),
+            where("date", "<=", Timestamp.fromDate(dateRange.to)),
+            orderBy("date", "desc")
+        );
+    } else {
+        bookingsQuery = query(collection(db, "bookings"), orderBy("date", "desc"));
+    }
+
+    const querySnapshot = await getDocs(bookingsQuery);
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+    const usersSnapshot = await getDocs(collection(db, "users"));
+    const users = usersSnapshot.docs.reduce((acc, doc) => {
+        acc[doc.id] = doc.data() as User;
+        return acc;
+    }, {} as Record<string, User>);
+
+    const csvData = bookings.map(b => {
+        const bookingDate = b.date instanceof Timestamp ? b.date.toDate() : b.date;
+        const submittedBy = b.userId ? (users[b.userId]?.displayName || 'N/A') : 'N/A';
+        
+        let confirmedBy = 'N/A';
+        if (b.status === 'confirmed') {
+            if (b.userId && users[b.userId]?.isTrusted) {
+                confirmedBy = `Trusted (${users[b.userId]?.displayName})`;
+            } else if (b.userId === 'admin_manual') {
+                 confirmedBy = 'Admin';
+            }
+        }
+        
+        return {
+            date: bookingDate.toISOString().split('T')[0],
+            slot_time: b.time,
+            submitted_by_name: b.name,
+            submitted_by_phone: b.phone,
+            submitted_by_user: submittedBy,
+            confirmed: b.status === 'confirmed' ? 'yes' : 'no',
+            confirmed_by: confirmedBy,
+            cancelled: b.status === 'cancelled' ? 'yes' : 'no'
+        };
+    });
+
+    const headers = [
+        'date', 'slot_time', 'submitted_by_name', 'submitted_by_phone', 
+        'submitted_by_user', 'confirmed', 'confirmed_by', 'cancelled'
+    ];
+    
+    return convertToCSV(csvData, headers);
+}
+
+
+export async function exportAcademyRegistrations(): Promise<string> {
+    const q = query(collection(db, "academyRegistrations"), orderBy("submittedAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    const registrations = querySnapshot.docs.map(doc => doc.data() as AcademyRegistration);
+
+    const csvData = registrations.map(r => {
+        const birthDate = r.birthDate instanceof Timestamp ? r.birthDate.toDate() : r.birthDate;
+        const submittedAt = r.submittedAt instanceof Timestamp ? r.submittedAt.toDate() : r.submittedAt;
+        return {
+            talent_name: r.talentName,
+            parent_name: r.parentName,
+            phone: r.phone,
+            birth_date: birthDate.toISOString().split('T')[0],
+            age_group: r.ageGroup,
+            status: r.status,
+            access_code: r.accessCode || 'N/A',
+            submitted_at: submittedAt.toISOString(),
+        };
+    });
+
+    const headers = [
+        'talent_name', 'parent_name', 'phone', 'birth_date', 'age_group', 
+        'status', 'access_code', 'submitted_at'
+    ];
+
+    return convertToCSV(csvData, headers);
+}
     
