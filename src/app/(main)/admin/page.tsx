@@ -1196,7 +1196,7 @@ export default function AdminPage() {
                                         let isDisabled = isPast || (isBookedForManual && !occupyingBooking);
         
                                         if (occupyingBooking) {
-                                            isDisabled = true;
+                                            isDisabled = false; // It should be clickable to show info or unblock
                                             switch (occupyingBooking.status) {
                                                 case 'blocked':
                                                     buttonVariant = 'destructive';
@@ -1226,11 +1226,14 @@ export default function AdminPage() {
                                                 disabled={isDisabled}
                                                 onClick={async () => {
                                                     if (!availabilityDate) return;
-                                                    if (occupyingBooking?.status === 'blocked') {
-                                                        await unblockSlot(occupyingBooking.id!);
-                                                    } else if (occupyingBooking?.status === 'confirmed') {
-                                                        setInfoBooking(occupyingBooking);
-                                                    } else if (!occupyingBooking) {
+                                                    if (occupyingBooking) {
+                                                        if (occupyingBooking.status === 'blocked') {
+                                                            await unblockSlot(occupyingBooking.id!);
+                                                            toast({ title: "Slot Unblocked", description: `The slot at ${time} has been made available.` });
+                                                        } else {
+                                                            setInfoBooking(occupyingBooking);
+                                                        }
+                                                    } else {
                                                         setManualBookingDuration(availabilityDuration);
                                                         setNewManualBooking({date: availabilityDate, time, duration: availabilityDuration});
                                                     }
