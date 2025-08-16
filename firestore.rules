@@ -19,13 +19,13 @@ service cloud.firestore {
 
     // Bookings collection
     match /bookings/{bookingId} {
-      // ✅ Allow all authenticated users to read any booking (e.g., to check availability)
+      // ✅ All authenticated users can read any booking (e.g., to check availability)
       allow read: if request.auth.uid != null;
 
-      // ✅ Allow all authenticated users to create bookings
+      // ✅ All authenticated users can create bookings
       allow create: if request.auth.uid != null;
-      
-      // ✅ Allow users to update their own bookings, and admins to update any
+
+      // ✅ Users can update their own bookings, admins can update any
       allow update: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
 
       // ✅ Users can delete their own bookings, admins can delete any
