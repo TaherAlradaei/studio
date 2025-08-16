@@ -28,11 +28,12 @@ function getFirebaseConfig() {
     return {
       "projectId": "al-maidan-arena",
       "appId": "1:183587615468:web:f291f692ed021ca1e22bc9",
-      "storageBucket": "al-maidan-arena.firebasestorage.app",
+      "storageBucket": "al-maidan-arena.appspot.com",
       "apiKey": "AIzaSyBI7rhT-6JhAVjVAXSlhztRnp4I310VrCc",
       "authDomain": "al-maidan-arena.firebaseapp.com",
       "measurementId": "G-37T02SS82J",
-      "messagingSenderId": "183587615468"
+      "messagingSenderId": "183587615468",
+      "databaseURL": "https://al-maidan-arena.firebaseio.com"
     };
 }
 
