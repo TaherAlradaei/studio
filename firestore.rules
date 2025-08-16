@@ -1,39 +1,56 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function isAdmin(userId) {
-      return request.auth.uid == 'vQF7GtgIRNeq66ktYosLQtk9W9w2' || request.auth.uid == 'WG8c2fN7Z9cEoHj8nebLEktLM332';
+      // List of all admin UIDs
+      return userId in [
+        "vQF7GtgIRNeq66ktYosLQtk9W9w2",
+        "WG8c2fN7Z9cEoHj8nebLEktLM332",
+        "2tNIh9jQISg0zzWiYPWXq3K0RHS2",
+        "redbn6RZ4YafH7xDPHtZDMHmGYA2",
+        "tgpBCQIt9Ea2FEaXmJq1A0HxHK53"
+      ];
     }
 
     // Users collection
     match /users/{userId} {
       allow read: if request.auth.uid == userId || isAdmin(request.auth.uid);
-      allow write: if request.auth.uid == userId && !('isAdmin' in request.resource.data);
-      allow write: if isAdmin(request.auth.uid);
+      // Allow user to write to their own doc, but prevent them from making themselves an admin.
+      // Admins can write anything.
+      allow write: if (request.auth.uid == userId && !('isAdmin' in request.resource.data)) || isAdmin(request.auth.uid);
     }
 
     // Bookings collection
     match /bookings/{bookingId} {
+      // Allow any authenticated user to see which slots are booked/blocked.
       allow read: if request.auth.uid != null;
+      // Allow authenticated users to create new bookings (requests).
       allow create: if request.auth.uid != null;
-      allow update, delete: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
+      // Allow a user to update their own booking, or an admin to update any booking.
+      allow update: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
+      // Allow a user to delete their own booking, or an admin to delete any booking.
+      allow delete: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
     }
 
     // Academy Registrations
     match /academyRegistrations/{registrationId} {
+      // User can read their own registration, admins can read all.
       allow read: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
+      // Any authenticated user can apply.
       allow create: if request.auth.uid != null;
+      // Only admins can update (approve/reject) or delete registrations.
       allow update, delete: if isAdmin(request.auth.uid);
     }
 
     // Find A Team Registrations
     match /findATeamRegistrations/{registrationId} {
-      // Allow any authenticated user to read the list to find players.
+      // Any authenticated user can read the list of players looking for a team.
       allow read: if request.auth.uid != null;
-      // Allow any authenticated user to create a registration for themselves.
+      // Any authenticated user can add themselves to the list.
       allow create: if request.auth.uid != null;
-      // Only allow a user to delete their own registration, or an admin to delete any.
+      // User can remove themselves, or an admin can remove anyone.
       allow delete: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
     }
 

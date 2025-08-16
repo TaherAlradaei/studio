@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from "react";
-import { auth, db, googleProvider, signInWithPopup, onFirebaseAuthStateChanged, linkWithCredential, signInAnonymously } from "@/lib/firebase";
+import { auth, db, googleProvider, signInWithPopup, signInAnonymously, linkWithCredential, onFirebaseAuthStateChanged } from "@/lib/firebase";
 import { onAuthStateChanged as onAuth, signOut, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, setDoc, writeBatch, collection, getDocs, where, query } from "firebase/firestore";
 import { getAdminAccessCode, updateAdminAccessCode as updateAdminAccessCodeAction } from "@/app/(main)/admin/actions";
@@ -28,40 +28,39 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUserDetails: (details: { name: string; phone: string }) => Promise<void>;
   checkAdminStatus: () => Promise<void>;
-  adminAccessCode: string;
-  updateAdminAccessCode: (code: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Hardcoded Admin UIDs
-const ADMIN_UIDS = ["vQF7GtgIRNeq66ktYosLQtk9W9w2", "WG8c2fN7Z9cEoHj8nebLEktLM332"];
+const ADMIN_UIDS = [
+    "vQF7GtgIRNeq66ktYosLQtk9W9w2", 
+    "WG8c2fN7Z9cEoHj8nebLEktLM332",
+    "2tNIh9jQISg0zzWiYPWXq3K0RHS2",
+    "redbn6RZ4YafH7xDPHtZDMHmGYA2",
+    "tgpBCQIt9Ea2FEaXmJq1A0HxHK53"
+];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUserRegistered, setIsUserRegistered] = useState<boolean | null>(null);
-  const [adminAccessCode, setAdminAccessCode] = useState('almaidan');
 
   const handleUserDocument = useCallback(async (firebaseUser: FirebaseUser): Promise<User> => {
     const userDocRef = doc(db, "users", firebaseUser.uid);
     let userDoc = await getDoc(userDocRef);
 
-    // Check for hardcoded admin status
     const isHardcodedAdmin = ADMIN_UIDS.includes(firebaseUser.uid);
     
     let userData: User;
 
     if (userDoc.exists()) {
       userData = userDoc.data() as User;
-      // Ensure hardcoded admins always have admin status in the app session
       if (isHardcodedAdmin && !userData.isAdmin) {
           userData.isAdmin = true;
-          // Optionally update Firestore to reflect this
           await setDoc(userDocRef, { isAdmin: true }, { merge: true });
       }
     } else {
-      // New user, create a doc
       const newUser: User = {
         uid: firebaseUser.uid,
         displayName: firebaseUser.displayName,
@@ -83,10 +82,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
       const unsubscribe = onFirebaseAuthStateChanged(auth, async (firebaseUser) => {
+          setIsLoading(true);
           if (firebaseUser) {
               await handleUserDocument(firebaseUser);
           } else {
-              // No user logged in, so sign in anonymously.
               try {
                   const { user: anonUser } = await signInAnonymously(auth);
                   await handleUserDocument(anonUser);
@@ -118,11 +117,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const currentUser = auth.currentUser;
 
       if (currentUser && currentUser.isAnonymous) {
-          // This is an anonymous user upgrading their account.
-          const credential = result.credential;
-          if (!credential) throw new Error("Could not get credential from Google sign-in.");
-
-          // Temporarily store anonymous user's data
           const anonUid = currentUser.uid;
           const bookingsRef = collection(db, "bookings");
           const bookingsQuery = query(bookingsRef, where("userId", "==", anonUid));
@@ -132,11 +126,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const teamQuery = query(teamRef, where("userId", "==", anonUid));
           const teamSnapshot = await getDocs(teamQuery);
 
-          // Link the anonymous account with the Google account.
+          const credential = result.credential;
+          if (!credential) throw new Error("Could not get credential from Google sign-in.");
           const linkResult = await linkWithCredential(currentUser, credential);
           const newFirebaseUser = linkResult.user;
 
-          // Now, migrate the data to the new permanent UID.
           const batch = writeBatch(db);
           bookingsSnapshot.forEach(doc => {
               batch.update(doc.ref, { userId: newFirebaseUser.uid });
@@ -145,15 +139,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               batch.update(doc.ref, { userId: newFirebaseUser.uid });
           });
           
-          // Delete the old anonymous user document
           batch.delete(doc(db, "users", anonUid));
 
           await batch.commit();
           
-          // Finalize the new user document
           await handleUserDocument(newFirebaseUser);
       } else {
-          // This is a direct login, not an upgrade.
           await handleUserDocument(result.user);
       }
     } catch (error) {
@@ -173,11 +164,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsUserRegistered(true);
     }
   };
-  
-  const updateAdminAccessCode = async (code: string) => {
-    await updateAdminAccessCodeAction(code);
-    setAdminAccessCode(code);
-  };
 
   const logout = async () => {
     await signOut(auth);
@@ -186,7 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isUserRegistered, loginWithGoogle, logout, updateUserDetails, checkAdminStatus, adminAccessCode, updateAdminAccessCode }}>
+    <AuthContext.Provider value={{ user, isLoading, isUserRegistered, loginWithGoogle, logout, updateUserDetails, checkAdminStatus }}>
       {children}
     </AuthContext.Provider>
   );

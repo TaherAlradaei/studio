@@ -17,7 +17,8 @@ import {
     where,
     getDocs,
     deleteDoc,
-    setDoc
+    setDoc,
+    runTransaction
 } from "firebase/firestore";
 import { getDefaultPrice } from "@/lib/pricing";
 import { useAuth } from "./auth-context";
@@ -35,11 +36,6 @@ interface BookingContextType {
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
-
-const timeToMinutes = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
-};
 
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -97,91 +93,88 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const unblockSlot = async (id: string) => {
     await deleteDoc(doc(db, "bookings", id));
   };
-
+  
   const confirmBooking = async (bookingToConfirm: Booking): Promise<'confirmed' | 'slot-taken'> => {
-      // Handle both Timestamp and Date objects
-      const bookingDate = bookingToConfirm.date instanceof Timestamp
-        ? bookingToConfirm.date.toDate()
-        : bookingToConfirm.date;
+      return runTransaction(db, async (transaction) => {
+          const bookingDate = bookingToConfirm.date instanceof Timestamp
+              ? bookingToConfirm.date.toDate()
+              : bookingToConfirm.date;
 
-      const bookingStart = new Date(bookingDate.getTime());
-      const [startHours, startMinutes] = bookingToConfirm.time.split(':').map(Number);
-      bookingStart.setHours(startHours, startMinutes, 0, 0);
-      
-      const bookingEnd = new Date(bookingStart.getTime() + bookingToConfirm.duration * 60 * 60 * 1000);
+          const bookingStart = new Date(bookingDate.getTime());
+          const [startHours, startMinutes] = bookingToConfirm.time.split(':').map(Number);
+          bookingStart.setHours(startHours, startMinutes, 0, 0);
+          
+          const bookingEnd = new Date(bookingStart.getTime() + bookingToConfirm.duration * 60 * 60 * 1000);
 
-      const q = query(
-        collection(db, "bookings"),
-        where("date", "==", Timestamp.fromDate(new Date(bookingDate.setHours(0, 0, 0, 0)))),
-        where("status", "in", ["confirmed", "blocked"])
-      );
-      const querySnapshot = await getDocs(q);
+          const q = query(
+              collection(db, "bookings"),
+              where("date", "==", Timestamp.fromDate(new Date(bookingDate.setHours(0, 0, 0, 0)))),
+              where("status", "in", ["confirmed", "blocked"])
+          );
+          
+          const dayBookingsSnapshot = await getDocs(q);
 
-      const isSlotTaken = querySnapshot.docs.some(doc => {
-        const b = doc.data() as Booking;
-        if (doc.id === bookingToConfirm.id) return false;
+          for (const doc of dayBookingsSnapshot.docs) {
+              if (doc.id === bookingToConfirm.id) continue;
+              const b = doc.data() as Booking;
+              const existingStart = new Date((b.date as Timestamp).toDate());
+              const [existingStartHours, existingStartMinutes] = b.time.split(':').map(Number);
+              existingStart.setHours(existingStartHours, existingStartMinutes, 0, 0);
+              const existingEnd = new Date(existingStart.getTime() + b.duration * 60 * 60 * 1000);
+              
+              if (bookingStart < existingEnd && bookingEnd > existingStart) {
+                  return 'slot-taken';
+              }
+          }
 
-        const existingStart = new Date((b.date as Timestamp).toDate());
-        const [existingStartHours, existingStartMinutes] = b.time.split(':').map(Number);
-        existingStart.setHours(existingStartHours, existingStartMinutes, 0, 0);
+          const bookingToConfirmRef = doc(db, "bookings", bookingToConfirm.id);
+          transaction.update(bookingToConfirmRef, { status: 'confirmed' });
 
-        const existingEnd = new Date(existingStart.getTime() + b.duration * 60 * 60 * 1000);
-        
-        // Check for overlap
-        return bookingStart < existingEnd && bookingEnd > existingStart;
+          const conflictQ = query(
+              collection(db, "bookings"),
+              where("date", "==", Timestamp.fromDate(new Date(bookingDate.setHours(0, 0, 0, 0)))),
+              where("status", "in", ["pending", "awaiting-confirmation"])
+          );
+          const conflictSnapshot = await getDocs(conflictQ);
+          
+          conflictSnapshot.forEach(conflictDoc => {
+              if (conflictDoc.id === bookingToConfirm.id) return;
+              const b = conflictDoc.data() as Booking;
+
+              const existingStart = new Date((b.date as Timestamp).toDate());
+              const [existingStartHours, existingStartMinutes] = b.time.split(':').map(Number);
+              existingStart.setHours(existingStartHours, existingStartMinutes, 0, 0);
+              const existingEnd = new Date(existingStart.getTime() + b.duration * 60 * 60 * 1000);
+
+              if (bookingStart < existingEnd && bookingEnd > existingStart) {
+                  transaction.update(conflictDoc.ref, { status: 'cancelled' });
+              }
+          });
+          
+          return 'confirmed';
       });
-
-      if (isSlotTaken) {
-        return 'slot-taken';
-      }
-
-      const batch = writeBatch(db);
-      
-      // Confirm the target booking
-      const bookingToConfirmRef = doc(db, "bookings", bookingToConfirm.id);
-      batch.update(bookingToConfirmRef, { status: 'confirmed' });
-
-      // Find and cancel conflicting requests (pending or awaiting-confirmation)
-      const conflictQ = query(
-        collection(db, "bookings"),
-        where("date", "==", Timestamp.fromDate(new Date(bookingDate.setHours(0, 0, 0, 0)))),
-        where("status", "in", ["pending", "awaiting-confirmation"])
-      );
-      const conflictSnapshot = await getDocs(conflictQ);
-      
-      conflictSnapshot.forEach(conflictDoc => {
-        if (conflictDoc.id === bookingToConfirm.id) return;
-        const b = conflictDoc.data() as Booking;
-
-        const existingStart = new Date((b.date as Timestamp).toDate());
-        const [existingStartHours, existingStartMinutes] = b.time.split(':').map(Number);
-        existingStart.setHours(existingStartHours, existingStartMinutes, 0, 0);
-        const existingEnd = new Date(existingStart.getTime() + b.duration * 60 * 60 * 1000);
-
-        if (bookingStart < existingEnd && bookingEnd > existingStart) {
-          batch.update(conflictDoc.ref, { status: 'cancelled' });
-        }
-      });
-      
-      await batch.commit();
-      return 'confirmed';
   };
 
   const createConfirmedBooking = async (bookingData: Omit<Booking, "id" | "status" | "userId" | "isRecurring" | "date"> & { date: Date }): Promise<'confirmed' | 'slot-taken'> => {
       const newBookingRef = doc(collection(db, "bookings"));
+      // Create a temporary booking object to pass to confirmBooking
       const tempBooking: Booking = {
         ...bookingData,
         id: newBookingRef.id,
         userId: 'admin_manual',
+        // This is a temporary in-memory status. The transaction will set the final status.
+        status: 'awaiting-confirmation', 
         date: Timestamp.fromDate(bookingData.date),
-        status: 'awaiting-confirmation', // Will be updated to confirmed by confirmBooking
       };
       
-      await setDoc(newBookingRef, tempBooking);
+      // Set the initial document data
+      await setDoc(newBookingRef, { ...tempBooking });
 
+      // Run the confirmation logic
       const result = await confirmBooking(tempBooking);
       
       if (result === 'slot-taken') {
+          // If the slot was taken, delete the temporary booking doc we created
           await deleteDoc(newBookingRef);
       }
 

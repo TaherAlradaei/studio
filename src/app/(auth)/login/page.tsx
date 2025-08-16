@@ -24,9 +24,11 @@ export default function LoginPage() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
-    // Only redirect when auth state is no longer loading
+    // Only redirect when auth state is no longer loading and we have a user object
     if (!isLoading && user && !user.isAnonymous) {
-        if (isUserRegistered) {
+        if(user.isAdmin) {
+            router.push('/admin');
+        } else if (isUserRegistered) {
             router.push('/booking');
         } else {
             router.push('/register-details');
@@ -38,14 +40,14 @@ export default function LoginPage() {
     setIsLoggingIn(true);
     try {
       await loginWithGoogle();
-      // The useEffect hook will handle redirection upon successful login.
+      // The useEffect hook will handle redirection upon successful login and user state update.
     } catch (error) {
       console.error("Login failed:", error);
       setIsLoggingIn(false);
     }
   };
   
-  if (isLoading) {
+  if (isLoading || (user && !user.isAnonymous)) {
     return (
        <div className="flex min-h-screen items-center justify-center bg-background p-4">
           <Loader2 className="h-8 w-8 animate-spin" />
