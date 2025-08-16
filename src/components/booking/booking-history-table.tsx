@@ -178,7 +178,7 @@ export function BookingHistoryTable() {
                         <Button size="sm" variant="destructive" onClick={() => handleDecline(booking)}>{t.actions.decline}</Button>
                       </div>
                     )}
-                     {booking.status === 'pending' && !user?.isTrusted && (
+                     {(booking.status === 'pending' && !user?.isTrusted) && (
                       <p className="text-xs text-muted-foreground text-right">{t.bookingHistoryTable.statusPending}</p>
                     )}
                   </TableCell>
@@ -228,7 +228,7 @@ export function BookingHistoryTable() {
                                <Button size="sm" variant="destructive" onClick={() => handleDecline(booking)} className="flex-1">{t.actions.decline}</Button>
                             </div>
                          )}
-                          {booking.status === 'pending' && !user?.isTrusted && (
+                          {(booking.status === 'pending' && !user?.isTrusted) && (
                               <p className="text-xs text-muted-foreground text-center pt-3 border-t">{t.bookingHistoryTable.statusPending}</p>
                           )}
                     </CardContent>
@@ -252,7 +252,7 @@ export function BookingHistoryTable() {
                           .replace('{time}', currentBooking.time)}
                     </p>
                     <div className="mt-4 p-4 bg-muted/50 rounded-md border text-sm text-foreground">
-                        <p className="whitespace-pre-wrap font-sans">{t.bookingHistoryTable.paymentDialogInstructions.replace("{phone}", "+967 736 333 328")}</p>
+                        <p className="whitespace-pre-wrap font-sans">{paymentInstructions}</p>
                     </div>
                   </div>
                 </AlertDialogDescription>

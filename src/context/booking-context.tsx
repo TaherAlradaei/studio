@@ -61,10 +61,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const addBooking = async (newBookingData: Omit<Booking, "id" | "status" | "price" | "date" | "isRecurring"> & {date: Date}) => {
     const price = getDefaultPrice(newBookingData.time) * newBookingData.duration;
     
+    // Set status directly to 'awaiting-confirmation' to skip admin pricing step.
     await addDoc(collection(db, "bookings"), {
       ...newBookingData,
       date: Timestamp.fromDate(newBookingData.date),
-      status: 'pending',
+      status: 'awaiting-confirmation',
       price,
     });
   };

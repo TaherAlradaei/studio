@@ -84,10 +84,8 @@ export function BookingForm({
       });
       
       toast({
-        title: t.toasts.bookingPendingTitle,
-        description: t.toasts.bookingPendingDesc
-          .replace('{date}', selectedDate.toLocaleDateString(lang))
-          .replace('{time}', selectedTime),
+        title: t.toasts.bookingAwaitingConfirmationTitle,
+        description: t.toasts.bookingAwaitingConfirmationDesc,
       });
 
       onBookingComplete();

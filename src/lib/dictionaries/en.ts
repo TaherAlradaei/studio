@@ -318,6 +318,8 @@ export const enStrings = {
     slotUnavailableDesc: "This time slot has just been confirmed by another user. Please select a different time.",
     registrationUpdateTitle: "Registration Updated",
     registrationUpdateDesc: "The registration for {name} has been {status}.",
+    bookingAwaitingConfirmationTitle: "Booking Awaiting Confirmation",
+    bookingAwaitingConfirmationDesc: "Your booking request has been submitted. Please go to 'My Bookings' to confirm.",
   },
   auth: {
       errorTitle: "Authentication Error",

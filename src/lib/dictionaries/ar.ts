@@ -316,6 +316,8 @@ export const arStrings: Dictionary = {
     slotUnavailableDesc: "تم تأكيد هذه الفترة الزمنية للتو من قبل مستخدم آخر. يرجى اختيار وقت مختلف.",
     registrationUpdateTitle: "تم تحديث التسجيل",
     registrationUpdateDesc: "تم {status} طلب تسجيل {name}.",
+    bookingAwaitingConfirmationTitle: "طلب الحجز قيد الانتظار",
+    bookingAwaitingConfirmationDesc: "تم تقديم طلب الحجز الخاص بك. يرجى الانتقال إلى 'حجوزاتي' للتأكيد.",
   },
   auth: {
       errorTitle: "خطأ في المصادقة",
