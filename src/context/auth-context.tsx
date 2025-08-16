@@ -32,13 +32,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Hardcoded Admin UIDs
+// --- CODE EDITING GUIDE ---
+// To add a new admin, add their Google User ID (UID) to this list.
 const ADMIN_UIDS = [
     "vQF7GtgIRNeq66ktYosLQtk9W9w2", 
     "WG8c2fN7Z9cEoHj8nebLEktLM332",
     "2tNIh9jQISg0zzWiYPWXq3K0RHS2",
     "redbn6RZ4YafH7xDPHtZDMHmGYA2",
-    "tgpBCQIt9Ea2FEaXmJq1A0HxHK53"
+    "tgpBCQIt9Ea2FEaXmJq1A0HxHK53",
+    "ADD_NEW_ADMIN_UID_HERE", // Add the new admin's UID here
 ];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
