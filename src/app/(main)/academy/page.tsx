@@ -26,17 +26,28 @@ import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { useAcademy } from "@/context/academy-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Shield, UserPlus, Calendar as CalendarIcon } from "lucide-react";
+import { Shield, UserPlus, Calendar as CalendarIcon, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { useState, useEffect } from "react";
 
 
 export default function AcademyRegistrationPage() {
+  // --- CODE EDITING GUIDE ---
+  // This section initializes hooks for various functionalities.
+  // `useLanguage` handles language translations (t).
+  // `useToast` shows pop-up notifications (toast).
+  // `useAcademy` manages academy registration logic (addRegistration).
+  // `useAuth` provides information about the current user (user).
   const { t, lang } = useLanguage();
   const { toast } = useToast();
   const { addRegistration } = useAcademy();
   const { user } = useAuth();
 
+  // --- CODE EDITING GUIDE ---
+  // This is the form's data structure, defined using Zod for validation.
+  // To add a new field, you would:
+  // 1. Add a new line here (e.g., `newField: z.string().min(5)`).
+  // 2. Add a corresponding `<FormField>` component in the JSX below.
   const formSchema = z.object({
     parentName: z.string().min(2, { message: t.academyPage.validation.parentNameMin }),
     phone: z.string().regex(/^[\d\s]{7,15}$/, { message: t.bookingForm.validation.phoneFormat }),
@@ -47,6 +58,9 @@ export default function AcademyRegistrationPage() {
     ageGroup: z.enum(["U10", "U14"]),
   });
 
+  // --- CODE EDITING GUIDE ---
+  // This initializes the form using `react-hook-form`.
+  // `defaultValues` sets the initial state of the form fields.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -57,7 +71,11 @@ export default function AcademyRegistrationPage() {
     },
   });
 
+  // --- CODE EDITING GUIDE ---
+  // This function runs when the user clicks the "Submit" button.
+  // `values` contains the data from the form.
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // This check ensures a user (even an anonymous one) exists before proceeding.
      if (!user) {
         toast({
             title: t.auth.notLoggedInTitle,
@@ -68,6 +86,7 @@ export default function AcademyRegistrationPage() {
     }
     
     try {
+      // This calls the function from `academy-context` to save the data to Firestore.
       await addRegistration({
         userId: user.uid,
         parentName: values.parentName,
@@ -76,12 +95,15 @@ export default function AcademyRegistrationPage() {
         ageGroup: values.ageGroup,
         birthDate: new Date(values.birthDate),
       });
+      // This displays a success message.
       toast({
         title: t.academyPage.toastSuccessTitle,
         description: t.academyPage.toastSuccessDesc.replace('{name}', values.talentName),
       });
+      // This clears the form after successful submission.
       form.reset();
     } catch (error) {
+      // This displays an error message if something goes wrong.
       toast({
         title: t.adminPage.errorTitle,
         description: error instanceof Error ? error.message : "Failed to submit registration.",
@@ -90,6 +112,9 @@ export default function AcademyRegistrationPage() {
     }
   }
 
+  // --- CODE EDITING GUIDE ---
+  // This is the JSX that renders the page's HTML structure.
+  // You can change text, icons, or layout here.
   return (
     <div className="container py-8">
       <div className="text-center mb-12">
@@ -114,8 +139,17 @@ export default function AcademyRegistrationPage() {
             <CardDescription>{t.academyPage.formDescription}</CardDescription>
           </CardHeader>
           <CardContent>
+            {user?.isAnonymous && (
+              <div className="mb-4 p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30 text-yellow-300">
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><AlertTriangle className="w-5 h-5"/>{t.auth.anonBookingTitle}</h4>
+                <p className="text-xs opacity-90">{t.auth.anonBookingDesc}</p>
+              </div>
+            )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* --- CODE EDITING GUIDE --- */}
+                {/* This is a form field. To add a new one, you would copy this block, */}
+                {/* change `name` to match the field in `formSchema`, and update the labels. */}
                 <FormField
                   control={form.control}
                   name="parentName"

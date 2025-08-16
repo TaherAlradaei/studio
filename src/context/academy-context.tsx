@@ -34,7 +34,9 @@ interface AcademyContextType {
 
 const AcademyContext = createContext<AcademyContextType | undefined>(undefined);
 
-// Helper function to generate a random alphanumeric code
+// --- CODE EDITING GUIDE ---
+// This is a helper function to generate a random 6-character code.
+// You could change the `length` or the characters in `chars` to customize it.
 const generateAccessCode = (length = 6) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
@@ -49,7 +51,10 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   const [registrations, setRegistrations] = useState<AcademyRegistration[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<AcademyRegistration[]>([]);
 
-  // This effect fetches all registrations for the admin page.
+  // --- CODE EDITING GUIDE ---
+  // This `useEffect` hook runs when the component loads or `user.isAdmin` changes.
+  // It fetches ALL academy registrations if the user is an admin.
+  // This is used for the admin dashboard.
   useEffect(() => {
     if (user?.isAdmin) {
         const q = query(collection(db, "academyRegistrations"));
@@ -63,8 +68,11 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.isAdmin]);
 
-  // This effect fetches only the registrations for the currently logged-in user.
+  // --- CODE EDITING GUIDE ---
+  // This `useEffect` hook fetches only the registrations for the currently logged-in user.
+  // It uses a Firestore `where` clause to filter by `userId`.
   useEffect(() => {
+    // This also handles anonymous users, as they have a UID.
     if (user) {
         const q = query(collection(db, "academyRegistrations"), where("userId", "==", user.uid));
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -77,10 +85,12 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user]);
 
-
+  // --- CODE EDITING GUIDE ---
+  // This function adds a new academy registration to the Firestore database.
+  // `newRegistrationData` is the data passed from the form.
+  // `status` is optional and defaults to 'pending'.
   const addRegistration = useCallback(async (newRegistrationData: Omit<AcademyRegistration, "id" | "status" | "submittedAt" | "accessCode" | "posts" | "birthDate"> & {birthDate: Date}, status: AcademyRegistration['status'] = 'pending') => {
     
-    // Ensure birthDate is a valid Date object before converting to Timestamp
     const birthDate = newRegistrationData.birthDate instanceof Date 
       ? newRegistrationData.birthDate 
       : new Date(newRegistrationData.birthDate);
@@ -89,6 +99,8 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
       throw new Error("Invalid birth date provided.");
     }
     
+    // This creates the object that will be saved.
+    // `Timestamp.fromDate` converts a JS Date to a Firestore Timestamp.
     const registrationPayload: any = {
       ...newRegistrationData,
       birthDate: Timestamp.fromDate(birthDate),
@@ -101,14 +113,17 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
         registrationPayload.accessCode = generateAccessCode();
     }
 
+    // This command actually saves the data to the "academyRegistrations" collection.
     await addDoc(collection(db, "academyRegistrations"), registrationPayload);
   }, []);
   
+  // --- CODE EDITING GUIDE ---
+  // This function updates the status of an existing registration (e.g., to 'accepted').
+  // It's used by the admin panel.
   const updateRegistrationStatus = async (id: string, status: AcademyRegistration['status']) => {
     const registrationDocRef = doc(db, "academyRegistrations", id);
     const updates: Partial<AcademyRegistration> = { status };
 
-    // If accepting, generate an access code if one doesn't exist.
     if (status === 'accepted') {
       const regDoc = await getDoc(registrationDocRef);
       if (regDoc.exists() && !regDoc.data().accessCode) {
@@ -133,8 +148,6 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getPosts = (memberId?: string): MemberPost[] => {
-    // This function will now use the state fetched for either admin or user,
-    // ensuring data is sourced correctly based on permissions.
     const sourceRegistrations = user?.isAdmin ? registrations : myRegistrations;
     
     const allPosts = sourceRegistrations.flatMap(r => (r.posts || []));
@@ -152,7 +165,6 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
         ...commentData,
         createdAt: Timestamp.now()
      };
-     // Since only admins can comment, we can safely iterate through the admin's 'registrations' state
      for (const reg of registrations) {
         const post = (reg.posts || []).find(p => p.id === postId);
         if (post) {
@@ -167,7 +179,6 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deletePost = async (postId: string) => {
-      // Since only admins can delete, we can safely iterate through the admin's 'registrations' state
       for (const reg of registrations) {
         const postToDelete = (reg.posts || []).find(p => p.id === postId);
         if (postToDelete) {
@@ -182,7 +193,10 @@ export const AcademyProvider = ({ children }: { children: ReactNode }) => {
         }
       }
   };
-
+  
+  // --- CODE EDITING GUIDE ---
+  // The `value` object makes all the functions and state available to any
+  // component that uses the `useAcademy()` hook.
   return (
     <AcademyContext.Provider value={{ registrations, myRegistrations, addRegistration, updateRegistrationStatus, addPost, getPosts, addComment, deletePost }}>
       {children}
