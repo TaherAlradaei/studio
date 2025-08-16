@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { uploadFile } from "../admin/actions";
 
 
-function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
+function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegistration | null, isAdminViewing: boolean, onLogout: () => void }) {
   const { t } = useLanguage();
   const { addPost, getPosts, addComment, deletePost } = useAcademy();
   const { user } = useAuth();
@@ -32,7 +32,7 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
   const postImageInputRef = useRef<HTMLInputElement>(null);
 
   const allPosts = getPosts();
-  const isAdmin = user?.isAdmin || false;
+  const isAdmin = user?.isAdmin || isAdminViewing;
 
   const handlePostImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -42,6 +42,10 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
   };
 
   const handleAddPost = async () => {
+    if (!member) {
+      toast({ title: "Error", description: "Cannot post without a member context.", variant: "destructive" });
+      return;
+    }
     if (!story.trim() && !postImage) {
         toast({ title: t.memberArea.postEmpty, variant: "destructive" });
         return;
@@ -114,13 +118,13 @@ function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogo
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-3xl font-bold font-headline text-primary">
-          {isAdmin ? t.header.title : t.memberArea.welcome.replace("{name}", member.talentName)}
+          {isAdmin ? t.header.title : t.memberArea.welcome.replace("{name}", member?.talentName || '')}
         </h2>
         <p className="text-muted-foreground">{isAdmin ? t.adminPage.academyRegistrationsTitle : t.memberArea.welcomeDesc}</p>
         <Button onClick={onLogout} variant="link" className="mt-2 text-destructive">{t.memberArea.logout}</Button>
       </div>
 
-      {!isAdmin && (
+      {!isAdmin && member && (
         <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
             <div className="flex items-center gap-2">
@@ -243,10 +247,10 @@ export default function MemberAreaPage() {
   const { myRegistrations } = useAcademy(); // Use myRegistrations for the current user
   const { user, checkAdminStatus } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
   const [accessCode, setAccessCode] = useState("");
   const [member, setMember] = useState<AcademyRegistration | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdminViewing, setIsAdminViewing] = useState(false);
   
   const handleLogin = async () => {
     setIsLoading(true);
@@ -265,7 +269,7 @@ export default function MemberAreaPage() {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, {isAdmin: true}, {merge: true});
         await checkAdminStatus();
-        router.push('/admin');
+        setIsAdminViewing(true);
         setIsLoading(false);
         return;
     }
@@ -288,13 +292,14 @@ export default function MemberAreaPage() {
   
   const handleLogout = () => {
     setMember(null);
+    setIsAdminViewing(false);
     setAccessCode("");
   };
 
-  if (member) {
+  if (member || isAdminViewing) {
     return (
         <div className="container py-8">
-            <MemberSpace member={member} onLogout={handleLogout} />
+            <MemberSpace member={member} isAdminViewing={isAdminViewing} onLogout={handleLogout} />
         </div>
     )
   }
