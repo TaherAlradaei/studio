@@ -15,8 +15,8 @@ import { arSA } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import type { Booking } from "@/lib/types";
-import { Timestamp } from "firebase/firestore";
-import { getPublicBookings } from "../admin/actions";
+import { Timestamp, collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 
 const pricingData = [
@@ -35,21 +35,24 @@ export default function BookingPage() {
   const [duration, setDuration] = useState(1);
   const [bookings, setBookings] = useState<Omit<Booking, 'id' | 'userId' | 'name' | 'phone' | 'status' | 'price' | 'isRecurring'>[]>([]);
   
+  const fetchBookings = async () => {
+    const q = query(collection(db, "bookings"), where("status", "in", ["confirmed", "blocked"]));
+    const querySnapshot = await getDocs(q);
+    const publicBookings = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            date: data.date.toDate(),
+            time: data.time,
+            duration: data.duration,
+        }
+    })
+    setBookings(publicBookings as any);
+  };
+  
   useEffect(() => {
     // Set initial date only on client to avoid hydration errors
     setSelectedDate(new Date());
-
-    const fetchBookings = async () => {
-        const publicBookings = await getPublicBookings();
-        setBookings(publicBookings);
-    };
-
     fetchBookings();
-    
-    // We don't need a real-time listener for public bookings.
-    // A snapshot at page load is sufficient.
-    // A listener would also cause permission issues for non-admins.
-
   }, []);
   
   const handleDateSelect = (date: Date | undefined) => {
@@ -64,10 +67,6 @@ export default function BookingPage() {
 
   const handleBookingComplete = () => {
     setSelectedTime(null);
-     const fetchBookings = async () => {
-        const publicBookings = await getPublicBookings();
-        setBookings(publicBookings);
-    };
     fetchBookings();
   };
 
