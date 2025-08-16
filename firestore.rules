@@ -2,12 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Admin check helper
     function isAdmin(userId) {
-      return (
-        exists(/databases/$(database)/documents/users/$(userId)) &&
-        get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true
-      ) || userId == "vQF7GtgIRNeq66ktYosLQtk9W9w2" || userId == "WG8c2fN7Z9cEoHj8nebLEktLM332";
+      return request.auth.uid == 'vQF7GtgIRNeq66ktYosLQtk9W9w2' || request.auth.uid == 'WG8c2fN7Z9cEoHj8nebLEktLM332';
     }
 
     // Users collection
@@ -19,17 +15,9 @@ service cloud.firestore {
 
     // Bookings collection
     match /bookings/{bookingId} {
-      // ✅ All authenticated users can read any booking (e.g., to check availability)
       allow read: if request.auth.uid != null;
-
-      // ✅ All authenticated users can create bookings
       allow create: if request.auth.uid != null;
-
-      // ✅ Users can update their own bookings, admins can update any
-      allow update: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
-
-      // ✅ Users can delete their own bookings, admins can delete any
-      allow delete: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
+      allow update, delete: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
     }
 
     // Academy Registrations
@@ -41,8 +29,11 @@ service cloud.firestore {
 
     // Find A Team Registrations
     match /findATeamRegistrations/{registrationId} {
+      // Allow any authenticated user to read the list to find players.
       allow read: if request.auth.uid != null;
+      // Allow any authenticated user to create a registration for themselves.
       allow create: if request.auth.uid != null;
+      // Only allow a user to delete their own registration, or an admin to delete any.
       allow delete: if request.auth.uid == resource.data.userId || isAdmin(request.auth.uid);
     }
 
