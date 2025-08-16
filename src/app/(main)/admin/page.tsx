@@ -530,7 +530,7 @@ export default function AdminPage() {
           await updateUserTrustedStatus(uid, isTrusted);
           toast({
               title: isTrusted ? t.adminPage.trustedCustomerAddedToastTitle : t.adminPage.trustedCustomerRemovedToastTitle,
-              description: isTrusted ? "User added to trusted list." : "User removed from trusted list.",
+              description: isTrusted ? t.adminPage.trustedCustomerAddedToastDesc : t.adminPage.trustedCustomerRemovedToastDesc,
           });
       } catch (err) {
           // Revert UI on error
@@ -1177,7 +1177,8 @@ export default function AdminPage() {
         
                                         const occupyingBooking = bookingsWithDates.find(b => {
                                           if (b.status === 'cancelled') return false;
-                                          if (!b.date || b.date.toDateString() !== slotDateTime.toDateString()) return false;
+                                          const bDate = b.date instanceof Timestamp ? b.date.toDate() : b.date;
+                                          if (!bDate || bDate.toDateString() !== slotDateTime.toDateString()) return false;
                                           
                                           const bookingStartMinutes = timeToMinutes(b.time);
                                           const bookingEndMinutes = bookingStartMinutes + b.duration * 60;
@@ -1225,21 +1226,13 @@ export default function AdminPage() {
                                                 disabled={isDisabled}
                                                 onClick={async () => {
                                                     if (!availabilityDate) return;
-                                                    try {
-                                                        if (occupyingBooking?.status === 'blocked') {
-                                                            await unblockSlot(occupyingBooking.id!);
-                                                        } else if (occupyingBooking?.status === 'confirmed') {
-                                                            setInfoBooking(occupyingBooking);
-                                                        } else if (!occupyingBooking) {
-                                                            setManualBookingDuration(availabilityDuration);
-                                                            setNewManualBooking({date: availabilityDate, time, duration: availabilityDuration});
-                                                        }
-                                                    } catch (err) {
-                                                        toast({
-                                                            title: t.adminPage.errorTitle,
-                                                            description: err instanceof Error ? err.message : "Failed to update availability.",
-                                                            variant: "destructive",
-                                                        });
+                                                    if (occupyingBooking?.status === 'blocked') {
+                                                        await unblockSlot(occupyingBooking.id!);
+                                                    } else if (occupyingBooking?.status === 'confirmed') {
+                                                        setInfoBooking(occupyingBooking);
+                                                    } else if (!occupyingBooking) {
+                                                        setManualBookingDuration(availabilityDuration);
+                                                        setNewManualBooking({date: availabilityDate, time, duration: availabilityDuration});
                                                     }
                                                 }}
                                             >
