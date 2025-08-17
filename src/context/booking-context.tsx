@@ -129,6 +129,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       const confirmedSnapshot = await getDocs(conflictingConfirmedQuery);
   
       for (const doc of confirmedSnapshot.docs) {
+        // A transaction doesn't need to read from the server again for docs it already has
         const existingBooking = doc.data() as Booking;
         const existingStartMinutes = timeToMinutes(existingBooking.time);
         const existingEndMinutes = existingStartMinutes + existingBooking.duration * 60;
