@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, type ReactNode, useEffect } from "react";
 import type { Booking } from "@/lib/types";
-import { addDays } from 'date-fns';
+import { addDays, startOfDay } from 'date-fns';
 import { db } from "@/lib/firebase";
 import { 
     collection, 
