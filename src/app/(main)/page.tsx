@@ -94,8 +94,8 @@ export default function WelcomePage() {
       </section>
 
       <div className="container py-8 md:py-16 space-y-16 md:space-y-24">
-        {/* Mobile-only Quick Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:hidden">
+        {/* Mobile-only Quick Action Cards - HIDDEN as per user request */}
+        <div className="grid-cols-1 md:grid-cols-2 gap-8 hidden">
           <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
             <CardHeader className="p-0">
                 {welcomePageContent?.fieldImageUrl &&
@@ -260,8 +260,8 @@ export default function WelcomePage() {
 
         {/* --- Phase 2 SECTIONS --- */}
 
-        {/* Expanded Academy Section */}
-        <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
+        {/* Expanded Academy Section - HIDDEN ON MOBILE */}
+        <Card className="hidden md:grid overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
             <div className="grid md:grid-cols-2 gap-0 items-center">
                 <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-2">
                     <Image
@@ -311,6 +311,7 @@ export default function WelcomePage() {
         {/* Latest News - Desktop Only */}
         <div className="hidden md:block">
             <div className="text-center mb-8">
+                <Newspaper className="w-12 h-12 text-primary mx-auto mb-4" />
                 <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary">Latest News</h2>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
@@ -353,13 +354,13 @@ export default function WelcomePage() {
         <div className="hidden md:block">
             <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
                  <div className="grid md:grid-cols-2 gap-0 items-center">
-                    <div className="p-8 md:p-12">
+                    <div className="p-8 md:p-12 md:order-2">
                         <Star className="w-12 h-12 text-primary mb-4" />
                         <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-2">Player Spotlight</h2>
                          <p className="font-semibold text-primary text-2xl mt-4">Adel Mohammed</p>
                          <p className="text-lg text-muted-foreground leading-relaxed">"This club is more than a team; it's a family. The support from the coaches and my teammates pushes me to be better every single day."</p>
                     </div>
-                    <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden">
+                    <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-1">
                          <Image
                           src="https://placehold.co/600x800.png"
                           alt="Adel Mohammed"
@@ -373,10 +374,10 @@ export default function WelcomePage() {
         </div>
 
 
-        {/* FAQ Section */}
-        <div className="my-16">
+        {/* FAQ Section - HIDDEN ON MOBILE */}
+        <div className="hidden md:block my-16">
             <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary text-center mb-8">Frequently Asked Questions</h2>
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto bg-card/80 backdrop-blur-sm p-4 rounded-lg">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="item-1">
                     <AccordionTrigger>What are the field booking hours?</AccordionTrigger>
