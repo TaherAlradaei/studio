@@ -6,9 +6,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { FieldIcon } from "@/components/icons";
-import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History, Building } from "lucide-react";
+import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History, Building, CheckCircle } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import {
   Carousel,
   CarouselContent,
@@ -190,19 +196,19 @@ export default function WelcomePage() {
             </div>
 
             {/* Our History */}
-            <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
+            <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
                 <div className="grid md:grid-cols-2 gap-0 items-center">
                     <div className="p-8 md:p-12">
                         <History className="w-12 h-12 text-primary mb-4" />
                         <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.welcomePage.ourHistoryTitle}</h2>
                         <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.ourHistoryText}</p>
                     </div>
-                    <div className="h-64 md:h-full min-h-[300px] relative">
+                    <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden">
                          <Image
                           src={welcomePageContent?.fieldImageUrl || "https://placehold.co/600x400.png"}
                           alt="Al Maidan Field"
                           layout="fill"
-                          className="object-cover"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
                           data-ai-hint="football field"
                         />
                     </div>
@@ -210,14 +216,14 @@ export default function WelcomePage() {
             </Card>
 
             {/* Manager's Word */}
-             <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
+             <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
                 <div className="grid md:grid-cols-2 gap-0 items-center">
-                    <div className="h-64 md:h-full min-h-[300px] relative md:order-2">
+                    <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-2">
                          <Image
                           src={welcomePageContent?.managerImageUrl || "https://placehold.co/600x400.png"}
                           alt="Waheeb Hameed - Manager"
                           layout="fill"
-                          className="object-cover"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
                           data-ai-hint="portrait man"
                         />
                     </div>
@@ -231,7 +237,7 @@ export default function WelcomePage() {
             </Card>
 
             {/* Captain's Speech */}
-             <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
+             <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
                  <div className="grid md:grid-cols-2 gap-0 items-center">
                     <div className="p-8 md:p-12">
                         <Award className="w-12 h-12 text-primary mb-4" />
@@ -239,17 +245,100 @@ export default function WelcomePage() {
                         <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.captainSpeechText}</p>
                         <p className="font-semibold text-primary text-lg mt-4">Captain Hafidh</p>
                     </div>
-                    <div className="h-64 md:h-full min-h-[300px] relative">
+                    <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden">
                          <Image
                           src={welcomePageContent?.coachImageUrl || "https://placehold.co/600x400.png"}
                           alt="Captain Hafidh"
                           layout="fill"
-                          className="object-cover"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
                           data-ai-hint="football coach portrait"
                         />
                     </div>
                 </div>
             </Card>
+        </div>
+
+        {/* --- PHASE 2 SECTIONS --- */}
+
+        {/* Expanded Academy Section */}
+        <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
+            <div className="grid md:grid-cols-2 gap-0 items-center">
+                <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-2">
+                    <Image
+                        src="https://placehold.co/600x800.png"
+                        alt="Youth academy players training"
+                        layout="fill"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        data-ai-hint="youth football academy"
+                    />
+                </div>
+                <div className="p-8 md:p-12 md:order-1">
+                    <Shield className="w-12 h-12 text-primary mb-4" />
+                    <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.header.academy}</h2>
+                    <p className="text-lg text-muted-foreground leading-relaxed mb-6">{t.welcomePage.coachDesc}</p>
+                    <ul className="space-y-4">
+                        <li className="flex items-start gap-3">
+                            <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                            <div>
+                                <h4 className="font-semibold">Professional Coaching Staff</h4>
+                                <p className="text-muted-foreground">Learn from certified coaches with experience in youth development.</p>
+                            </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                            <div>
+                                <h4 className="font-semibold">Age-Specific Programs</h4>
+                                <p className="text-muted-foreground">Tailored training for U-10 and U-14 age groups to maximize skill acquisition.</p>
+                            </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                            <div>
+                                <h4 className="font-semibold">Holistic Development</h4>
+                                <p className="text-muted-foreground">We focus on teamwork, discipline, and sportsmanship, not just technical skills.</p>
+                            </div>
+                        </li>
+                    </ul>
+                    <Button asChild size="lg" className="mt-8">
+                      <Link href="/academy">
+                        {t.academyPage.submitButton}
+                      </Link>
+                    </Button>
+                </div>
+            </div>
+        </Card>
+
+        {/* FAQ Section */}
+        <div className="my-16">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary text-center mb-8">Frequently Asked Questions</h2>
+            <div className="max-w-3xl mx-auto">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger>What are the field booking hours?</AccordionTrigger>
+                    <AccordionContent>
+                      Our fields are available for booking from 7:00 AM to 12:00 PM and from 2:00 PM to 12:00 AM every day.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-2">
+                    <AccordionTrigger>What ages are eligible for the academy?</AccordionTrigger>
+                    <AccordionContent>
+                      We currently offer programs for two age groups: Under-10 (U-10) and Under-14 (U-14). You can find more details and register on our Academy page.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-3">
+                    <AccordionTrigger>Do you provide equipment for bookings?</AccordionTrigger>
+                    <AccordionContent>
+                      We provide the goals and a clean, well-maintained pitch. Players are expected to bring their own footballs, appropriate footwear, and any other personal gear.
+                    </AccordionContent>
+                  </AccordionItem>
+                   <AccordionItem value="item-4">
+                    <AccordionTrigger>How do I pay for my booking?</AccordionTrigger>
+                    <AccordionContent>
+                      After your booking is confirmed, you will receive instructions to contact our administration to finalize the payment. We accept cash and local payment methods.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+            </div>
         </div>
 
         {/* Gallery - visible on all sizes */}
@@ -324,3 +413,5 @@ export default function WelcomePage() {
     </div>
   );
 }
+
+    
