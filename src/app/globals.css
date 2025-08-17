@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -45,7 +46,7 @@ body {
   .dark {
     --background: 274 71% 10%;
     --foreground: 210 40% 98%;
-    --card: 274 71% 10%;
+    --card: 274 71% 14%;
     --card-foreground: 210 40% 98%;
     --popover: 274 71% 10%;
     --popover-foreground: 210 40% 98%;
@@ -83,7 +84,7 @@ body {
     @apply border-border;
   }
   body {
-    @apply text-foreground;
+    @apply text-foreground bg-background;
   }
 }
 

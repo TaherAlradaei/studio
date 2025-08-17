@@ -59,19 +59,38 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="container py-8 md:py-12">
-      <div className="text-center mb-12">
-         <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary mb-4">
-            {t.welcomePage.welcomeTitle}
-         </h1>
-         <p className="text-lg md:text-xl text-white max-w-3xl mx-auto">
-            {t.welcomePage.welcomeMessage}
-         </p>
-      </div>
+    <div className="flex flex-col">
+      {/* Hero Section */}
+      <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white">
+          <div className="absolute inset-0 bg-black/50 z-10"/>
+          <div className="relative z-20 p-4">
+              <h1 className="text-4xl md:text-6xl font-bold font-headline text-white mb-4 drop-shadow-lg">
+                  {t.welcomePage.welcomeTitle}
+              </h1>
+              <p className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto drop-shadow-md">
+                  {t.welcomePage.welcomeMessage}
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button asChild size="lg">
+                    <Link href="/booking">
+                      <FieldIcon className="mr-2" />
+                      {t.header.bookField}
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="secondary">
+                    <Link href="/academy">
+                      <Shield className="mr-2" />
+                      {t.header.academy}
+                    </Link>
+                  </Button>
+              </div>
+          </div>
+      </section>
 
+      <div className="container py-8 md:py-16 space-y-16 md:space-y-24">
         {/* Mobile-only Quick Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 md:hidden">
-          <Card className="overflow-hidden bg-card/50 backdrop-blur-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:hidden">
+          <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
             <CardHeader className="p-0">
                 {welcomePageContent?.fieldImageUrl &&
                     <Image
@@ -95,7 +114,7 @@ export default function WelcomePage() {
               </Button>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden bg-card/50 backdrop-blur-sm">
+          <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
              <CardHeader className="p-0">
                 {welcomePageContent?.coachImageUrl &&
                     <Image
@@ -122,7 +141,7 @@ export default function WelcomePage() {
         </div>
         
         {/* "Find a Team" button only for mobile view */}
-        <div className="mb-12 text-center md:hidden">
+        <div className="text-center md:hidden">
             <Button asChild size="lg" variant="outline" className="w-full max-w-sm mx-auto">
               <Link href={isRegistered ? "/find-a-team/players" : "/find-a-team"}>
                 <Users className="mr-2"/>
@@ -132,10 +151,10 @@ export default function WelcomePage() {
         </div>
 
         {/* ----- Desktop Content Sections ----- */}
-        <div className="hidden md:block space-y-24">
+        <div className="space-y-16 md:space-y-24">
             {/* Mission, Vision, Goals */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="text-center bg-card/80 backdrop-blur-sm p-6">
+              <Card className="text-center bg-card/80 backdrop-blur-sm p-6 hover:shadow-xl transition-shadow duration-300">
                 <CardHeader>
                   <div className="flex justify-center items-center mb-4">
                       <Heart className="w-12 h-12 text-primary" />
@@ -146,7 +165,7 @@ export default function WelcomePage() {
                   <p className="text-muted-foreground leading-relaxed">{t.welcomePage.ourMissionText}</p>
                 </CardContent>
               </Card>
-               <Card className="text-center bg-card/80 backdrop-blur-sm p-6">
+               <Card className="text-center bg-card/80 backdrop-blur-sm p-6 hover:shadow-xl transition-shadow duration-300">
                 <CardHeader>
                   <div className="flex justify-center items-center mb-4">
                       <Eye className="w-12 h-12 text-primary" />
@@ -157,7 +176,7 @@ export default function WelcomePage() {
                   <p className="text-muted-foreground leading-relaxed">{t.welcomePage.ourVisionText}</p>
                 </CardContent>
               </Card>
-               <Card className="text-center bg-card/80 backdrop-blur-sm p-6">
+               <Card className="text-center bg-card/80 backdrop-blur-sm p-6 hover:shadow-xl transition-shadow duration-300">
                 <CardHeader>
                   <div className="flex justify-center items-center mb-4">
                       <Target className="w-12 h-12 text-primary" />
@@ -171,81 +190,84 @@ export default function WelcomePage() {
             </div>
 
             {/* Our History */}
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                     <Image
-                      src={welcomePageContent?.fieldImageUrl || "https://placehold.co/600x400.png"}
-                      alt="Al Maidan Field"
-                      width={600}
-                      height={400}
-                      className="w-full h-auto object-cover rounded-lg shadow-xl"
-                      data-ai-hint="football field"
-                    />
+            <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
+                <div className="grid md:grid-cols-2 gap-0 items-center">
+                    <div className="p-8 md:p-12">
+                        <History className="w-12 h-12 text-primary mb-4" />
+                        <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.welcomePage.ourHistoryTitle}</h2>
+                        <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.ourHistoryText}</p>
+                    </div>
+                    <div className="h-64 md:h-full min-h-[300px] relative">
+                         <Image
+                          src={welcomePageContent?.fieldImageUrl || "https://placehold.co/600x400.png"}
+                          alt="Al Maidan Field"
+                          layout="fill"
+                          className="object-cover"
+                          data-ai-hint="football field"
+                        />
+                    </div>
                 </div>
-                <div className="space-y-4">
-                    <History className="w-12 h-12 text-primary" />
-                    <h2 className="text-4xl font-bold font-headline text-primary">{t.welcomePage.ourHistoryTitle}</h2>
-                    <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.ourHistoryText}</p>
-                </div>
-            </div>
+            </Card>
 
             {/* Manager's Word */}
-             <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div className="space-y-4 md:order-2">
-                    <User className="w-12 h-12 text-primary" />
-                    <h2 className="text-4xl font-bold font-headline text-primary">{t.welcomePage.managerWordTitle}</h2>
-                    <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.managerWordText}</p>
-                    <p className="font-semibold text-primary text-lg">Waheeb Hameed</p>
+             <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
+                <div className="grid md:grid-cols-2 gap-0 items-center">
+                    <div className="h-64 md:h-full min-h-[300px] relative md:order-2">
+                         <Image
+                          src={welcomePageContent?.managerImageUrl || "https://placehold.co/600x400.png"}
+                          alt="Waheeb Hameed - Manager"
+                          layout="fill"
+                          className="object-cover"
+                          data-ai-hint="portrait man"
+                        />
+                    </div>
+                    <div className="p-8 md:p-12 md:order-1">
+                        <User className="w-12 h-12 text-primary mb-4" />
+                        <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.welcomePage.managerWordTitle}</h2>
+                        <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.managerWordText}</p>
+                        <p className="font-semibold text-primary text-lg mt-4">Waheeb Hameed</p>
+                    </div>
                 </div>
-                <div className="md:order-1">
-                     <Image
-                      src={welcomePageContent?.managerImageUrl || "https://placehold.co/600x400.png"}
-                      alt="Waheeb Hameed - Manager"
-                      width={600}
-                      height={400}
-                      className="w-full h-auto object-cover rounded-lg shadow-xl"
-                      data-ai-hint="portrait man"
-                    />
-                </div>
-            </div>
+            </Card>
 
             {/* Captain's Speech */}
-             <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                     <Image
-                      src={welcomePageContent?.coachImageUrl || "https://placehold.co/600x400.png"}
-                      alt="Captain Hafidh"
-                      width={600}
-                      height={400}
-                      className="w-full h-auto object-cover rounded-lg shadow-xl"
-                      data-ai-hint="football coach portrait"
-                    />
+             <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
+                 <div className="grid md:grid-cols-2 gap-0 items-center">
+                    <div className="p-8 md:p-12">
+                        <Award className="w-12 h-12 text-primary mb-4" />
+                        <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.welcomePage.captainSpeechTitle}</h2>
+                        <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.captainSpeechText}</p>
+                        <p className="font-semibold text-primary text-lg mt-4">Captain Hafidh</p>
+                    </div>
+                    <div className="h-64 md:h-full min-h-[300px] relative">
+                         <Image
+                          src={welcomePageContent?.coachImageUrl || "https://placehold.co/600x400.png"}
+                          alt="Captain Hafidh"
+                          layout="fill"
+                          className="object-cover"
+                          data-ai-hint="football coach portrait"
+                        />
+                    </div>
                 </div>
-                <div className="space-y-4">
-                    <Award className="w-12 h-12 text-primary" />
-                    <h2 className="text-4xl font-bold font-headline text-primary">{t.welcomePage.captainSpeechTitle}</h2>
-                    <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.captainSpeechText}</p>
-                    <p className="font-semibold text-primary text-lg">Captain Hafidh</p>
-                </div>
-            </div>
+            </Card>
         </div>
 
         {/* Gallery - visible on all sizes */}
         <div className="my-16">
-            <h2 className="text-4xl font-bold font-headline text-primary text-center mb-8">{t.welcomePage.galleryTitle}</h2>
-            <Carousel className="w-full max-w-4xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary text-center mb-8">{t.welcomePage.galleryTitle}</h2>
+            <Carousel className="w-full max-w-5xl mx-auto" opts={{ loop: true }}>
               <CarouselContent>
                 {galleryImages?.map((image, index) => (
-                  <CarouselItem key={index}>
+                  <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                     <div className="p-1">
-                      <Card>
+                      <Card className="overflow-hidden group">
                         <CardContent className="flex aspect-video items-center justify-center p-0 overflow-hidden rounded-lg">
                            <Image
                               src={image.url}
                               alt={`Gallery image ${index + 1}`}
                               width={800}
                               height={600}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               data-ai-hint="stadium football"
                             />
                         </CardContent>
@@ -254,19 +276,19 @@ export default function WelcomePage() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
+              <CarouselPrevious className="hidden sm:flex" />
+              <CarouselNext className="hidden sm:flex" />
             </Carousel>
         </div>
 
         {/* Sponsors Section - visible on all sizes */}
-        <div className="text-center bg-card/50 backdrop-blur-sm p-8 rounded-lg">
+        <div className="text-center bg-card/80 backdrop-blur-sm p-8 md:p-12 rounded-lg">
             <div className="flex justify-center items-center mb-4">
                 <Building className="w-12 h-12 text-primary" />
             </div>
             <h3 className="text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.sponsorsTitle}</h3>
-            <p className="text-muted-foreground mb-6 text-lg max-w-2xl mx-auto">{t.welcomePage.sponsorsText}</p>
-            <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
+            <p className="text-muted-foreground mb-8 text-lg max-w-2xl mx-auto">{t.welcomePage.sponsorsText}</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-80">
                 {welcomePageContent?.sponsors?.map((sponsor, index) => (
                     sponsor.url && <Image key={index} src={sponsor.url} alt={`Sponsor ${index + 1}`} width={150} height={80} className="object-contain" data-ai-hint="company logo"/>
                 ))}
@@ -274,10 +296,10 @@ export default function WelcomePage() {
         </div>
 
         {/* Final CTA - visible on all sizes */}
-        <div className="text-center bg-card/80 backdrop-blur-sm p-8 rounded-lg mt-16">
+        <div className="text-center bg-card/80 backdrop-blur-sm p-8 md:p-12 rounded-lg">
            {user ? (
             <>
-              <h3 className="text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.alreadyMember}</h3>
+              <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-4">{t.welcomePage.alreadyMember}</h3>
               <p className="text-muted-foreground mb-6 text-lg">{t.welcomePage.alreadyMemberDesc}</p>
               <Button asChild variant="outline" size="lg">
                 <Link href="/member-area">{t.welcomePage.memberAreaButton}</Link>
@@ -285,9 +307,9 @@ export default function WelcomePage() {
             </>
           ) : (
             <>
-              <h3 className="text-3xl font-bold font-headline text-primary mb-4">{t.auth.getStartedTitle}</h3>
+              <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-4">{t.auth.getStartedTitle}</h3>
               <p className="text-muted-foreground mb-6 text-lg">{t.auth.getStartedDesc}</p>
-              <div className="flex gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg">
                   <Link href="/login">{t.auth.createAccountAction}</Link>
                 </Button>
@@ -298,8 +320,7 @@ export default function WelcomePage() {
             </>
           )}
         </div>
+      </div>
     </div>
   );
 }
-
-    
