@@ -222,7 +222,7 @@ export default function WelcomePage() {
                     <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-2">
                          <Image
                           src={welcomePageContent?.managerImageUrl || "https://placehold.co/600x400.png"}
-                          alt="Waheeb Hameed - Manager"
+                          alt={t.welcomePage.managerWordTitle}
                           layout="fill"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                           data-ai-hint="portrait man"
@@ -249,7 +249,7 @@ export default function WelcomePage() {
                     <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden">
                          <Image
                           src={welcomePageContent?.coachImageUrl || "https://placehold.co/600x400.png"}
-                          alt="Captain Hafidh"
+                          alt={t.welcomePage.captainSpeechTitle}
                           layout="fill"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                           data-ai-hint="football coach portrait"
@@ -261,7 +261,7 @@ export default function WelcomePage() {
 
         {/* --- Phase 2 SECTIONS --- */}
 
-        {/* Expanded Academy Section - HIDDEN ON MOBILE */}
+        {/* Expanded Academy Section */}
         <Card className="hidden md:grid overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
             <div className="grid md:grid-cols-2 gap-0 items-center">
                 <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-2">
@@ -275,28 +275,28 @@ export default function WelcomePage() {
                 </div>
                 <div className="p-8 md:p-12 md:order-1">
                     <Shield className="w-12 h-12 text-primary mb-4" />
-                    <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.header.academy}</h2>
-                    <p className="text-lg text-muted-foreground leading-relaxed mb-6">{t.welcomePage.coachDesc}</p>
+                    <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.welcomePage.academySectionTitle}</h2>
+                    <p className="text-lg text-muted-foreground leading-relaxed mb-6">{t.welcomePage.academySectionDesc}</p>
                     <ul className="space-y-4">
                         <li className="flex items-start gap-3">
                             <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
                             <div>
-                                <h4 className="font-semibold">Professional Coaching Staff</h4>
-                                <p className="text-muted-foreground">Learn from certified coaches with experience in youth development.</p>
+                                <h4 className="font-semibold">{t.welcomePage.academyBenefit1Title}</h4>
+                                <p className="text-muted-foreground">{t.welcomePage.academyBenefit1Desc}</p>
                             </div>
                         </li>
                         <li className="flex items-start gap-3">
                             <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
                             <div>
-                                <h4 className="font-semibold">Age-Specific Programs</h4>
-                                <p className="text-muted-foreground">Tailored training for U-10 and U-14 age groups to maximize skill acquisition.</p>
+                                <h4 className="font-semibold">{t.welcomePage.academyBenefit2Title}</h4>
+                                <p className="text-muted-foreground">{t.welcomePage.academyBenefit2Desc}</p>
                             </div>
                         </li>
                         <li className="flex items-start gap-3">
                             <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
                             <div>
-                                <h4 className="font-semibold">Holistic Development</h4>
-                                <p className="text-muted-foreground">We focus on teamwork, discipline, and sportsmanship, not just technical skills.</p>
+                                <h4 className="font-semibold">{t.welcomePage.academyBenefit3Title}</h4>
+                                <p className="text-muted-foreground">{t.welcomePage.academyBenefit3Desc}</p>
                             </div>
                         </li>
                     </ul>
@@ -309,62 +309,62 @@ export default function WelcomePage() {
             </div>
         </Card>
 
-        {/* Latest News - Desktop Only */}
+        {/* Latest News */}
         <div className="hidden md:block">
             <div className="text-center mb-8">
                 <Newspaper className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary">Latest News</h2>
+                <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary">{t.welcomePage.latestNewsTitle}</h2>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
                 <Card className="lg:col-span-2 overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
                     <div className="aspect-video relative overflow-hidden">
-                        <Image src="https://placehold.co/800x450.png" alt="Featured News" layout="fill" className="object-cover group-hover:scale-105 transition-transform" data-ai-hint="football match action"/>
+                        <Image src="https://placehold.co/800x450.png" alt={t.welcomePage.featuredNewsTitle} layout="fill" className="object-cover group-hover:scale-105 transition-transform" data-ai-hint="football match action"/>
                     </div>
                     <CardHeader>
-                        <CardTitle className="font-headline text-2xl">Academy Team Secures Victory in Championship</CardTitle>
-                        <CardDescription>August 16, 2024</CardDescription>
+                        <CardTitle className="font-headline text-2xl">{t.welcomePage.featuredNewsTitle}</CardTitle>
+                        <CardDescription>{t.welcomePage.featuredNewsDate}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">An incredible performance by our U-14 squad led to a thrilling 2-1 victory, securing the regional championship trophy. The final goal came in the last minute of extra time...</p>
+                        <p className="text-muted-foreground">{t.welcomePage.featuredNewsSummary}</p>
                     </CardContent>
                 </Card>
                 <div className="space-y-4">
                     <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
                         <CardHeader>
-                           <CardTitle className="text-lg font-headline">New Training Schedule Announced</CardTitle>
-                           <CardDescription>August 15, 2024</CardDescription>
+                           <CardTitle className="text-lg font-headline">{t.welcomePage.newsItem1Title}</CardTitle>
+                           <CardDescription>{t.welcomePage.newsItem1Date}</CardDescription>
                         </CardHeader>
                     </Card>
                      <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
                         <CardHeader>
-                           <CardTitle className="text-lg font-headline">Open Tryouts for Goalkeepers</CardTitle>
-                           <CardDescription>August 14, 2024</CardDescription>
+                           <CardTitle className="text-lg font-headline">{t.welcomePage.newsItem2Title}</CardTitle>
+                           <CardDescription>{t.welcomePage.newsItem2Date}</CardDescription>
                         </CardHeader>
                     </Card>
                      <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
                         <CardHeader>
-                           <CardTitle className="text-lg font-headline">Community Fun Day Recap</CardTitle>
-                           <CardDescription>August 12, 2024</CardDescription>
+                           <CardTitle className="text-lg font-headline">{t.welcomePage.newsItem3Title}</CardTitle>
+                           <CardDescription>{t.welcomePage.newsItem3Date}</CardDescription>
                         </CardHeader>
                     </Card>
                 </div>
             </div>
         </div>
         
-        {/* Player Spotlight - Desktop Only */}
+        {/* Player Spotlight */}
         <div className="hidden md:block">
             <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
                  <div className="grid md:grid-cols-2 gap-0 items-center">
                     <div className="p-8 md:p-12 md:order-2">
                         <Star className="w-12 h-12 text-primary mb-4" />
-                        <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-2">Player Spotlight</h2>
-                         <p className="font-semibold text-primary text-2xl mt-4">Adel Mohammed</p>
-                         <p className="text-lg text-muted-foreground leading-relaxed">"This club is more than a team; it's a family. The support from the coaches and my teammates pushes me to be better every single day."</p>
+                        <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-2">{t.welcomePage.playerSpotlightTitle}</h2>
+                         <p className="font-semibold text-primary text-2xl mt-4">{t.welcomePage.playerSpotlightName}</p>
+                         <p className="text-lg text-muted-foreground leading-relaxed">{t.welcomePage.playerSpotlightQuote}</p>
                     </div>
                     <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-1">
                          <Image
                           src="https://placehold.co/600x800.png"
-                          alt="Adel Mohammed"
+                          alt={t.welcomePage.playerSpotlightName}
                           layout="fill"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                           data-ai-hint="football player portrait"
@@ -375,34 +375,26 @@ export default function WelcomePage() {
         </div>
 
 
-        {/* FAQ Section - HIDDEN ON MOBILE */}
+        {/* FAQ Section */}
         <div className="hidden md:block my-16">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary text-center mb-8">Frequently Asked Questions</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary text-center mb-8">{t.welcomePage.faqTitle}</h2>
             <div className="max-w-3xl mx-auto bg-card/80 backdrop-blur-sm p-4 rounded-lg">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="item-1">
-                    <AccordionTrigger>What are the field booking hours?</AccordionTrigger>
-                    <AccordionContent>
-                      Our fields are available for booking from 7:00 AM to 12:00 PM and from 2:00 PM to 12:00 AM every day.
-                    </AccordionContent>
+                    <AccordionTrigger>{t.welcomePage.faq1Question}</AccordionTrigger>
+                    <AccordionContent>{t.welcomePage.faq1Answer}</AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-2">
-                    <AccordionTrigger>What ages are eligible for the academy?</AccordionTrigger>
-                    <AccordionContent>
-                      We currently offer programs for two age groups: Under-10 (U-10) and Under-14 (U-14). You can find more details and register on our Academy page.
-                    </AccordionContent>
+                    <AccordionTrigger>{t.welcomePage.faq2Question}</AccordionTrigger>
+                    <AccordionContent>{t.welcomePage.faq2Answer}</AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-3">
-                    <AccordionTrigger>Do you provide equipment for bookings?</AccordionTrigger>
-                    <AccordionContent>
-                      We provide the goals and a clean, well-maintained pitch. Players are expected to bring their own footballs, appropriate footwear, and any other personal gear.
-                    </AccordionContent>
+                    <AccordionTrigger>{t.welcomePage.faq3Question}</AccordionTrigger>
+                    <AccordionContent>{t.welcomePage.faq3Answer}</AccordionContent>
                   </AccordionItem>
                    <AccordionItem value="item-4">
-                    <AccordionTrigger>How do I pay for my booking?</AccordionTrigger>
-                    <AccordionContent>
-                      After your booking is confirmed, you will receive instructions to contact our administration to finalize the payment. We accept cash and local payment methods.
-                    </AccordionContent>
+                    <AccordionTrigger>{t.welcomePage.faq4Question}</AccordionTrigger>
+                    <AccordionContent>{t.welcomePage.faq4Answer}</AccordionContent>
                   </AccordionItem>
                 </Accordion>
             </div>
@@ -420,7 +412,7 @@ export default function WelcomePage() {
                         <CardContent className="flex aspect-video items-center justify-center p-0 overflow-hidden rounded-lg">
                            <Image
                               src={image.url}
-                              alt={`Gallery image ${index + 1}`}
+                              alt={`${t.welcomePage.galleryTitle} ${index + 1}`}
                               width={800}
                               height={600}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -437,9 +429,9 @@ export default function WelcomePage() {
             </Carousel>
         </div>
         
-        {/* Social Media Hub - Desktop Only */}
+        {/* Social Media Hub */}
         <div className="hidden md:block text-center">
-            <h3 className="text-2xl font-bold font-headline text-primary mb-4">Follow Our Journey</h3>
+            <h3 className="text-2xl font-bold font-headline text-primary mb-4">{t.welcomePage.socialMediaTitle}</h3>
             <div className="flex justify-center items-center gap-6">
                  <Link href="#" aria-label="Facebook"><Facebook className="w-8 h-8 text-muted-foreground hover:text-primary transition-colors" /></Link>
                  <Link href="#" aria-label="Instagram"><Instagram className="w-8 h-8 text-muted-foreground hover:text-primary transition-colors" /></Link>
