@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone, Building, User, Download, Archive } from "lucide-react";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone, Building, User, Download, Archive, BookUser, Star, Users } from "lucide-react";
 import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers, getGalleryImages, updateGalleryImages, exportBookings, exportAcademyRegistrations } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
@@ -526,19 +526,28 @@ export default function AdminPage() {
     }
   };
   
-  const handleTrustedChange = async (uid: string, isTrusted: boolean) => {
+  const handlePermissionChange = async (uid: string, key: 'isTrusted' | 'isAdmin', value: boolean) => {
       // Optimistically update UI
-      setAllUsers(prevUsers => prevUsers.map(u => u.uid === uid ? { ...u, isTrusted } : u));
+      setAllUsers(prevUsers => prevUsers.map(u => u.uid === uid ? { ...u, [key]: value } : u));
       try {
-          await updateUserTrustedStatus(uid, isTrusted);
-          toast({
-              title: isTrusted ? t.adminPage.trustedCustomerAddedToastTitle : t.adminPage.trustedCustomerRemovedToastTitle,
-              description: isTrusted ? t.adminPage.trustedCustomerAddedToastDesc : t.adminPage.trustedCustomerRemovedToastDesc,
-          });
+          await updateUserTrustedStatus(uid, { [key]: value });
+          
+          let toastTitle = '';
+          let toastDesc = '';
+          
+          if(key === 'isTrusted'){
+             toastTitle = value ? t.adminPage.trustedCustomerAddedToastTitle : t.adminPage.trustedCustomerRemovedToastTitle;
+             toastDesc = value ? t.adminPage.trustedCustomerAddedToastDesc : t.adminPage.trustedCustomerRemovedToastDesc;
+          } else {
+             toastTitle = value ? t.adminPage.adminAddedToastTitle : t.adminPage.adminRemovedToastTitle;
+             toastDesc = value ? t.adminPage.adminAddedToastDesc : t.adminPage.adminRemovedToastDesc;
+          }
+
+          toast({ title: toastTitle, description: toastDesc });
       } catch (err) {
           // Revert UI on error
-          setAllUsers(prevUsers => prevUsers.map(u => u.uid === uid ? { ...u, isTrusted: !isTrusted } : u));
-          const message = err instanceof Error ? err.message : "Failed to update trusted customer list.";
+          setAllUsers(prevUsers => prevUsers.map(u => u.uid === uid ? { ...u, [key]: !value } : u));
+          const message = err instanceof Error ? err.message : `Failed to update user's ${key} status.`;
           toast({ title: t.adminPage.errorTitle, description: message, variant: "destructive" });
       }
   };
@@ -964,9 +973,17 @@ export default function AdminPage() {
             <ShieldCheck className="h-4 w-4" />
             {t.adminPage.academyRegistrationsTitle}
           </TabsTrigger>
+           <TabsTrigger value="users" className="w-full justify-start gap-2">
+            <Users className="h-4 w-4" />
+            {t.adminPage.usersTab}
+          </TabsTrigger>
            <TabsTrigger value="settings" className="w-full justify-start gap-2">
             <Settings className="h-4 w-4" />
             {t.adminPage.settingsTab}
+          </TabsTrigger>
+           <TabsTrigger value="exports" className="w-full justify-start gap-2">
+            <Download className="h-4 w-4" />
+            {t.adminPage.exportsTab}
           </TabsTrigger>
           <TabsTrigger value="assistant" className="w-full justify-start gap-2">
             <Sparkles className="h-4 w-4" />
@@ -1003,29 +1020,6 @@ export default function AdminPage() {
                                   </TabsList>
                                 </Tabs>
                            </div>
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <Label>{t.adminPage.exportBookingsTitle}</Label>
-                             <div className="flex flex-col sm:flex-row gap-2 items-center">
-                                <Calendar
-                                  mode="single"
-                                  selected={exportStartDate}
-                                  onSelect={setExportStartDate}
-                                  className="rounded-md border w-full sm:w-auto"
-                                  placeholder={t.adminPage.exportStartDate}
-                                />
-                                <Calendar
-                                  mode="single"
-                                  selected={exportEndDate}
-                                  onSelect={setExportEndDate}
-                                  className="rounded-md border w-full sm:w-auto"
-                                  placeholder={t.adminPage.exportEndDate}
-                                />
-                                <Button onClick={handleExportBookings} className="w-full sm:w-auto">
-                                    <Download className="mr-2 h-4 w-4"/>
-                                    {t.adminPage.exportButton}
-                                </Button>
-                            </div>
                         </div>
                     </div>
                     
@@ -1323,15 +1317,9 @@ export default function AdminPage() {
                 {/* Academy Registrations Card */}
                 <Card className="bg-card/80 backdrop-blur-sm">
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-2">
-                                <ShieldCheck className="w-6 h-6 text-primary" />
-                                <CardTitle>{t.adminPage.academyRegistrationsTitle}</CardTitle>
-                           </div>
-                           <Button onClick={handleExportRegistrations} variant="outline">
-                               <Download className="mr-2 h-4 w-4" />
-                               {t.adminPage.exportButton}
-                           </Button>
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.academyRegistrationsTitle}</CardTitle>
                         </div>
                         <CardDescription>{t.adminPage.academyRegistrationsDesc}</CardDescription>
                     </CardHeader>
@@ -1350,8 +1338,8 @@ export default function AdminPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {registrations.filter(r => r.status !== 'rejected').length > 0 ? (
-                                        registrations.filter(r => r.status !== 'rejected').map((reg) => {
+                                    {registrations.filter(r => r.status === 'pending' || r.status === 'accepted').length > 0 ? (
+                                        registrations.filter(r => r.status === 'pending' || r.status === 'accepted').map((reg) => {
                                           const birthDate = reg.birthDate instanceof Timestamp ? reg.birthDate.toDate() : reg.birthDate;
                                           return (
                                             <TableRow key={reg.id}>
@@ -1404,8 +1392,102 @@ export default function AdminPage() {
                         </div>
                     </CardContent>
                 </Card>
+                {/* Archived Members Card */}
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Archive className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.archivedRegistrationsTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.archivedRegistrationsDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="border rounded-lg overflow-x-auto">
+                            <Table dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>{t.adminPage.talentName}</TableHead>
+                                        <TableHead>{t.adminPage.parentContact}</TableHead>
+                                        <TableHead>{t.adminPage.accessCode}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {registrations.filter(r => r.status === 'archived').length > 0 ? (
+                                        registrations.filter(r => r.status === 'archived').map((reg) => (
+                                            <TableRow key={reg.id}>
+                                                <TableCell>{reg.talentName}</TableCell>
+                                                <TableCell>{reg.parentName} ({reg.phone})</TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2 font-mono text-sm">
+                                                        <KeyRound className="w-4 h-4 text-muted-foreground" />
+                                                        <span>{reg.accessCode}</span>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={3} className="text-center h-24">{t.adminPage.noArchivedRegistrations}</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
                 {/* Add Member Form Card */}
                 <AddMemberForm />
+            </TabsContent>
+            <TabsContent value="users" className="grid grid-cols-1 gap-8 mt-0">
+                 <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Users className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.userManagementTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.userManagementDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isUsersLoading ? (
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                        ) : (
+                            <div className="border rounded-lg overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t.adminPage.customer}</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead className="text-center">{t.adminPage.trustedStatusLabel}</TableHead>
+                                            <TableHead className="text-center">{t.adminPage.adminStatusLabel}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {allUsers.map(user => (
+                                            <TableRow key={user.uid}>
+                                                <TableCell>{user.displayName}</TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell className="text-center">
+                                                    <Switch
+                                                        checked={user.isTrusted || false}
+                                                        onCheckedChange={(isChecked) => handlePermissionChange(user.uid, 'isTrusted', isChecked)}
+                                                        aria-label={`Toggle trusted status for ${user.displayName}`}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Switch
+                                                        checked={user.isAdmin || false}
+                                                        onCheckedChange={(isChecked) => handlePermissionChange(user.uid, 'isAdmin', isChecked)}
+                                                        aria-label={`Toggle admin status for ${user.displayName}`}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </TabsContent>
             <TabsContent value="settings" className="grid grid-cols-1 gap-8 mt-0">
                  <Card className="bg-card/80 backdrop-blur-sm">
@@ -1701,49 +1783,6 @@ export default function AdminPage() {
                 <Card className="bg-card/80 backdrop-blur-sm">
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <UserCheck className="w-6 h-6 text-primary" />
-                            <CardTitle>{t.adminPage.trustedCustomersCardTitle}</CardTitle>
-                        </div>
-                        <CardDescription>{t.adminPage.trustedCustomersCardDescription}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isUsersLoading ? (
-                            <Loader2 className="h-8 w-8 animate-spin" />
-                        ) : (
-                            <div className="border rounded-lg overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>{t.adminPage.customer}</TableHead>
-                                            <TableHead>Email</TableHead>
-                                            <TableHead>{t.bookingForm.phoneLabel}</TableHead>
-                                            <TableHead className="text-right">{t.adminPage.trustedStatusLabel}</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {allUsers.filter(u => !u.isAdmin).map(user => (
-                                            <TableRow key={user.uid}>
-                                                <TableCell>{user.displayName}</TableCell>
-                                                <TableCell>{user.email}</TableCell>
-                                                <TableCell>{user.phone || 'N/A'}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Switch
-                                                        checked={user.isTrusted || false}
-                                                        onCheckedChange={(isChecked) => handleTrustedChange(user.uid, isChecked)}
-                                                        aria-label={`Toggle trusted status for ${user.displayName}`}
-                                                    />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-                <Card className="bg-card/80 backdrop-blur-sm">
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
                             <Lock className="w-6 h-6 text-primary" />
                             <CardTitle>{t.adminPage.securitySettingsCardTitle}</CardTitle>
                         </div>
@@ -1776,6 +1815,55 @@ export default function AdminPage() {
                     </CardContent>
                 </Card>
             </TabsContent>
+             <TabsContent value="exports" className="grid grid-cols-1 gap-8 mt-0">
+                 <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Download className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.exportBookingsTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.exportBookingsDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Label>{t.adminPage.exportByDateRange}</Label>
+                         <div className="flex flex-col sm:flex-row gap-2 items-center">
+                            <Calendar
+                              mode="single"
+                              selected={exportStartDate}
+                              onSelect={setExportStartDate}
+                              className="rounded-md border w-full sm:w-auto"
+                              placeholder={t.adminPage.exportStartDate}
+                            />
+                            <Calendar
+                              mode="single"
+                              selected={exportEndDate}
+                              onSelect={setExportEndDate}
+                              className="rounded-md border w-full sm:w-auto"
+                              placeholder={t.adminPage.exportEndDate}
+                            />
+                            <Button onClick={handleExportBookings} className="w-full sm:w-auto">
+                                <Download className="mr-2 h-4 w-4"/>
+                                {t.adminPage.exportButton}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <BookUser className="w-6 h-6 text-primary" />
+                            <CardTitle>{t.adminPage.exportRegistrationsTitle}</CardTitle>
+                        </div>
+                        <CardDescription>{t.adminPage.exportRegistrationsDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       <Button onClick={handleExportRegistrations} variant="outline">
+                           <Download className="mr-2 h-4 w-4" />
+                           {t.adminPage.exportButton}
+                       </Button>
+                    </CardContent>
+                </Card>
+             </TabsContent>
             <TabsContent value="assistant" className="grid grid-cols-1 gap-8 mt-0">
                 <Card className="bg-card/80 backdrop-blur-sm">
                   <CardHeader>
@@ -1961,5 +2049,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

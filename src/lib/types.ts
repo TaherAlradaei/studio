@@ -67,6 +67,12 @@ export interface User {
     isAnonymous: boolean;
 }
 
+export interface Background {
+    url: string;
+    hint: string;
+    path: string;
+}
+
 export interface GalleryImage {
     url: string;
     path?: string;

@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode, 
 import { auth, db, googleProvider, signInWithPopup, signInAnonymously, linkWithCredential, onFirebaseAuthStateChanged } from "@/lib/firebase";
 import { onAuthStateChanged as onAuth, signOut, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, setDoc, writeBatch, collection, getDocs, where, query } from "firebase/firestore";
-import { getAdminAccessCode, updateAdminAccessCode as updateAdminAccessCodeAction } from "@/app/(main)/admin/actions";
+import { getAdminAccessCode, updateUserTrustedStatus } from "@/app/(main)/admin/actions";
 
 
 // Custom User type definition
@@ -28,19 +28,21 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUserDetails: (details: { name: string; phone: string }) => Promise<void>;
   checkAdminStatus: () => Promise<void>;
+  updateUserPermissions: (uid: string, permissions: Partial<{isTrusted: boolean, isAdmin: boolean}>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // --- CODE EDITING GUIDE ---
-// To add a new admin, add their Google User ID (UID) to this list.
+// This is a failsafe list of super-admins. Their admin status is hardcoded
+// and cannot be accidentally revoked from the database.
 const ADMIN_UIDS = [
     "vQF7GtgIRNeq66ktYosLQtk9W9w2", 
     "WG8c2fN7Z9cEoHj8nebLEktLM332",
     "2tNIh9jQISg0zzWiYPWXq3K0RHS2",
     "redbn6RZ4YafH7xDPHtZDMHmGYA2",
     "tgpBCQIt9Ea2FEaXmJq1A0HxHK53",
-    "ADD_NEW_ADMIN_UID_HERE", // Add the new admin's UID here
+    "YOUR_ADMIN_UID_HERE",
 ];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -53,11 +55,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let userDoc = await getDoc(userDocRef);
 
     const isHardcodedAdmin = ADMIN_UIDS.includes(firebaseUser.uid);
-    
     let userData: User;
 
     if (userDoc.exists()) {
-      userData = userDoc.data() as User;
+      userData = { uid: firebaseUser.uid, isAnonymous: firebaseUser.isAnonymous, ...userDoc.data() } as User;
+      // Ensure hardcoded admins always have admin status in their document
       if (isHardcodedAdmin && !userData.isAdmin) {
           userData.isAdmin = true;
           await setDoc(userDocRef, { isAdmin: true }, { merge: true });
@@ -166,6 +168,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsUserRegistered(true);
     }
   };
+  
+  const updateUserPermissions = async (uid: string, permissions: Partial<{isTrusted: boolean, isAdmin: boolean}>) => {
+    await updateUserTrustedStatus(uid, permissions);
+  }
 
   const logout = async () => {
     await signOut(auth);
@@ -174,7 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isUserRegistered, loginWithGoogle, logout, updateUserDetails, checkAdminStatus }}>
+    <AuthContext.Provider value={{ user, isLoading, isUserRegistered, loginWithGoogle, logout, updateUserDetails, checkAdminStatus, updateUserPermissions }}>
       {children}
     </AuthContext.Provider>
   );

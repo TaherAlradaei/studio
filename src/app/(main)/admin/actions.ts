@@ -78,9 +78,9 @@ export async function getPublicBookings(): Promise<Omit<Booking, 'id' | 'userId'
 }
 
 
-export async function updateUserTrustedStatus(uid: string, isTrusted: boolean): Promise<void> {
+export async function updateUserTrustedStatus(uid: string, permissions: Partial<{ isTrusted: boolean, isAdmin: boolean }>): Promise<void> {
     const userDocRef = doc(db, 'users', uid);
-    await updateDoc(userDocRef, { isTrusted });
+    await updateDoc(userDocRef, permissions);
 }
 
 export async function getPaymentInstructions(): Promise<string> {
@@ -296,4 +296,3 @@ export async function exportAcademyRegistrations(): Promise<string> {
 
     return convertToCSV(csvData, headers);
 }
-    
