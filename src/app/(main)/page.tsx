@@ -94,8 +94,19 @@ export default function WelcomePage() {
       </section>
 
       <div className="container py-8 md:py-16 space-y-16 md:space-y-24">
-        {/* Mobile-only Quick Action Cards - HIDDEN as per user request */}
-        <div className="grid-cols-1 md:grid-cols-2 gap-8 hidden">
+        
+        {/* "Find a Team" button only for mobile view */}
+        <div className="text-center md:hidden">
+            <Button asChild size="lg" variant="outline" className="w-full max-w-sm mx-auto">
+              <Link href={isRegistered ? "/find-a-team/players" : "/find-a-team"}>
+                <Users className="mr-2"/>
+                {t.header.findTeam}
+              </Link>
+            </Button>
+        </div>
+        
+        {/* Mobile-only Quick Action Cards */}
+        <div className="grid grid-cols-1 md:hidden gap-8">
           <Card className="overflow-hidden bg-card/80 backdrop-blur-sm">
             <CardHeader className="p-0">
                 {welcomePageContent?.fieldImageUrl &&
@@ -144,16 +155,6 @@ export default function WelcomePage() {
               </Button>
             </CardContent>
           </Card>
-        </div>
-        
-        {/* "Find a Team" button only for mobile view */}
-        <div className="text-center md:hidden">
-            <Button asChild size="lg" variant="outline" className="w-full max-w-sm mx-auto">
-              <Link href={isRegistered ? "/find-a-team/players" : "/find-a-team"}>
-                <Users className="mr-2"/>
-                {t.header.findTeam}
-              </Link>
-            </Button>
         </div>
 
         {/* ----- Desktop Content Sections (hidden on mobile) ----- */}
