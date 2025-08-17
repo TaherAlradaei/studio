@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { FieldIcon } from "@/components/icons";
-import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History, Building, CheckCircle } from "lucide-react";
+import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History, Building, CheckCircle, Star, Newspaper, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -156,8 +156,8 @@ export default function WelcomePage() {
             </Button>
         </div>
 
-        {/* ----- Desktop Content Sections ----- */}
-        <div className="space-y-16 md:space-y-24">
+        {/* ----- Desktop Content Sections (hidden on mobile) ----- */}
+        <div className="hidden md:block space-y-16 md:space-y-24">
             {/* Mission, Vision, Goals */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="text-center bg-card/80 backdrop-blur-sm p-6 hover:shadow-xl transition-shadow duration-300">
@@ -258,7 +258,7 @@ export default function WelcomePage() {
             </Card>
         </div>
 
-        {/* --- PHASE 2 SECTIONS --- */}
+        {/* --- Phase 2 SECTIONS --- */}
 
         {/* Expanded Academy Section */}
         <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
@@ -307,6 +307,71 @@ export default function WelcomePage() {
                 </div>
             </div>
         </Card>
+
+        {/* Latest News - Desktop Only */}
+        <div className="hidden md:block">
+            <div className="text-center mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary">Latest News</h2>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+                <Card className="lg:col-span-2 overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
+                    <div className="aspect-video relative overflow-hidden">
+                        <Image src="https://placehold.co/800x450.png" alt="Featured News" layout="fill" className="object-cover group-hover:scale-105 transition-transform" data-ai-hint="football match action"/>
+                    </div>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl">Academy Team Secures Victory in Championship</CardTitle>
+                        <CardDescription>August 16, 2024</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">An incredible performance by our U-14 squad led to a thrilling 2-1 victory, securing the regional championship trophy. The final goal came in the last minute of extra time...</p>
+                    </CardContent>
+                </Card>
+                <div className="space-y-4">
+                    <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
+                        <CardHeader>
+                           <CardTitle className="text-lg font-headline">New Training Schedule Announced</CardTitle>
+                           <CardDescription>August 15, 2024</CardDescription>
+                        </CardHeader>
+                    </Card>
+                     <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
+                        <CardHeader>
+                           <CardTitle className="text-lg font-headline">Open Tryouts for Goalkeepers</CardTitle>
+                           <CardDescription>August 14, 2024</CardDescription>
+                        </CardHeader>
+                    </Card>
+                     <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
+                        <CardHeader>
+                           <CardTitle className="text-lg font-headline">Community Fun Day Recap</CardTitle>
+                           <CardDescription>August 12, 2024</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </div>
+            </div>
+        </div>
+        
+        {/* Player Spotlight - Desktop Only */}
+        <div className="hidden md:block">
+            <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
+                 <div className="grid md:grid-cols-2 gap-0 items-center">
+                    <div className="p-8 md:p-12">
+                        <Star className="w-12 h-12 text-primary mb-4" />
+                        <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-2">Player Spotlight</h2>
+                         <p className="font-semibold text-primary text-2xl mt-4">Adel Mohammed</p>
+                         <p className="text-lg text-muted-foreground leading-relaxed">"This club is more than a team; it's a family. The support from the coaches and my teammates pushes me to be better every single day."</p>
+                    </div>
+                    <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden">
+                         <Image
+                          src="https://placehold.co/600x800.png"
+                          alt="Adel Mohammed"
+                          layout="fill"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          data-ai-hint="football player portrait"
+                        />
+                    </div>
+                </div>
+            </Card>
+        </div>
+
 
         {/* FAQ Section */}
         <div className="my-16">
@@ -369,6 +434,18 @@ export default function WelcomePage() {
               <CarouselNext className="hidden sm:flex" />
             </Carousel>
         </div>
+        
+        {/* Social Media Hub - Desktop Only */}
+        <div className="hidden md:block text-center">
+            <h3 className="text-2xl font-bold font-headline text-primary mb-4">Follow Our Journey</h3>
+            <div className="flex justify-center items-center gap-6">
+                 <Link href="#" aria-label="Facebook"><Facebook className="w-8 h-8 text-muted-foreground hover:text-primary transition-colors" /></Link>
+                 <Link href="#" aria-label="Instagram"><Instagram className="w-8 h-8 text-muted-foreground hover:text-primary transition-colors" /></Link>
+                 <Link href="#" aria-label="Twitter"><Twitter className="w-8 h-8 text-muted-foreground hover:text-primary transition-colors" /></Link>
+                 <Link href="#" aria-label="YouTube"><Youtube className="w-8 h-8 text-muted-foreground hover:text-primary transition-colors" /></Link>
+            </div>
+        </div>
+
 
         {/* Sponsors Section - visible on all sizes */}
         <div className="text-center bg-card/80 backdrop-blur-sm p-8 md:p-12 rounded-lg">
@@ -413,5 +490,3 @@ export default function WelcomePage() {
     </div>
   );
 }
-
-    
