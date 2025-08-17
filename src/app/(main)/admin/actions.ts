@@ -3,8 +3,8 @@
 
 import { analyzeBookingPatterns, type AnalyzeBookingPatternsInput } from "@/ai/flows/scheduling-recommendations";
 import { db, storage } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, where, query, orderBy, Timestamp } from "firebase/firestore";
-import type { Background, WelcomePageContent, User, GalleryImage, SponsorImage, Booking, AcademyRegistration } from "@/lib/types";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, where, query, orderBy, Timestamp, addDoc, deleteDoc } from "firebase/firestore";
+import type { Background, WelcomePageContent, User, GalleryImage, SponsorImage, Booking, AcademyRegistration, NewsArticle } from "@/lib/types";
 import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -119,7 +119,7 @@ export async function getLogo(): Promise<{ url: string, path?: string }> {
         return docSnap.data() as { url: string, path?: string };
     }
     // Return a default if not set
-    return { url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACuwEE+AAABJUlEQVR42u3bS2nEUBiF0bswkw5eVR2sQqgC3Yk4Qoow4YVkHi+e/4J7QY4LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBvcj7331PI+Xw4Z+c+9Sg+t8fG+8fN+lq/VvyncoL3yQhYJkR4XisYLSso1zQy6m1/M9wghPfhM/VjZ/XJMkIWWYQQnhmY1oqG5ckywltZZKsgwsI7wwsWiYR1sgjRQlZJpPgRS7IIIfCsmbKMEEJ2WUSZEGIJUQYhE4QUaQcKYQoMQgghhBBCiCEU3o9n3G+0wU2UMIYQYghBCGGIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCHkP+Q8/gDAo+N8/H/l/4b8BgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAe/AEnrA0bgaed1gAAAABJRU5ErkJggg==" };
+    return { url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACuwEE+AAABJUlEQVR42u3bS2nEUBiF0bswkw5eVR2sQqgC3Yk4Qoow4YVkHi+e/4J7QY4LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMBvcj7331PI+Xw4Z+c+9Sg+t8fG+8fN+lq/VvyncoL3yQhYJkR4XisYLSso1zQy6m1/M9wghPfhM/VjZ/XJMkIWWYQQnhmY1oqG5ckywltZZKsgwsI7wwsWiYR1sgjRQlZJpPgRS7IIIfCsmbKMEEJ2WUSZEGIJUQYhE4QUaQcKYQoMQgghhBBCiCEU3o9n3G+0wU2UMIYQYghBCGGIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCHkP+Q8/gDAo+N8/H/l/b78BgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAe/AEnrA0bgaed1gAAAABJRU5ErkJggg==" };
 }
 
 export async function updateLogo(url: string, path: string): Promise<void> {
@@ -204,6 +204,40 @@ export async function updateGalleryImages(images: GalleryImage[]): Promise<void>
     const docRef = doc(db, 'settings', 'gallery');
     await setDoc(docRef, { images });
 }
+
+// News Actions
+export async function createNewsArticle(data: Omit<NewsArticle, 'id' | 'createdAt'>) {
+    await addDoc(collection(db, 'news'), {
+        ...data,
+        createdAt: Timestamp.now(),
+    });
+}
+
+export async function updateNewsArticle(id: string, data: Partial<Omit<NewsArticle, 'id'>>) {
+    const docRef = doc(db, 'news', id);
+    await updateDoc(docRef, data);
+}
+
+export async function deleteNewsArticle(id: string) {
+    const docRef = doc(db, 'news', id);
+    // Optionally, delete associated image from storage first
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        const article = docSnap.data() as NewsArticle;
+        if (article.imagePath) {
+            await deleteFile(article.imagePath);
+        }
+    }
+    await deleteDoc(docRef);
+}
+
+export async function getNewsArticles(limitCount = 4): Promise<NewsArticle[]> {
+  const newsQuery = query(collection(db, "news"), orderBy("createdAt", "desc"), where("createdAt", "<=", Timestamp.now()));
+  const querySnapshot = await getDocs(newsQuery);
+  const articles = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsArticle));
+  return articles;
+}
+
 
 // Helper to convert data to CSV format
 function convertToCSV(data: any[], headers: string[]): string {

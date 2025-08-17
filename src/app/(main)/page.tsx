@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { FieldIcon } from "@/components/icons";
-import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History, Building, CheckCircle, Star, Newspaper, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import { Shield, User, Loader2, Eye, Target, Heart, Users, Calendar, Award, History, Building, CheckCircle, Star, Newspaper, Facebook, Instagram, Twitter, Youtube, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -23,29 +23,37 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useFindATeam } from "@/context/find-a-team-context";
-import { WelcomePageContent, GalleryImage } from "@/lib/types";
-import { getWelcomePageContent, getGalleryImages } from "./admin/actions";
+import { WelcomePageContent, GalleryImage, NewsArticle } from "@/lib/types";
+import { getWelcomePageContent, getGalleryImages, getNewsArticles } from "./admin/actions";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-
+import { Timestamp } from "firebase/firestore";
+import { format } from "date-fns";
+import { arSA } from "date-fns/locale";
 
 export default function WelcomePage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user } = useAuth();
   const { isRegistered } = useFindATeam();
   const { toast } = useToast();
   
   const [welcomePageContent, setWelcomePageContent] = useState<WelcomePageContent | null>(null);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchContent() {
       try {
         setIsLoading(true);
-        const [welcomeData, galleryData] = await Promise.all([getWelcomePageContent(), getGalleryImages()]);
+        const [welcomeData, galleryData, newsData] = await Promise.all([
+          getWelcomePageContent(), 
+          getGalleryImages(),
+          getNewsArticles()
+        ]);
         setWelcomePageContent(welcomeData);
         setGalleryImages(galleryData);
+        setNewsArticles(newsData);
       } catch (err) {
         toast({ title: "Error", description: "Failed to load page content", variant: "destructive" });
       } finally {
@@ -63,6 +71,9 @@ export default function WelcomePage() {
       </div>
     );
   }
+
+  const featuredArticle = newsArticles[0];
+  const otherArticles = newsArticles.slice(1);
 
   return (
     <div className="flex flex-col">
@@ -259,55 +270,57 @@ export default function WelcomePage() {
             </Card>
         </div>
 
-        {/* --- Phase 2 SECTIONS --- */}
+        {/* --- Phase 2 SECTIONS (Desktop Only) --- */}
 
         {/* Expanded Academy Section */}
-        <Card className="hidden md:grid overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
-            <div className="grid md:grid-cols-2 gap-0 items-center">
-                <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-2">
-                    <Image
-                        src="https://placehold.co/600x800.png"
-                        alt="Youth academy players training"
-                        layout="fill"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        data-ai-hint="youth football academy"
-                    />
+        <div className="hidden md:block">
+            <Card className="overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
+                <div className="grid md:grid-cols-2 gap-0 items-center">
+                    <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-2">
+                        <Image
+                            src="https://placehold.co/600x800.png"
+                            alt="Youth academy players training"
+                            layout="fill"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            data-ai-hint="youth football academy"
+                        />
+                    </div>
+                    <div className="p-8 md:p-12 md:order-1">
+                        <Shield className="w-12 h-12 text-primary mb-4" />
+                        <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.welcomePage.academySectionTitle}</h2>
+                        <p className="text-lg text-muted-foreground leading-relaxed mb-6">{t.welcomePage.academySectionDesc}</p>
+                        <ul className="space-y-4">
+                            <li className="flex items-start gap-3">
+                                <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                                <div>
+                                    <h4 className="font-semibold">{t.welcomePage.academyBenefit1Title}</h4>
+                                    <p className="text-muted-foreground">{t.welcomePage.academyBenefit1Desc}</p>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                                <div>
+                                    <h4 className="font-semibold">{t.welcomePage.academyBenefit2Title}</h4>
+                                    <p className="text-muted-foreground">{t.welcomePage.academyBenefit2Desc}</p>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                                <div>
+                                    <h4 className="font-semibold">{t.welcomePage.academyBenefit3Title}</h4>
+                                    <p className="text-muted-foreground">{t.welcomePage.academyBenefit3Desc}</p>
+                                </div>
+                            </li>
+                        </ul>
+                        <Button asChild size="lg" className="mt-8">
+                        <Link href="/academy">
+                            {t.academyPage.submitButton}
+                        </Link>
+                        </Button>
+                    </div>
                 </div>
-                <div className="p-8 md:p-12 md:order-1">
-                    <Shield className="w-12 h-12 text-primary mb-4" />
-                    <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-4">{t.welcomePage.academySectionTitle}</h2>
-                    <p className="text-lg text-muted-foreground leading-relaxed mb-6">{t.welcomePage.academySectionDesc}</p>
-                    <ul className="space-y-4">
-                        <li className="flex items-start gap-3">
-                            <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-                            <div>
-                                <h4 className="font-semibold">{t.welcomePage.academyBenefit1Title}</h4>
-                                <p className="text-muted-foreground">{t.welcomePage.academyBenefit1Desc}</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-                            <div>
-                                <h4 className="font-semibold">{t.welcomePage.academyBenefit2Title}</h4>
-                                <p className="text-muted-foreground">{t.welcomePage.academyBenefit2Desc}</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <CheckCircle className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-                            <div>
-                                <h4 className="font-semibold">{t.welcomePage.academyBenefit3Title}</h4>
-                                <p className="text-muted-foreground">{t.welcomePage.academyBenefit3Desc}</p>
-                            </div>
-                        </li>
-                    </ul>
-                    <Button asChild size="lg" className="mt-8">
-                      <Link href="/academy">
-                        {t.academyPage.submitButton}
-                      </Link>
-                    </Button>
-                </div>
-            </div>
-        </Card>
+            </Card>
+        </div>
 
         {/* Latest News */}
         <div className="hidden md:block">
@@ -315,40 +328,38 @@ export default function WelcomePage() {
                 <Newspaper className="w-12 h-12 text-primary mx-auto mb-4" />
                 <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary">{t.welcomePage.latestNewsTitle}</h2>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-                <Card className="lg:col-span-2 overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
-                    <div className="aspect-video relative overflow-hidden">
-                        <Image src="https://placehold.co/800x450.png" alt={t.welcomePage.featuredNewsTitle} layout="fill" className="object-cover group-hover:scale-105 transition-transform" data-ai-hint="football match action"/>
+            {newsArticles.length > 0 ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+                    <Card className="lg:col-span-2 overflow-hidden bg-card/80 backdrop-blur-sm group transition-shadow duration-300 hover:shadow-xl">
+                        <div className="aspect-video relative overflow-hidden">
+                            <Image src={featuredArticle.imageUrl || 'https://placehold.co/800x450.png'} alt={lang === 'ar' ? featuredArticle.titleAR : featuredArticle.titleEN} layout="fill" className="object-cover group-hover:scale-105 transition-transform" data-ai-hint="football match action"/>
+                        </div>
+                        <CardHeader>
+                            <CardTitle className="font-headline text-2xl">{lang === 'ar' ? featuredArticle.titleAR : featuredArticle.titleEN}</CardTitle>
+                            <CardDescription>
+                                {format(featuredArticle.createdAt instanceof Timestamp ? featuredArticle.createdAt.toDate() : featuredArticle.createdAt, 'PP', { locale: lang === 'ar' ? arSA : undefined })}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">{lang === 'ar' ? featuredArticle.summaryAR : featuredArticle.summaryEN}</p>
+                        </CardContent>
+                    </Card>
+                    <div className="space-y-4">
+                        {otherArticles.map(article => (
+                            <Card key={article.id} className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
+                                <CardHeader>
+                                    <CardTitle className="text-lg font-headline">{lang === 'ar' ? article.titleAR : article.titleEN}</CardTitle>
+                                    <CardDescription>
+                                        {format(article.createdAt instanceof Timestamp ? article.createdAt.toDate() : article.createdAt, 'PP', { locale: lang === 'ar' ? arSA : undefined })}
+                                    </CardDescription>
+                                </CardHeader>
+                            </Card>
+                        ))}
                     </div>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-2xl">{t.welcomePage.featuredNewsTitle}</CardTitle>
-                        <CardDescription>{t.welcomePage.featuredNewsDate}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">{t.welcomePage.featuredNewsSummary}</p>
-                    </CardContent>
-                </Card>
-                <div className="space-y-4">
-                    <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
-                        <CardHeader>
-                           <CardTitle className="text-lg font-headline">{t.welcomePage.newsItem1Title}</CardTitle>
-                           <CardDescription>{t.welcomePage.newsItem1Date}</CardDescription>
-                        </CardHeader>
-                    </Card>
-                     <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
-                        <CardHeader>
-                           <CardTitle className="text-lg font-headline">{t.welcomePage.newsItem2Title}</CardTitle>
-                           <CardDescription>{t.welcomePage.newsItem2Date}</CardDescription>
-                        </CardHeader>
-                    </Card>
-                     <Card className="bg-card/80 backdrop-blur-sm hover:shadow-xl transition-shadow">
-                        <CardHeader>
-                           <CardTitle className="text-lg font-headline">{t.welcomePage.newsItem3Title}</CardTitle>
-                           <CardDescription>{t.welcomePage.newsItem3Date}</CardDescription>
-                        </CardHeader>
-                    </Card>
                 </div>
-            </div>
+            ) : (
+                <p className="text-center text-muted-foreground">{t.adminPage.newsManagement.noArticles}</p>
+            )}
         </div>
         
         {/* Player Spotlight */}
@@ -403,7 +414,7 @@ export default function WelcomePage() {
         {/* Gallery - visible on all sizes */}
         <div className="my-16">
             <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary text-center mb-8">{t.welcomePage.galleryTitle}</h2>
-            <Carousel className="w-full max-w-5xl mx-auto" opts={{ loop: true }}>
+            <Carousel className="w-full max-w-5xl mx-auto" opts={{ loop: true, direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
               <CarouselContent>
                 {galleryImages?.map((image, index) => (
                   <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">

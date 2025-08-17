@@ -7,17 +7,18 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone, Building, User, Download, Archive, BookUser, Star, Users } from "lucide-react";
-import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers, getGalleryImages, updateGalleryImages, exportBookings, exportAcademyRegistrations } from "./actions";
+import { Loader2, Sparkles, Wand2, CalendarDays, Clock, Info, ImageUp, ShieldCheck, Settings, LayoutDashboard, KeyRound, UserCheck, Trash2, UserPlus, Repeat, Presentation, Lock, Image as ImageIcon, Phone, Building, User, Download, Archive, BookUser, Star, Users, Newspaper, PlusCircle } from "lucide-react";
+import { getSchedulingRecommendations, getPaymentInstructions, updatePaymentInstructions, updateUserTrustedStatus, getAdminAccessCode, updateAdminAccessCode as updateAdminCodeAction, getWelcomePageContent, updateWelcomePageContent as updateWelcomeContentAction, uploadFile, deleteFile, getAllUsers, getGalleryImages, updateGalleryImages, exportBookings, exportAcademyRegistrations, createNewsArticle, getNewsArticles, updateNewsArticle, deleteNewsArticle } from "./actions";
 import { useBookings } from "@/context/booking-context";
 import { useAcademy } from "@/context/academy-context";
 import { useLanguage } from "@/context/language-context";
-import type { Booking, AcademyRegistration, GalleryImage, WelcomePageContent, User as UserType, SponsorImage } from "@/lib/types";
+import type { Booking, AcademyRegistration, GalleryImage, WelcomePageContent, User as UserType, SponsorImage, NewsArticle } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfDay, endOfDay, addDays, startOfMonth, endOfMonth, isWithinInterval, differenceInYears } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +28,7 @@ import { useBackground } from "@/context/background-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLogo } from "@/context/logo-context";
 import { getDefaultPrice } from "@/lib/pricing";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -262,10 +263,16 @@ export default function AdminPage() {
   const welcomePageManagerImageInputRef = useRef<HTMLInputElement | null>(null);
   const galleryImageInputRef = useRef<HTMLInputElement | null>(null);
   const sponsorImageInputRef = useRef<HTMLInputElement | null>(null);
+  const newsImageInputRef = useRef<HTMLInputElement | null>(null);
 
 
   const [adminAccessCode, setAdminAccessCode] = useState("");
   const [newAdminCode, setNewAdminCode] = useState("");
+  
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [isNewsLoading, setIsNewsLoading] = useState(true);
+  const [isNewsDialogOpen, setIsNewsDialogOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
   
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -302,17 +309,21 @@ export default function AdminPage() {
     fetchContent();
   }, [toast]);
 
-
   useEffect(() => {
-    async function fetchAdminSettings() {
+    async function fetchAdminData() {
         try {
             setIsUsersLoading(true);
-            const instructions = await getPaymentInstructions();
+            setIsNewsLoading(true);
+            const [instructions, users, code, articles] = await Promise.all([
+                getPaymentInstructions(),
+                getAllUsers(),
+                getAdminAccessCode(),
+                getNewsArticles()
+            ]);
             setPaymentInstructions(instructions);
-            const users = await getAllUsers();
             setAllUsers(users);
-            const code = await getAdminAccessCode();
             setAdminAccessCode(code);
+            setNewsArticles(articles);
         } catch (err) {
             toast({
                 title: t.adminPage.errorTitle,
@@ -321,9 +332,10 @@ export default function AdminPage() {
             });
         } finally {
             setIsUsersLoading(false);
+            setIsNewsLoading(false);
         }
     }
-    fetchAdminSettings();
+    fetchAdminData();
   }, [toast, t]);
 
 
@@ -951,6 +963,22 @@ export default function AdminPage() {
     }
     return false;
   };
+  
+  const handleOpenNewsDialog = (article: NewsArticle | null) => {
+    setEditingArticle(article);
+    setIsNewsDialogOpen(true);
+  };
+  
+  const handleDeleteArticle = async (id: string) => {
+    try {
+      await deleteNewsArticle(id);
+      setNewsArticles(prev => prev.filter(a => a.id !== id));
+      toast({ title: t.adminPage.newsManagement.articleDeleted, variant: 'destructive' });
+    } catch (err) {
+      toast({ title: t.adminPage.errorTitle, description: err instanceof Error ? err.message : "Failed to delete article", variant: "destructive" });
+    }
+  };
+
 
   return (
     <div className="container py-8" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -968,6 +996,10 @@ export default function AdminPage() {
           <TabsTrigger value="booking" className="w-full justify-start gap-2">
             <LayoutDashboard className="h-4 w-4" />
             {t.adminPage.bookingManagementCardTitle}
+          </TabsTrigger>
+           <TabsTrigger value="news" className="w-full justify-start gap-2">
+            <Newspaper className="h-4 w-4" />
+            {t.adminPage.newsTab}
           </TabsTrigger>
           <TabsTrigger value="academy" className="w-full justify-start gap-2">
             <ShieldCheck className="h-4 w-4" />
@@ -1310,6 +1342,65 @@ export default function AdminPage() {
                             </>
                             )}
                         </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="news" className="grid grid-cols-1 gap-8 mt-0">
+                <Card className="bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <CardTitle>{t.adminPage.newsManagement.title}</CardTitle>
+                                <CardDescription>{t.adminPage.newsManagement.description}</CardDescription>
+                            </div>
+                            <Button onClick={() => handleOpenNewsDialog(null)}>
+                                <PlusCircle className="mr-2 h-4 w-4"/>
+                                {t.adminPage.newsManagement.createNew}
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                         {isNewsLoading ? (
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                        ) : newsArticles.length > 0 ? (
+                            <div className="border rounded-lg overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Image</TableHead>
+                                            <TableHead>Title</TableHead>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {newsArticles.map(article => (
+                                            <TableRow key={article.id}>
+                                                <TableCell>
+                                                    <Image 
+                                                        src={article.imageUrl || 'https://placehold.co/100x75.png'} 
+                                                        alt={lang === 'ar' ? article.titleAR : article.titleEN}
+                                                        width={100}
+                                                        height={75}
+                                                        className="w-24 h-auto object-cover rounded-md"
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="font-medium">{lang === 'ar' ? article.titleAR : article.titleEN}</TableCell>
+                                                <TableCell>{format(article.createdAt.toDate(), 'PPP', { locale: lang === 'ar' ? arSA : undefined })}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex gap-2 justify-end">
+                                                        <Button variant="outline" size="sm" onClick={() => handleOpenNewsDialog(article)}>{t.adminPage.edit}</Button>
+                                                        <Button variant="destructive" size="sm" onClick={() => handleDeleteArticle(article.id)}>{t.adminPage.cancel}</Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        ) : (
+                           <div className="text-center py-12 text-muted-foreground">{t.adminPage.newsManagement.noArticles}</div>
+                        )}
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -2046,6 +2137,186 @@ export default function AdminPage() {
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
+
+      <NewsArticleDialog 
+        isOpen={isNewsDialogOpen}
+        setIsOpen={setIsNewsDialogOpen}
+        article={editingArticle}
+        onSave={(newArticle) => {
+          if (editingArticle) {
+            setNewsArticles(prev => prev.map(a => a.id === newArticle.id ? newArticle as NewsArticle : a));
+          } else {
+            setNewsArticles(prev => [newArticle as NewsArticle, ...prev]);
+          }
+        }}
+      />
+
     </div>
+  );
+}
+
+
+// News Article Dialog Component
+function NewsArticleDialog({ isOpen, setIsOpen, article, onSave }: { isOpen: boolean, setIsOpen: (open: boolean) => void, article: NewsArticle | null, onSave: (article: NewsArticle | Partial<NewsArticle>) => void }) {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(article?.imageUrl || null);
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+
+  const newsFormSchema = z.object({
+    titleEN: z.string().min(1, t.adminPage.newsManagement.validation.titleEN),
+    titleAR: z.string().min(1, t.adminPage.newsManagement.validation.titleAR),
+    summaryEN: z.string().min(1, t.adminPage.newsManagement.validation.summaryEN),
+    summaryAR: z.string().min(1, t.adminPage.newsManagement.validation.summaryAR),
+  });
+
+  const form = useForm<z.infer<typeof newsFormSchema>>({
+    resolver: zodResolver(newsFormSchema),
+    defaultValues: {
+      titleEN: '',
+      titleAR: '',
+      summaryEN: '',
+      summaryAR: '',
+    }
+  });
+  
+  useEffect(() => {
+    if (article) {
+      form.reset({
+        titleEN: article.titleEN,
+        titleAR: article.titleAR,
+        summaryEN: article.summaryEN,
+        summaryAR: article.summaryAR,
+      });
+      setImagePreview(article.imageUrl || null);
+    } else {
+      form.reset({ titleEN: '', titleAR: '', summaryEN: '', summaryAR: '' });
+      setImagePreview(null);
+    }
+    setNewImageFile(null);
+  }, [article, isOpen, form]);
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setNewImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onSubmit = async (data: z.infer<typeof newsFormSchema>) => {
+    setIsSaving(true);
+    try {
+      let imageUrl = article?.imageUrl || undefined;
+      let imagePath = article?.imagePath || undefined;
+
+      if (newImageFile) {
+        if (article?.imagePath) {
+          await deleteFile(article.imagePath);
+        }
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(newImageFile);
+        });
+        const uploaded = await uploadFile(dataUrl, 'public/news');
+        imageUrl = uploaded.url;
+        imagePath = uploaded.path;
+      }
+      
+      const payload = { ...data, imageUrl, imagePath };
+
+      if (article) {
+        await updateNewsArticle(article.id, payload);
+        onSave({ ...article, ...payload });
+        toast({ title: t.adminPage.newsManagement.articleUpdated });
+      } else {
+        const newDoc = await createNewsArticle(payload);
+        // This is a bit of a workaround to get the full object back without another fetch
+        const createdArticle = { ...payload, id: newDoc.id, createdAt: Timestamp.now() };
+        onSave(createdArticle as any);
+        toast({ title: t.adminPage.newsManagement.articleCreated });
+      }
+      setIsOpen(false);
+    } catch (err) {
+      toast({ title: t.adminPage.errorTitle, description: err instanceof Error ? err.message : "Failed to save article", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>{article ? t.adminPage.newsManagement.editArticle : t.adminPage.newsManagement.createNew}</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField control={form.control} name="titleEN" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.adminPage.newsManagement.titleEN}</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="titleAR" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.adminPage.newsManagement.titleAR}</FormLabel>
+                <FormControl><Input {...field} dir="rtl"/></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="summaryEN" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.adminPage.newsManagement.summaryEN}</FormLabel>
+                <FormControl><Textarea {...field} rows={4}/></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="summaryAR" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.adminPage.newsManagement.summaryAR}</FormLabel>
+                <FormControl><Textarea {...field} dir="rtl" rows={4} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <div>
+              <Label>{t.adminPage.newsManagement.image}</Label>
+              <Card className="mt-2">
+                <CardContent className="p-2">
+                  <div className="flex items-center gap-4">
+                    {imagePreview ? (
+                      <Image src={imagePreview} alt="Preview" width={100} height={75} className="object-cover rounded-md aspect-video" />
+                    ) : <div className="w-[100px] h-[75px] bg-muted rounded-md flex items-center justify-center"><ImageIcon className="w-8 h-8 text-muted-foreground"/></div>}
+                    <div className="flex-1 space-y-2">
+                       <Button type="button" variant="outline" onClick={() => imageInputRef.current?.click()}>
+                         <ImageUp className="mr-2 h-4 w-4" />
+                         {imagePreview ? t.adminPage.replaceImageButton : t.adminPage.addCustomerButton + " " + t.adminPage.newsManagement.image}
+                       </Button>
+                       <p className="text-xs text-muted-foreground">{t.adminPage.newsManagement.imageDesc}</p>
+                       <input type="file" ref={imageInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild><Button type="button" variant="outline">{t.adminPage.cancel}</Button></DialogClose>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                {article ? t.adminPage.newsManagement.update : t.adminPage.newsManagement.publish}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

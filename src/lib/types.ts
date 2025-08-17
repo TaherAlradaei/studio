@@ -92,3 +92,14 @@ export interface WelcomePageContent {
   managerImageUrlPath?: string;
   sponsors: SponsorImage[];
 }
+
+export interface NewsArticle {
+  id: string;
+  titleEN: string;
+  titleAR: string;
+  summaryEN: string;
+  summaryAR: string;
+  imageUrl?: string;
+  imagePath?: string;
+  createdAt: Timestamp;
+}
