@@ -337,7 +337,7 @@ export default function WelcomePage() {
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">{lang === 'ar' ? featuredArticle.titleAR : featuredArticle.titleEN}</CardTitle>
                             <CardDescription>
-                                {format(featuredArticle.createdAt instanceof Timestamp ? featuredArticle.createdAt.toDate() : featuredArticle.createdAt, 'PP', { locale: lang === 'ar' ? arSA : undefined })}
+                                {format(new Date(featuredArticle.createdAt as unknown as string), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -350,7 +350,7 @@ export default function WelcomePage() {
                                 <CardHeader>
                                     <CardTitle className="text-lg font-headline">{lang === 'ar' ? article.titleAR : article.titleEN}</CardTitle>
                                     <CardDescription>
-                                        {format(article.createdAt instanceof Timestamp ? article.createdAt.toDate() : article.createdAt, 'PP', { locale: lang === 'ar' ? arSA : undefined })}
+                                        {format(new Date(article.createdAt as unknown as string), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
                                     </CardDescription>
                                 </CardHeader>
                             </Card>

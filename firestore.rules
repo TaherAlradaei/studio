@@ -1,15 +1,72 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // --- Helper Functions ---
+    // Use custom claims for secure, role-based access control
+    function isAdmin() {
+      return request.auth.token.isAdmin == true;
+    }
     
-    // WARNING: These rules are completely public and insecure.
-    // Anyone can read, write, and delete any data in your database.
-    // This is for development and debugging purposes only.
-    // You should secure your data before launching your application.
+    // Check if the authenticated user is the owner of a document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Allow any authenticated user (including anonymous)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // --- Admin Rule: Allow Admins to do ANYTHING ---
+    // This single rule grants full read/write access to all documents
+    // for any user with the 'isAdmin' custom claim.
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
+    }
+
+    // --- Public Read Access ---
+    // Anyone can read news and settings documents
+    match /news/{docId} {
+      allow read: if true;
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+    }
+    
+    match /publicBookings/{bookingId} {
+      allow read: if true;
+    }
+    
+    // --- User-Specific Collections ---
+    // Users can create, read, and update their own user documents
+    match /users/{userId} {
+      allow create: if isOwner(userId);
+      allow read, update: if isOwner(userId);
+    }
+    
+    // Users can create, read, and manage their own bookings
+    match /bookings/{bookingId} {
+      allow read, update, delete: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow list: if isOwner(request.auth.uid);
+    }
+    
+    // --- Academy Registrations with Access Code Feature ---
+    // Users can create their own academy registration and read with their code.
+    match /academyRegistrations/{regId} {
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow read: if isOwner(resource.data.userId) || request.resource.data.accessCode == resource.data.accessCode;
+    }
+    
+    // --- Find a Team Registrations ---
+    // Users can create and manage their own "find a team" registration
+    // Other authenticated users can list and read them to find a team
+    match /findATeamRegistrations/{regId} {
+      allow create: if isOwner(request.resource.data.userId);
+      allow read, list: if isAuthenticated();
+      allow delete: if isOwner(resource.data.userId);
     }
   }
 }

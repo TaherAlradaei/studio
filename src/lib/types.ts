@@ -101,5 +101,5 @@ export interface NewsArticle {
   summaryAR: string;
   imageUrl?: string;
   imagePath?: string;
-  createdAt: Timestamp;
+  createdAt: Timestamp | string; // Allow string for client-side
 }

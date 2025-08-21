@@ -1386,7 +1386,7 @@ export default function AdminPage() {
                                                     />
                                                 </TableCell>
                                                 <TableCell className="font-medium">{lang === 'ar' ? article.titleAR : article.titleEN}</TableCell>
-                                                <TableCell>{format(article.createdAt.toDate(), 'PPP', { locale: lang === 'ar' ? arSA : undefined })}</TableCell>
+                                                <TableCell>{format(new Date(article.createdAt as unknown as string), 'PPP', { locale: lang === 'ar' ? arSA : undefined })}</TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex gap-2 justify-end">
                                                         <Button variant="outline" size="sm" onClick={() => handleOpenNewsDialog(article)}>{t.adminPage.edit}</Button>
@@ -2239,7 +2239,7 @@ function NewsArticleDialog({ isOpen, setIsOpen, article, onSave }: { isOpen: boo
       } else {
         const newDoc = await createNewsArticle(payload);
         // This is a bit of a workaround to get the full object back without another fetch
-        const createdArticle = { ...payload, id: newDoc.id, createdAt: Timestamp.now() };
+        const createdArticle = { ...payload, id: newDoc.id, createdAt: Timestamp.now().toDate().toISOString() };
         onSave(createdArticle as any);
         toast({ title: t.adminPage.newsManagement.articleCreated });
       }

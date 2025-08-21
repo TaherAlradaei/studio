@@ -207,10 +207,11 @@ export async function updateGalleryImages(images: GalleryImage[]): Promise<void>
 
 // News Actions
 export async function createNewsArticle(data: Omit<NewsArticle, 'id' | 'createdAt'>) {
-    await addDoc(collection(db, 'news'), {
+    const docRef = await addDoc(collection(db, 'news'), {
         ...data,
         createdAt: Timestamp.now(),
     });
+    return docRef;
 }
 
 export async function updateNewsArticle(id: string, data: Partial<Omit<NewsArticle, 'id'>>) {
@@ -231,10 +232,18 @@ export async function deleteNewsArticle(id: string) {
     await deleteDoc(docRef);
 }
 
-export async function getNewsArticles(limitCount = 4): Promise<NewsArticle[]> {
+export async function getNewsArticles(limitCount = 4) {
   const newsQuery = query(collection(db, "news"), orderBy("createdAt", "desc"), where("createdAt", "<=", Timestamp.now()));
   const querySnapshot = await getDocs(newsQuery);
-  const articles = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsArticle));
+  const articles = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return { 
+          id: doc.id, 
+          ...data,
+          // Convert Timestamp to serializable format (ISO string)
+          createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+      } as unknown as NewsArticle;
+  });
   return articles;
 }
 
