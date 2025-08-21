@@ -1,56 +1,15 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAdmin() {
-      return request.auth.token.isAdmin == true;
-    }
     
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    match /users/{userId} {
-      allow read, update: if isOwner(userId);
-      allow list: if isAdmin();
-      allow create: if request.auth.uid != null;
-    }
-
-    match /bookings/{bookingId} {
-      allow read, update: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
-      allow list: if isOwner(resource.data.userId) || isAdmin();
-      allow delete: if isOwner(resource.data.userId) || isAdmin();
-    }
-    
-    match /publicBookings/{bookingId} {
-      allow read: if true;
-      allow list: if true;
-      allow write: if isAdmin();
-    }
-
-    match /academyRegistrations/{regId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if request.auth.uid != null;
-      allow update: if isAdmin();
-    }
-    
-    match /findATeamRegistrations/{regId} {
-      allow read, list: if request.auth.uid != null;
-      allow create: if isOwner(request.resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
-    }
-    
-    match /settings/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /news/{docId} {
-      allow read: if true;
-      allow list: if true;
-      allow write: if isAdmin();
+    // WARNING: These rules are completely public and insecure.
+    // Anyone can read, write, and delete any data in your database.
+    // This is for development and debugging purposes only.
+    // You should secure your data before launching your application.
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
