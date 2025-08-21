@@ -99,67 +99,67 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   
   const confirmBooking = async (bookingToConfirm: Booking): Promise<'confirmed' | 'slot-taken'> => {
     const bookingDate = bookingToConfirm.date instanceof Timestamp ? bookingToConfirm.date.toDate() : bookingToConfirm.date;
+
     const timeToMinutes = (time: string) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
     };
-  
+
     const newBookingStartMinutes = timeToMinutes(bookingToConfirm.time);
     const newBookingEndMinutes = newBookingStartMinutes + bookingToConfirm.duration * 60;
-  
-    // Pre-transaction check for conflicts with already confirmed/blocked slots.
-    // This is now done OUTSIDE the transaction, which is the correct approach.
-    const conflictingConfirmedQuery = query(
-      collection(db, "bookings"),
-      where("date", "==", Timestamp.fromDate(startOfDay(bookingDate))),
-      where("status", "in", ["confirmed", "blocked"])
-    );
-  
-    const confirmedSnapshot = await getDocs(conflictingConfirmedQuery);
-  
-    for (const doc of confirmedSnapshot.docs) {
-      const existingBooking = doc.data() as Booking;
-      const existingStartMinutes = timeToMinutes(existingBooking.time);
-      const existingEndMinutes = existingStartMinutes + existingBooking.duration * 60;
-  
-      if (Math.max(newBookingStartMinutes, existingStartMinutes) < Math.min(newBookingEndMinutes, existingEndMinutes)) {
-        return 'slot-taken'; // Conflict found, abort before transaction.
-      }
-    }
-  
-    // If no conflicts, proceed with an atomic transaction to confirm and cancel others.
-    return runTransaction(db, async (transaction) => {
-      const bookingToConfirmRef = doc(db, "bookings", bookingToConfirm.id);
-  
-      // 1. Confirm the target booking
-      transaction.update(bookingToConfirmRef, { status: 'confirmed' });
-  
-      // 2. Find and cancel all other overlapping pending/awaiting-confirmation bookings
-      const conflictingPendingQuery = query(
+
+    // Fetch ALL bookings for the given day to check for conflicts before starting the transaction.
+    const allBookingsForDayQuery = query(
         collection(db, "bookings"),
-        where("date", "==", Timestamp.fromDate(startOfDay(bookingDate))),
-        where("status", "in", ["pending", "awaiting-confirmation"])
-      );
-      
-      // Note: We fetch these IDs before the transaction, but act on them inside.
-      // For a fully robust system, you'd pass the IDs to cancel into the transaction.
-      // But for this case, we requery and it's generally safe as new pending bookings can't be created for this slot simultaneously.
-      const pendingSnapshot = await getDocs(conflictingPendingQuery);
-  
-      for (const pendingDoc of pendingSnapshot.docs) {
-        if (pendingDoc.id === bookingToConfirm.id) continue; // Don't cancel itself
-  
-        const pendingBooking = pendingDoc.data() as Booking;
-        const pendingStartMinutes = timeToMinutes(pendingBooking.time);
-        const pendingEndMinutes = pendingStartMinutes + pendingBooking.duration * 60;
-  
-        if (Math.max(newBookingStartMinutes, pendingStartMinutes) < Math.min(newBookingEndMinutes, pendingEndMinutes)) {
-          transaction.update(pendingDoc.ref, { status: 'cancelled' });
+        where("date", "==", Timestamp.fromDate(startOfDay(bookingDate)))
+    );
+
+    const snapshot = await getDocs(allBookingsForDayQuery);
+    const bookingsForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+
+    // Check for conflicts with already confirmed or blocked slots
+    const hasConflict = bookingsForDay.some(existingBooking => {
+        if (existingBooking.status !== 'confirmed' && existingBooking.status !== 'blocked') {
+            return false;
         }
-      }
-  
-      return 'confirmed';
+        const existingStartMinutes = timeToMinutes(existingBooking.time);
+        const existingEndMinutes = existingStartMinutes + existingBooking.duration * 60;
+        return Math.max(newBookingStartMinutes, existingStartMinutes) < Math.min(newBookingEndMinutes, existingEndMinutes);
     });
+
+    if (hasConflict) {
+        return 'slot-taken';
+    }
+
+    // Identify other pending/awaiting-confirmation bookings that conflict and need to be cancelled
+    const bookingsToCancel = bookingsForDay.filter(b => {
+        if (b.id === bookingToConfirm.id || (b.status !== 'pending' && b.status !== 'awaiting-confirmation')) {
+            return false;
+        }
+        const pendingStartMinutes = timeToMinutes(b.time);
+        const pendingEndMinutes = pendingStartMinutes + b.duration * 60;
+        return Math.max(newBookingStartMinutes, pendingStartMinutes) < Math.min(newBookingEndMinutes, pendingEndMinutes);
+    });
+
+    // Now, run the transaction to perform the atomic write operations
+    try {
+        await runTransaction(db, async (transaction) => {
+            // 1. Confirm the target booking
+            const bookingToConfirmRef = doc(db, "bookings", bookingToConfirm.id);
+            transaction.update(bookingToConfirmRef, { status: 'confirmed' });
+
+            // 2. Cancel all conflicting pending bookings
+            bookingsToCancel.forEach(b => {
+                const bookingToCancelRef = doc(db, "bookings", b.id);
+                transaction.update(bookingToCancelRef, { status: 'cancelled' });
+            });
+        });
+        return 'confirmed';
+    } catch (error) {
+        console.error("Transaction failed: ", error);
+        // If the transaction fails, it's safer to assume the slot might have been taken by another process.
+        return 'slot-taken';
+    }
   };
 
   const createConfirmedBooking = async (bookingData: Omit<Booking, "id" | "status" | "userId" | "isRecurring" | "date"> & { date: Date }): Promise<'confirmed' | 'slot-taken'> => {
@@ -199,7 +199,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
     const createRecurringBookings = async (originalBooking: Booking): Promise<void> => {
         const batch = writeBatch(db);
-        const originalDate = originalBooking.date instanceof Timestamp ? originalBooking.date.toDate() : originalDate;
+        const originalDate = originalBooking.date instanceof Timestamp ? originalBooking.date.toDate() : originalBooking.date;
 
         for (let i = 1; i <= 4; i++) {
             const nextDate = addDays(originalDate, i * 7);
