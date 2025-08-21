@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { cn, convertGsToHttps } from "@/lib/utils";
 import { useBackground } from "@/context/background-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLogo } from "@/context/logo-context";
@@ -1765,7 +1765,7 @@ export default function AdminPage() {
                          {isLogoLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : (
                             logo.url && (
                                 <Image
-                                    src={logo.url}
+                                    src={convertGsToHttps(logo.url)}
                                     alt="Current Logo"
                                     width={80}
                                     height={88}
