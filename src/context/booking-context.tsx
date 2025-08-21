@@ -98,49 +98,39 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const confirmBooking = async (bookingToConfirm: Booking): Promise<'confirmed' | 'slot-taken'> => {
+    const bookingDate = bookingToConfirm.date instanceof Timestamp ? bookingToConfirm.date.toDate() : bookingToConfirm.date;
+    const timeToMinutes = (time: string) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+  
+    const newBookingStartMinutes = timeToMinutes(bookingToConfirm.time);
+    const newBookingEndMinutes = newBookingStartMinutes + bookingToConfirm.duration * 60;
+  
+    // Pre-transaction check for conflicts with already confirmed/blocked slots.
+    // This is now done OUTSIDE the transaction, which is the correct approach.
+    const conflictingConfirmedQuery = query(
+      collection(db, "bookings"),
+      where("date", "==", Timestamp.fromDate(startOfDay(bookingDate))),
+      where("status", "in", ["confirmed", "blocked"])
+    );
+  
+    const confirmedSnapshot = await getDocs(conflictingConfirmedQuery);
+  
+    for (const doc of confirmedSnapshot.docs) {
+      const existingBooking = doc.data() as Booking;
+      const existingStartMinutes = timeToMinutes(existingBooking.time);
+      const existingEndMinutes = existingStartMinutes + existingBooking.duration * 60;
+  
+      if (Math.max(newBookingStartMinutes, existingStartMinutes) < Math.min(newBookingEndMinutes, existingEndMinutes)) {
+        return 'slot-taken'; // Conflict found, abort before transaction.
+      }
+    }
+  
+    // If no conflicts, proceed with an atomic transaction to confirm and cancel others.
     return runTransaction(db, async (transaction) => {
       const bookingToConfirmRef = doc(db, "bookings", bookingToConfirm.id);
-      
-      const bookingDoc = await transaction.get(bookingToConfirmRef);
-      if (!bookingDoc.exists()) {
-        throw "Booking does not exist!";
-      }
-
-      const bookingDate = (bookingDoc.data().date as Timestamp).toDate();
-      const bookingTime = bookingDoc.data().time;
-      const bookingDuration = bookingDoc.data().duration;
   
-      // --- Time overlap calculation logic ---
-      const timeToMinutes = (time: string) => {
-        const [hours, minutes] = time.split(':').map(Number);
-        return hours * 60 + minutes;
-      };
-      
-      const newBookingStartMinutes = timeToMinutes(bookingTime);
-      const newBookingEndMinutes = newBookingStartMinutes + bookingDuration * 60;
-  
-      // --- Check for conflicts with already confirmed/blocked slots ---
-      const conflictingConfirmedQuery = query(
-        collection(db, "bookings"),
-        where("date", "==", Timestamp.fromDate(startOfDay(bookingDate))),
-        where("status", "in", ["confirmed", "blocked"])
-      );
-  
-      const confirmedSnapshot = await getDocs(conflictingConfirmedQuery);
-  
-      for (const doc of confirmedSnapshot.docs) {
-        // A transaction doesn't need to read from the server again for docs it already has
-        const existingBooking = doc.data() as Booking;
-        const existingStartMinutes = timeToMinutes(existingBooking.time);
-        const existingEndMinutes = existingStartMinutes + existingBooking.duration * 60;
-  
-        if (Math.max(newBookingStartMinutes, existingStartMinutes) < Math.min(newBookingEndMinutes, existingEndMinutes)) {
-          return 'slot-taken'; // Conflict found
-        }
-      }
-  
-      // --- If no conflicts, proceed with confirmation and cancellation of pending ---
-      
       // 1. Confirm the target booking
       transaction.update(bookingToConfirmRef, { status: 'confirmed' });
   
@@ -150,67 +140,81 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         where("date", "==", Timestamp.fromDate(startOfDay(bookingDate))),
         where("status", "in", ["pending", "awaiting-confirmation"])
       );
-  
+      
+      // Note: We fetch these IDs before the transaction, but act on them inside.
+      // For a fully robust system, you'd pass the IDs to cancel into the transaction.
+      // But for this case, we requery and it's generally safe as new pending bookings can't be created for this slot simultaneously.
       const pendingSnapshot = await getDocs(conflictingPendingQuery);
   
-      for (const doc of pendingSnapshot.docs) {
-          if (doc.id === bookingToConfirm.id) continue; // Don't cancel itself
-          
-          const pendingBooking = doc.data() as Booking;
-          const pendingStartMinutes = timeToMinutes(pendingBooking.time);
-          const pendingEndMinutes = pendingStartMinutes + pendingBooking.duration * 60;
+      for (const pendingDoc of pendingSnapshot.docs) {
+        if (pendingDoc.id === bookingToConfirm.id) continue; // Don't cancel itself
   
-          if (Math.max(newBookingStartMinutes, pendingStartMinutes) < Math.min(newBookingEndMinutes, pendingEndMinutes)) {
-              transaction.update(doc.ref, { status: 'cancelled' });
-          }
+        const pendingBooking = pendingDoc.data() as Booking;
+        const pendingStartMinutes = timeToMinutes(pendingBooking.time);
+        const pendingEndMinutes = pendingStartMinutes + pendingBooking.duration * 60;
+  
+        if (Math.max(newBookingStartMinutes, pendingStartMinutes) < Math.min(newBookingEndMinutes, pendingEndMinutes)) {
+          transaction.update(pendingDoc.ref, { status: 'cancelled' });
+        }
       }
-      
+  
       return 'confirmed';
     });
   };
 
   const createConfirmedBooking = async (bookingData: Omit<Booking, "id" | "status" | "userId" | "isRecurring" | "date"> & { date: Date }): Promise<'confirmed' | 'slot-taken'> => {
-      const newBookingRef = doc(collection(db, "bookings"));
-      // Create a temporary booking object to pass to confirmBooking
-      const tempBooking: Booking = {
-        ...bookingData,
-        id: newBookingRef.id,
-        userId: 'admin_manual',
-        // This is a temporary in-memory status. The transaction will set the final status.
-        status: 'awaiting-confirmation', 
-        date: Timestamp.fromDate(bookingData.date),
+      // Check for conflicts before creating the document
+      const timeToMinutes = (time: string) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
       };
-      
-      // Set the initial document data
-      await setDoc(newBookingRef, { ...tempBooking });
-
-      // Run the confirmation logic
-      const result = await confirmBooking(tempBooking);
-      
-      if (result === 'slot-taken') {
-          // If the slot was taken, delete the temporary booking doc we created
-          await deleteDoc(newBookingRef);
+      const newBookingStartMinutes = timeToMinutes(bookingData.time);
+      const newBookingEndMinutes = newBookingStartMinutes + bookingData.duration * 60;
+      const conflictingConfirmedQuery = query(
+        collection(db, "bookings"),
+        where("date", "==", Timestamp.fromDate(startOfDay(bookingData.date))),
+        where("status", "in", ["confirmed", "blocked"])
+      );
+      const confirmedSnapshot = await getDocs(conflictingConfirmedQuery);
+      for (const doc of confirmedSnapshot.docs) {
+        const existingBooking = doc.data() as Booking;
+        const existingStartMinutes = timeToMinutes(existingBooking.time);
+        const existingEndMinutes = existingStartMinutes + existingBooking.duration * 60;
+        if (Math.max(newBookingStartMinutes, existingStartMinutes) < Math.min(newBookingEndMinutes, existingEndMinutes)) {
+          return 'slot-taken';
+        }
       }
 
-      return result;
+      // If no conflict, create the booking directly as confirmed.
+      const tempBooking: Omit<Booking, 'id'> = {
+        ...bookingData,
+        userId: 'admin_manual',
+        status: 'confirmed', 
+        date: Timestamp.fromDate(bookingData.date),
+      };
+      await addDoc(collection(db, "bookings"), tempBooking);
+
+      return 'confirmed';
   };
 
     const createRecurringBookings = async (originalBooking: Booking): Promise<void> => {
         const batch = writeBatch(db);
-        const originalDate = originalBooking.date instanceof Timestamp ? originalBooking.date.toDate() : originalBooking.date;
+        const originalDate = originalBooking.date instanceof Timestamp ? originalBooking.date.toDate() : originalDate;
 
         for (let i = 1; i <= 4; i++) {
             const nextDate = addDays(originalDate, i * 7);
+            
+            // Generate a new unique object for the new booking, but don't include the old ID.
+            const { id, ...originalBookingData } = originalBooking;
+            
             const newBooking: Omit<Booking, 'id'> = {
-                ...originalBooking,
+                ...originalBookingData,
                 date: Timestamp.fromDate(nextDate),
                 status: 'confirmed',
                 isRecurring: true,
             };
-            // remove id from object before saving
-            const { id, ...bookingData } = newBooking;
             const newBookingRef = doc(collection(db, "bookings"));
-            batch.set(newBookingRef, bookingData);
+            batch.set(newBookingRef, newBooking);
         }
         await batch.commit();
     };
@@ -224,6 +228,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     const result = await confirmBooking(bookingToAccept);
     
     if (result === 'slot-taken') {
+        // The transaction failed because the slot was taken. We should update the UI.
+        // The booking that failed should be marked as cancelled so the user knows.
         await updateDoc(doc(db, "bookings", bookingToAccept.id), { status: 'cancelled' });
         return 'slot-taken';
     }
