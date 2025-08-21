@@ -2,77 +2,54 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check for admin custom claim
     function isAdmin() {
       return request.auth.token.isAdmin == true;
     }
     
-    // Helper function to check if the user is the owner of a document
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    // --- Users Collection ---
-    // Users can read and update their own document.
-    // Admins can list and read any user document.
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
+      allow read, update: if isOwner(userId);
       allow list: if isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
-      // Deleting users should be handled via backend functions for safety
-      allow delete: if false; 
+      allow create: if request.auth.uid != null;
     }
 
-    // --- Bookings Collection ---
-    // Users can create bookings and manage their own.
-    // Admins can manage any booking.
     match /bookings/{bookingId} {
-      allow get, update, delete: if isOwner(resource.data.userId) || isAdmin();
-      allow list: if request.query.where.field == "userId" && request.query.where.value == request.auth.uid || isAdmin();
-      allow create: if isOwner(request.resource.data.userId) || isAdmin();
+      allow read, update: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow list: if isOwner(resource.data.userId) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
     
-    // --- Public Bookings Collection ---
-    // Anyone can read this collection to see booked slots.
-    // Only backend functions or admins should write to this.
     match /publicBookings/{bookingId} {
-      allow get: if true;
+      allow read: if true;
       allow list: if true;
-      allow write: if isAdmin(); // Or managed by a backend function
+      allow write: if isAdmin();
     }
 
-    // --- Academy Registrations Collection ---
-    // Users can create and read their own. Admins can manage all.
     match /academyRegistrations/{regId} {
-      allow get: if isOwner(resource.data.userId) || isAdmin();
+      allow read: if isOwner(resource.data.userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isOwner(request.resource.data.userId);
+      allow create: if request.auth.uid != null;
       allow update: if isAdmin();
-      // Posts sub-collection is managed via array updates on the parent document.
     }
     
-    // --- Find a Team Registrations Collection ---
-    // Any authenticated user can see the list and create/delete their own registration.
     match /findATeamRegistrations/{regId} {
-      allow list, get: if request.auth != null;
+      allow read, list: if request.auth.uid != null;
       allow create: if isOwner(request.resource.data.userId);
       allow delete: if isOwner(resource.data.userId);
     }
     
-    // --- News Collection ---
-    // Anyone can read news. Only admins can write.
-    match /news/{articleId} {
-        allow get: if true;
-        allow list: if true;
-        allow write: if isAdmin();
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // --- Settings Collection ---
-    // Anyone can read settings, only admins can write.
-    match /settings/{docId} {
-      allow get: if true;
+    match /news/{docId} {
+      allow read: if true;
+      allow list: if true;
       allow write: if isAdmin();
     }
   }
