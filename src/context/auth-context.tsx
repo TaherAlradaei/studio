@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from "react";
@@ -56,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const isHardcodedAdmin = ADMIN_UIDS.includes(firebaseUser.uid);
     let userData: User;
+    let needsTokenRefresh = false;
 
     if (userDoc.exists()) {
       userData = { uid: firebaseUser.uid, isAnonymous: firebaseUser.isAnonymous, ...userDoc.data() } as User;
@@ -63,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (isHardcodedAdmin && !userData.isAdmin) {
           userData.isAdmin = true;
           await setDoc(userDocRef, { isAdmin: true }, { merge: true });
+          needsTokenRefresh = true;
       }
     } else {
       const newUser: User = {
@@ -77,6 +80,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
       await setDoc(userDocRef, newUser);
       userData = newUser;
+      if (isHardcodedAdmin) {
+        needsTokenRefresh = true;
+      }
+    }
+    
+    // If admin status was just set, force a token refresh to get the custom claim.
+    if(needsTokenRefresh) {
+        await firebaseUser.getIdToken(true);
     }
 
     setUser(userData);
@@ -193,3 +204,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+    

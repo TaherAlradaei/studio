@@ -216,6 +216,7 @@ export default function AdminPage() {
   const { bookings: allBookings, unblockSlot, confirmBooking, createConfirmedBooking, createRecurringBookings, updateBooking } = useBookings();
   const { registrations, updateRegistrationStatus } = useAcademy();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [welcomePageContent, setWelcomePageContent] = useState<WelcomePageContent | null>(null);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
@@ -575,6 +576,10 @@ export default function AdminPage() {
   };
   
     const handleAddBackground = () => {
+        if (!user?.isAdmin) {
+          toast({ title: "Permission Denied", description: "You do not have permission to add backgrounds.", variant: "destructive" });
+          return;
+        }
         const newFileInput = document.createElement('input');
         newFileInput.type = 'file';
         newFileInput.accept = 'image/*';
@@ -602,6 +607,10 @@ export default function AdminPage() {
     };
 
     const handleDeleteBackground = async (index: number, path: string | undefined) => {
+        if (!user?.isAdmin) {
+          toast({ title: "Permission Denied", description: "You do not have permission to delete backgrounds.", variant: "destructive" });
+          return;
+        }
         if (!path) {
             toast({ title: "Error", description: "Image path not found, cannot delete.", variant: "destructive" });
             return;
@@ -617,6 +626,10 @@ export default function AdminPage() {
 
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+      if (!user?.isAdmin) {
+        toast({ title: "Permission Denied", description: "You do not have permission to change backgrounds.", variant: "destructive" });
+        return;
+      }
       const file = event.target.files?.[0];
       if (file) {
           const reader = new FileReader();
@@ -649,6 +662,10 @@ export default function AdminPage() {
   };
   
     const handleLogoReplaceClick = () => {
+        if (!user?.isAdmin) {
+          toast({ title: "Permission Denied", description: "You do not have permission to change the logo.", variant: "destructive" });
+          return;
+        }
         logoFileInputRef.current?.click();
     };
 
@@ -684,6 +701,10 @@ export default function AdminPage() {
       event: React.ChangeEvent<HTMLInputElement>,
       imageType: 'fieldImageUrl' | 'coachImageUrl' | 'managerImageUrl'
     ) => {
+      if (!user?.isAdmin) {
+        toast({ title: "Permission Denied", description: "You do not have permission to change welcome page images.", variant: "destructive" });
+        return;
+      }
       const file = event.target.files?.[0];
       if (file && welcomePageContent) {
         const reader = new FileReader();
@@ -723,6 +744,10 @@ export default function AdminPage() {
     };
     
     const handleAddGalleryImage = () => {
+        if (!user?.isAdmin) {
+          toast({ title: "Permission Denied", description: "You do not have permission to add gallery images.", variant: "destructive" });
+          return;
+        }
         galleryImageInputRef.current?.click();
     };
 
@@ -750,6 +775,10 @@ export default function AdminPage() {
     };
 
     const handleDeleteGalleryImage = async (imageToDelete: GalleryImage) => {
+        if (!user?.isAdmin) {
+          toast({ title: "Permission Denied", description: "You do not have permission to delete gallery images.", variant: "destructive" });
+          return;
+        }
         if (!imageToDelete.path) {
             toast({ title: "Error", description: "Image path not found, cannot delete from storage.", variant: "destructive" });
             return;
@@ -766,6 +795,10 @@ export default function AdminPage() {
     };
     
     const handleAddSponsorImage = () => {
+        if (!user?.isAdmin) {
+          toast({ title: "Permission Denied", description: "You do not have permission to add sponsor images.", variant: "destructive" });
+          return;
+        }
         sponsorImageInputRef.current?.click();
     };
 
@@ -793,6 +826,10 @@ export default function AdminPage() {
     };
 
     const handleDeleteSponsorImage = async (sponsorToDelete: SponsorImage) => {
+        if (!user?.isAdmin) {
+          toast({ title: "Permission Denied", description: "You do not have permission to delete sponsor images.", variant: "destructive" });
+          return;
+        }
         if (!sponsorToDelete.path) {
             toast({ title: "Error", description: "Image path not found, cannot delete from storage.", variant: "destructive" });
             return;
@@ -970,6 +1007,10 @@ export default function AdminPage() {
   };
   
   const handleDeleteArticle = async (id: string) => {
+    if (!user?.isAdmin) {
+        toast({ title: "Permission Denied", description: "You do not have permission to delete news articles.", variant: "destructive" });
+        return;
+    }
     try {
       await deleteNewsArticle(id);
       setNewsArticles(prev => prev.filter(a => a.id !== id));
@@ -1789,7 +1830,7 @@ export default function AdminPage() {
                 </Card>
                 <Card className="bg-card/80 backdrop-blur-sm">
                     <CardHeader>
-                         <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <ImageUp className="w-6 h-6 text-primary" />
@@ -2160,6 +2201,7 @@ export default function AdminPage() {
 function NewsArticleDialog({ isOpen, setIsOpen, article, onSave }: { isOpen: boolean, setIsOpen: (open: boolean) => void, article: NewsArticle | null, onSave: (article: NewsArticle | Partial<NewsArticle>) => void }) {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(article?.imageUrl || null);
@@ -2211,6 +2253,10 @@ function NewsArticleDialog({ isOpen, setIsOpen, article, onSave }: { isOpen: boo
   };
 
   const onSubmit = async (data: z.infer<typeof newsFormSchema>) => {
+    if (!user?.isAdmin) {
+        toast({ title: "Permission Denied", description: "You do not have permission to save news articles.", variant: "destructive" });
+        return;
+    }
     setIsSaving(true);
     try {
       let imageUrl = article?.imageUrl || undefined;
@@ -2238,8 +2284,12 @@ function NewsArticleDialog({ isOpen, setIsOpen, article, onSave }: { isOpen: boo
         toast({ title: t.adminPage.newsManagement.articleUpdated });
       } else {
         const newDoc = await createNewsArticle(payload);
-        // This is a bit of a workaround to get the full object back without another fetch
-        const createdArticle = { ...payload, id: newDoc.id, createdAt: Timestamp.now().toDate().toISOString() };
+        const newArticleData = await (await getDoc(newDoc)).data();
+        const createdArticle = { 
+            ...newArticleData,
+            id: newDoc.id, 
+            createdAt: (newArticleData?.createdAt as Timestamp)?.toDate().toISOString() 
+        };
         onSave(createdArticle as any);
         toast({ title: t.adminPage.newsManagement.articleCreated });
       }
@@ -2320,3 +2370,5 @@ function NewsArticleDialog({ isOpen, setIsOpen, article, onSave }: { isOpen: boo
     </Dialog>
   );
 }
+
+    
