@@ -1,31 +1,21 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // --- General Public Read Access ---
-    // Anyone can read (view) files in the public directory.
-    // This is essential for the welcome page, gallery, news, etc.
-    match /public/{allPaths=**} {
-      allow read: if true;
-    }
-
-    // --- Specific Write Rules ---
-    // Rules are not inherited, so we must be specific.
-    // Order matters: more specific paths should come first if they overlap.
-
-    // Allow academy members OR an admin to upload to their posts folder.
+    // --- Academy Member Posts Write Access ---
+    // This rule must come FIRST because it is more specific.
+    // It allows an authenticated user to write to their own folder, or an admin to write to any member's folder.
     match /public/posts/{memberId}/{allPaths=**} {
       allow write: if request.auth != null && (request.auth.uid == memberId || request.auth.token.isAdmin == true);
     }
-
-    // Allow ONLY admins to write to all other public folders.
-    // This covers /logo, /gallery, /news, /backgrounds, etc.
-    // We deny writes to /public/posts here unless the more specific rule above is met.
+    
+    // --- General Public Assets Rule ---
+    // This rule applies to all other folders within /public/ (e.g., /gallery, /news, /logo).
     match /public/{folder}/{allPaths=**} {
-        // Deny non-admins from writing to any other folder that is NOT the posts folder they own.
-        // Admins can write anywhere.
-        allow write: if request.auth != null && request.auth.token.isAdmin == true;
+      // Anyone can read (view) these files.
+      allow read: if true;
+      // Only authenticated admins can write (upload/delete) these files.
+      allow write: if request.auth != null && request.auth.token.isAdmin == true;
     }
   }
 }
