@@ -2,71 +2,58 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // --- Helper Functions ---
-    // Use custom claims for secure, role-based access control
-    function isAdmin() {
-      return request.auth.token.isAdmin == true;
-    }
-    
-    // Check if the authenticated user is the owner of a document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
-    // Allow any authenticated user (including anonymous)
-    function isAuthenticated() {
-      return request.auth != null;
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      allow create: if request.auth.uid == userId;
+      allow read: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // --- Admin Rule: Allow Admins to do ANYTHING ---
-    // This single rule grants full read/write access to all documents
-    // for any user with the 'isAdmin' custom claim.
-    match /{document=**} {
-      allow read, write: if isAdmin();
-    }
+    // --- Bookings Collection ---
+    match /bookings/{bookingId} {
+      // Any authenticated user can check if a slot is booked.
+      allow read: if request.auth != null;
 
-    // --- Public Read Access ---
-    // Anyone can read news and settings documents
-    match /news/{docId} {
+      // Regular users can only list their own bookings. Admins can list all.
+      allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true || request.query.where.field == "userId" && request.query.where.value == request.auth.uid;
+      
+      // A user can only create a booking with their own UID,
+      // while an admin can create one for anyone.
+      allow create: if request.auth.uid != null
+        && (request.auth.uid == request.resource.data.userId
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+
+      // User who owns the booking or an admin can update/delete it.
+      allow update, delete: if request.auth.uid == resource.data.userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // --- Academy Registrations Collection ---
+    match /academyRegistrations/{regId} {
+      // THIS IS THE FIX: Admins are now allowed to list all registrations.
+      allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow read: if request.auth.uid == resource.data.userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow create: if request.auth.uid != null;
+      allow update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // --- Find a Team Registrations Collection ---
+    match /findATeamRegistrations/{regId} {
+      allow list, read: if request.auth.uid != null;
+      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.userId;
+      allow delete: if request.auth.uid == resource.data.userId;
+    }
+    
+    // --- News Collection ---
+    match /news/{articleId} {
       allow read: if true;
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
+    // --- Settings Collection ---
     match /settings/{docId} {
       allow read: if true;
-    }
-    
-    match /publicBookings/{bookingId} {
-      allow read: if true;
-    }
-    
-    // --- User-Specific Collections ---
-    // Users can create, read, and update their own user documents
-    match /users/{userId} {
-      allow create: if isOwner(userId);
-      allow read, update: if isOwner(userId);
-    }
-    
-    // Users can create, read, and manage their own bookings
-    match /bookings/{bookingId} {
-      allow read, update, delete: if isOwner(resource.data.userId);
-      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow list: if isOwner(request.auth.uid);
-    }
-    
-    // --- Academy Registrations with Access Code Feature ---
-    // Users can create their own academy registration and read with their code.
-    match /academyRegistrations/{regId} {
-      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow read: if isOwner(resource.data.userId) || request.resource.data.accessCode == resource.data.accessCode;
-    }
-    
-    // --- Find a Team Registrations ---
-    // Users can create and manage their own "find a team" registration
-    // Other authenticated users can list and read them to find a team
-    match /findATeamRegistrations/{regId} {
-      allow create: if isOwner(request.resource.data.userId);
-      allow read, list: if isAuthenticated();
-      allow delete: if isOwner(resource.data.userId);
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
   }
 }
