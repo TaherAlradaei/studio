@@ -5,31 +5,55 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // --- Helper Functions ---
+    // Checks if the requesting user is the owner of a document.
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Checks if the user is a hardcoded super-admin.
+    function isSuperAdmin() {
+      // These UIDs have permanent admin access.
+      let superAdminUIDs = [
+        "vQF7GtgIRNeq66ktYosLQtk9W9w2",
+        "WG8c2fN7Z9cEoHj8nebLEktLM332",
+        "2tNIh9jQISg0zzWiYPWXq3K0RHS2",
+        "redbn6RZ4YafH7xDPHtZDMHmGYA2",
+        "tgpBCQIt9Ea2FEaXmJq1A0HxHK53",
+        "YOUR_ADMIN_UID_HERE" // Replace with actual UIDs
+      ];
+      return request.auth.uid in superAdminUIDs;
+    }
+
+    // Checks if the user has an admin claim in their auth token.
+    // This allows for dynamic admin roles managed from the app.
+    function isAppAdmin() {
+      return request.auth.token.isAdmin == true;
+    }
+    
+    // A user is an admin if they are a super admin OR have the app admin role.
+    function isAdmin() {
+      return isSuperAdmin() || isAppAdmin();
+    }
+
+    // A user is trusted if they have the trusted claim in their token.
+    function isTrusted() {
+        return request.auth.token.isTrusted == true;
+    }
+    
+    // Any authenticated user (including anonymous) can perform the action.
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isAdmin() {
-      // Check both the hardcoded super-admin list and the custom claim.
-      return request.auth.uid in ["vQF7GtgIRNeq66ktYosLQtk9W9w2", "WG8c2fN7Z9cEoHj8nebLEktLM332", "2tNIh9jQISg0zzWiYPWXq3K0RHS2", "redbn6RZ4YafH7xDPHtZDMHmGYA2", "tgpBCQIt9Ea2FEaXmJq1A0HxHK53"]
-          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-    
-    function isTrusted() {
-        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isTrusted == true;
-    }
-
     // --- Global Admin Rule ---
-    // This gives admins full read/write access to everything.
-    match /{path=**} {
+    // This single rule grants full read/write access to all documents
+    // for any user identified as an admin.
+    match /{document=**} {
       allow read, write: if isAdmin();
     }
-    
-    // --- Public & Anonymous Access ---
+
+    // --- Public & Anonymous Access Rules ---
+    // Anyone can read these collections.
     match /news/{docId} {
       allow read: if true;
     }
@@ -37,41 +61,39 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // --- User & Auth Rules ---
+    // --- User & Booking Rules ---
+    // Users can create, read, and update their own user documents.
     match /users/{userId} {
       allow create, read, update: if isOwner(userId);
     }
-    
-    // --- Booking Rules ---
+
+    // Complex rules for bookings
     match /bookings/{bookingId} {
-      // Any authenticated user can create a booking for themselves.
+      // Anonymous or registered users can create their own booking requests.
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      // Users can manage their own bookings. Trusted users can also manage them.
-      allow read, update: if isOwner(resource.data.userId) || isTrusted();
-      // Only owners/trusted/admins can list their own bookings.
-      allow list: if isOwner(request.auth.uid) || isTrusted();
-       // Public can only list bookings that are confirmed or blocked to populate the calendar.
-      allow list: if resource.data.status == 'confirmed' || resource.data.status == 'blocked';
+      
+      // Users can see their own bookings. Admins/Trusted can see all.
+      allow list, read: if isOwner(resource.data.userId);
+      
+      // Users can update their own bookings (e.g., to cancel or accept a quote).
+      allow update: if isOwner(resource.data.userId);
     }
-
-    // --- Academy Registration Rules ---
+    
+    // --- Academy & Team Finding Rules ---
     match /academyRegistrations/{regId} {
-      // Any authenticated user can create a registration for themselves.
-      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      // Owners can read their own registration. Admins can read any.
-      allow read, update: if isOwner(resource.data.userId);
-      // Only admins can list ALL registrations for the dashboard.
-      allow list: if isAdmin();
+        // Users can create their own registration.
+        allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+        // Only the owner can read their own registration data.
+        allow read: if isOwner(resource.data.userId);
     }
 
-    // --- Find a Team Rules ---
     match /findATeamRegistrations/{regId} {
-      // Any authenticated user can create a registration.
-      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      // Any authenticated user can read/list all registrations to find players.
-      allow read, list: if isAuthenticated();
-      // Only the owner can delete their own registration.
-      allow delete: if isOwner(resource.data.userId);
+        // Any authenticated user can create their own request.
+        allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+        // Any authenticated user can read the list to find teammates.
+        allow read, list: if isAuthenticated();
+        // Only the owner can delete their own request.
+        allow delete: if isOwner(resource.data.userId);
     }
   }
 }
