@@ -278,7 +278,7 @@ export default function WelcomePage() {
                 <div className="grid md:grid-cols-2 gap-0 items-center">
                     <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-2">
                         <Image
-                            src="https://placehold.co/600x800.png"
+                            src="https://images.unsplash.com/photo-1631490238088-9e9dd50041a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmb290YmFsbCUyMGNvYWNofGVufDB8fHx8MTc1NTg5ODk1Nnww&ixlib=rb-4.1.0&q=80&w=1080"
                             alt="Youth academy players training"
                             layout="fill"
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -337,7 +337,7 @@ export default function WelcomePage() {
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">{lang === 'ar' ? featuredArticle.titleAR : featuredArticle.titleEN}</CardTitle>
                             <CardDescription>
-                                {format(new Date(featuredArticle.createdAt as unknown as string), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
+                                {format(new Date(featuredArticle.createdAt), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -350,7 +350,7 @@ export default function WelcomePage() {
                                 <CardHeader>
                                     <CardTitle className="text-lg font-headline">{lang === 'ar' ? article.titleAR : article.titleEN}</CardTitle>
                                     <CardDescription>
-                                        {format(new Date(article.createdAt as unknown as string), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
+                                        {format(new Date(article.createdAt), 'PP', { locale: lang === 'ar' ? arSA : undefined })}
                                     </CardDescription>
                                 </CardHeader>
                             </Card>
@@ -374,7 +374,7 @@ export default function WelcomePage() {
                     </div>
                     <div className="h-64 md:h-full min-h-[300px] relative overflow-hidden md:order-1">
                          <Image
-                          src="https://placehold.co/600x800.png"
+                          src="https://images.unsplash.com/photo-1569196272637-2a7d9b21119e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGxheWVyJTIwc3BvdGxpZ2h0fGVufDB8fHx8MTc1NTg5OTAxMnww&ixlib=rb-4.1.0&q=80&w=1080"
                           alt={t.welcomePage.playerSpotlightName}
                           layout="fill"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"

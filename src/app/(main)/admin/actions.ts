@@ -149,7 +149,7 @@ export async function getWelcomePageContent(): Promise<WelcomePageContent> {
     const docRef = doc(db, 'settings', 'welcomePage');
     const docSnap = await getDoc(docRef);
     const defaults: WelcomePageContent = {
-        fieldImageUrl: "https://images.unsplash.com/photo-1551958214-2d5e23a4c053?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w7NDE5ODJ8MHwxfHNlYXJjaHwxfHxmb290YmFsbCUyMHBsYXllcnN8ZW58MHx8fHwxNzU1MDk0MDMwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+        fieldImageUrl: "https://images.unsplash.com/photo-1665822813914-2ad3dfabeedd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhJTIwZm9vdGJhbGwlMjBmaWVsZCUyMHxlbnwwfHx8fDE3NTU4OTkwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
         coachImageUrl: "https://scontent.fsah1-1.fna.fbcdn.net/v/t39.30808-6/448981428_876644267838531_2111867807758356942_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=f68bGsRqzT0Q7kNvgE44uJe&_nc_ht=scontent.fsah1-1.fna&oh=00_AYB42wSnH-s_D-e_3oXF28ZJ6B9XpC3s-L33vOQAnS_33w&oe=66B386C5",
         managerImageUrl: "https://placehold.co/600x400.png",
         sponsors: [
