@@ -7,32 +7,75 @@ import { useLanguage } from "@/context/language-context";
 import type { AcademyRegistration, MemberPost } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { KeyRound, BookOpen, Trash2, Send, ImageUp } from "lucide-react";
+import { KeyRound, BookOpen, Trash2, Send, ImageUp, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/context/auth-context";
-import { useRouter } from "next/navigation";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { uploadFile } from "../admin/actions";
+import { uploadFile, deleteFile } from "../admin/actions";
+import { Timestamp, collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 
-function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegistration | null, isAdminViewing: boolean, onLogout: () => void }) {
+function MemberSpace({ member, onLogout }: { member: AcademyRegistration, onLogout: () => void }) {
   const { t } = useLanguage();
-  const { addPost, getPosts, addComment, deletePost } = useAcademy();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [posts, setPosts] = useState<MemberPost[]>(member.posts || []);
   const [story, setStory] = useState("");
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [postImage, setPostImage] = useState<File | null>(null);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
   const postImageInputRef = useRef<HTMLInputElement>(null);
 
-  const allPosts = getPosts();
-  const isAdmin = user?.isAdmin || isAdminViewing;
+  const isAdmin = user?.isAdmin;
+
+  const addPost = async (postData: Omit<MemberPost, 'id' | 'createdAt'>) => {
+    const memberDocRef = doc(db, "academyRegistrations", member.id);
+    const newPost: MemberPost = {
+      ...postData,
+      id: doc(collection(db, 'dummy')).id, // Generate a random ID
+      createdAt: Timestamp.now(),
+      comments: [],
+    };
+    await updateDoc(memberDocRef, {
+      posts: arrayUnion(newPost)
+    });
+    setPosts(prev => [newPost, ...prev]);
+  };
+  
+  const addComment = async (postId: string, commentData: Omit<MemberPost['comments'][0], 'createdAt'>) => {
+      const memberDocRef = doc(db, "academyRegistrations", member.id);
+      const postIndex = posts.findIndex(p => p.id === postId);
+      if (postIndex === -1) return;
+
+      const newComment = { ...commentData, createdAt: Timestamp.now() };
+      const updatedPost = { ...posts[postIndex] };
+      updatedPost.comments = [...(updatedPost.comments || []), newComment];
+      
+      const updatedPosts = [...posts];
+      updatedPosts[postIndex] = updatedPost;
+
+      await updateDoc(memberDocRef, { posts: updatedPosts });
+      setPosts(updatedPosts);
+  };
+  
+  const removePost = async (postId: string) => {
+      const memberDocRef = doc(db, "academyRegistrations", member.id);
+      const postToDelete = posts.find(p => p.id === postId);
+      if(postToDelete) {
+          if(postToDelete.storagePath) {
+              await deleteFile(postToDelete.storagePath);
+          }
+          await updateDoc(memberDocRef, {
+              posts: arrayRemove(postToDelete)
+          });
+          setPosts(prev => prev.filter(p => p.id !== postId));
+      }
+  };
+
 
   const handlePostImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -42,10 +85,6 @@ function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegi
   };
 
   const handleAddPost = async () => {
-    if (!member) {
-      toast({ title: "Error", description: "Cannot post without a member context.", variant: "destructive" });
-      return;
-    }
     if (!story.trim() && !postImage) {
         toast({ title: t.memberArea.postEmpty, variant: "destructive" });
         return;
@@ -63,7 +102,6 @@ function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegi
         
         if (postImage) {
             const reader = new FileReader();
-            // Using a Promise to handle the async FileReader operation
             const dataUrl = await new Promise<string>((resolve, reject) => {
                 reader.onload = e => resolve(e.target?.result as string);
                 reader.onerror = e => reject(e);
@@ -74,7 +112,7 @@ function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegi
             storagePath = uploadedFile.path;
         }
 
-        await addPost(member.id, { 
+        await addPost({ 
             story, 
             author: member.talentName, 
             comments: [], 
@@ -109,7 +147,7 @@ function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegi
   
   const handleDeletePost = async (postId: string) => {
     if (isAdmin) {
-        await deletePost(postId);
+        await removePost(postId);
         toast({ title: "Story Deleted", description: "The story has been successfully removed.", variant: "destructive" });
     }
   }
@@ -118,58 +156,55 @@ function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegi
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-3xl font-bold font-headline text-primary">
-          {isAdmin ? t.header.title : t.memberArea.welcome.replace("{name}", member?.talentName || '')}
+          {t.memberArea.welcome.replace("{name}", member.talentName)}
         </h2>
-        <p className="text-muted-foreground">{isAdmin ? t.adminPage.academyRegistrationsTitle : t.memberArea.welcomeDesc}</p>
+        <p className="text-muted-foreground">{t.memberArea.welcomeDesc}</p>
         <Button onClick={onLogout} variant="link" className="mt-2 text-destructive">{t.memberArea.logout}</Button>
       </div>
 
-      {!isAdmin && member && (
-        <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-            <div className="flex items-center gap-2">
-                <BookOpen className="w-6 h-6 text-primary" />
-                <CardTitle>{t.memberArea.addPostTitle}</CardTitle>
-            </div>
-            <CardDescription>{t.memberArea.addPostDesc}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-            <Textarea
-                value={story}
-                onChange={(e) => setStory(e.target.value)}
-                placeholder={t.memberArea.storyPlaceholder}
-                rows={4}
+      <Card className="bg-card/80 backdrop-blur-sm">
+        <CardHeader>
+        <div className="flex items-center gap-2">
+            <BookOpen className="w-6 h-6 text-primary" />
+            <CardTitle>{t.memberArea.addPostTitle}</CardTitle>
+        </div>
+        <CardDescription>{t.memberArea.addPostDesc}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+        <Textarea
+            value={story}
+            onChange={(e) => setStory(e.target.value)}
+            placeholder={t.memberArea.storyPlaceholder}
+            rows={4}
+        />
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+             <Button onClick={() => postImageInputRef.current?.click()} variant="outline" className="w-full sm:w-auto">
+                <ImageUp className="mr-2 h-4 w-4" />
+                {postImage ? t.memberArea.changeImage : t.memberArea.addImage}
+            </Button>
+            <input
+                type="file"
+                accept="image/*"
+                ref={postImageInputRef}
+                onChange={handlePostImageSelect}
+                className="hidden"
             />
-            <div className="flex flex-col sm:flex-row gap-4 items-center">
-                 <Button onClick={() => postImageInputRef.current?.click()} variant="outline" className="w-full sm:w-auto">
-                    <ImageUp className="mr-2 h-4 w-4" />
-                    {postImage ? t.memberArea.changeImage : t.memberArea.addImage}
-                </Button>
-                <input
-                    type="file"
-                    accept="image/*"
-                    ref={postImageInputRef}
-                    onChange={handlePostImageSelect}
-                    className="hidden"
-                />
-                {postImage && <span className="text-sm text-muted-foreground truncate">{postImage.name}</span>}
-                <Button onClick={handleAddPost} className="w-full sm:w-auto sm:ml-auto" disabled={isSubmittingPost}>
-                    {isSubmittingPost ? t.adminPage.savingButton : t.memberArea.addPostButton}
-                </Button>
-            </div>
-            </CardContent>
-        </Card>
-      )}
-
+            {postImage && <span className="text-sm text-muted-foreground truncate">{postImage.name}</span>}
+            <Button onClick={handleAddPost} className="w-full sm:w-auto sm:ml-auto" disabled={isSubmittingPost}>
+                {isSubmittingPost ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> {t.adminPage.savingButton}</> : t.memberArea.addPostButton}
+            </Button>
+        </div>
+        </CardContent>
+    </Card>
 
       <div className="space-y-6">
          <div className="flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-primary" />
             <h3 className="text-2xl font-bold font-headline">{t.memberArea.galleryTitle}</h3>
         </div>
-        {allPosts.length > 0 ? (
+        {posts.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {allPosts.map((post) => (
+            {posts.map((post) => (
               <Card key={post.id} className="flex flex-col overflow-hidden bg-card/80 backdrop-blur-sm">
                 {post.photoUrl && (
                     <div className="aspect-video relative">
@@ -199,9 +234,11 @@ function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegi
                         </Button>
                     )}
                 </CardHeader>
-                <CardContent className="p-4 pt-0 flex-grow">
-                    <p className="text-muted-foreground whitespace-pre-wrap">{post.story}</p>
-                </CardContent>
+                {post.story && (
+                  <CardContent className="p-4 pt-0 flex-grow">
+                      <p className="text-muted-foreground whitespace-pre-wrap">{post.story}</p>
+                  </CardContent>
+                )}
                 <CardFooter className="flex flex-col items-start gap-4 p-4 border-t bg-background/20">
                     <div className="w-full space-y-2 max-h-32 overflow-y-auto">
                         {post.comments && post.comments.map((comment, index) => (
@@ -244,13 +281,11 @@ function MemberSpace({ member, isAdminViewing, onLogout }: { member: AcademyRegi
 
 export default function MemberAreaPage() {
   const { t } = useLanguage();
-  const { myRegistrations } = useAcademy(); // Use myRegistrations for the current user
-  const { user, checkAdminStatus } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [accessCode, setAccessCode] = useState("");
   const [member, setMember] = useState<AcademyRegistration | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAdminViewing, setIsAdminViewing] = useState(false);
   
   const handleLogin = async () => {
     setIsLoading(true);
@@ -261,45 +296,41 @@ export default function MemberAreaPage() {
         return;
     }
 
-    const settingsDocRef = doc(db, 'settings', 'admin');
-    const docSnap = await getDoc(settingsDocRef);
-    const adminCode = docSnap.exists() ? docSnap.data().accessCode : 'almaidan';
+    const q = query(collection(db, "academyRegistrations"), where("accessCode", "==", accessCode.trim().toUpperCase()));
+    const querySnapshot = await getDocs(q);
 
-    if (accessCode === adminCode) {
-        const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, {isAdmin: true}, {merge: true});
-        await checkAdminStatus();
-        setIsAdminViewing(true);
-        setIsLoading(false);
-        return;
-    }
-
-    // A user can only access the member area of a registration that is linked to their UID.
-    // Use the `myRegistrations` state which is already scoped to the logged-in user.
-    const validatedMember = myRegistrations.find(r => r.accessCode === accessCode && r.status === 'accepted');
-
-    if (validatedMember) {
-      setMember(validatedMember);
+    if (querySnapshot.empty) {
+        toast({
+            title: t.memberArea.invalidCodeTitle,
+            description: t.memberArea.invalidCodeDesc,
+            variant: "destructive",
+        });
     } else {
-      toast({
-        title: t.memberArea.invalidCodeTitle,
-        description: t.memberArea.invalidCodeDesc,
-        variant: "destructive",
-      });
+        const validatedMember = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as AcademyRegistration;
+        // For security, ensure the logged-in user is the one associated with the registration
+        if (validatedMember.userId === user.uid || user.isAdmin) {
+             setMember(validatedMember);
+        } else {
+             toast({
+                title: t.memberArea.invalidCodeTitle,
+                description: "This access code belongs to another user.",
+                variant: "destructive",
+            });
+        }
     }
+    
     setIsLoading(false);
   };
   
   const handleLogout = () => {
     setMember(null);
-    setIsAdminViewing(false);
     setAccessCode("");
   };
 
-  if (member || isAdminViewing) {
+  if (member) {
     return (
         <div className="container py-8">
-            <MemberSpace member={member} isAdminViewing={isAdminViewing} onLogout={handleLogout} />
+            <MemberSpace member={member} onLogout={handleLogout} />
         </div>
     )
   }
@@ -322,8 +353,8 @@ export default function MemberAreaPage() {
                         placeholder={t.memberArea.accessCodePlaceholder}
                         className="text-center tracking-widest font-mono text-lg h-12"
                     />
-                    <Button onClick={handleLogin} disabled={isLoading || !user} className="w-full">
-                         {isLoading ? t.adminPage.analyzingButton : t.memberArea.enterButton}
+                    <Button onClick={handleLogin} disabled={isLoading || !user || accessCode.length < 6} className="w-full">
+                         {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> {t.adminPage.analyzingButton}</> : t.memberArea.enterButton}
                     </Button>
                 </div>
             </CardContent>

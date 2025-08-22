@@ -1,59 +1,77 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Users Collection ---
-    match /users/{userId} {
-      allow create: if request.auth.uid == userId;
-      allow read: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // --- Bookings Collection ---
-    match /bookings/{bookingId} {
-      // Any authenticated user can check if a slot is booked.
-      allow read: if request.auth != null;
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
 
-      // Regular users can only list their own bookings. Admins can list all.
-      allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true || request.query.where.field == "userId" && request.query.where.value == request.auth.uid;
-      
-      // A user can only create a booking with their own UID,
-      // while an admin can create one for anyone.
-      allow create: if request.auth.uid != null
-        && (request.auth.uid == request.resource.data.userId
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    function isAdmin() {
+      // Check both the hardcoded super-admin list and the custom claim.
+      return request.auth.uid in ["vQF7GtgIRNeq66ktYosLQtk9W9w2", "WG8c2fN7Z9cEoHj8nebLEktLM332", "2tNIh9jQISg0zzWiYPWXq3K0RHS2", "redbn6RZ4YafH7xDPHtZDMHmGYA2", "tgpBCQIt9Ea2FEaXmJq1A0HxHK53"]
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    function isTrusted() {
+        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isTrusted == true;
+    }
 
-      // User who owns the booking or an admin can update/delete it.
-      allow update, delete: if request.auth.uid == resource.data.userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    // --- Global Admin Rule ---
+    // This gives admins full read/write access to everything.
+    match /{path=**} {
+      allow read, write: if isAdmin();
     }
     
-    // --- Academy Registrations Collection ---
-    match /academyRegistrations/{regId} {
-      // THIS IS THE FIX: Admins are now allowed to list all registrations.
-      allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-      allow read: if request.auth.uid == resource.data.userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-      allow create: if request.auth.uid != null;
-      allow update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-    
-    // --- Find a Team Registrations Collection ---
-    match /findATeamRegistrations/{regId} {
-      allow list, read: if request.auth.uid != null;
-      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.userId;
-      allow delete: if request.auth.uid == resource.data.userId;
-    }
-    
-    // --- News Collection ---
-    match /news/{articleId} {
+    // --- Public & Anonymous Access ---
+    match /news/{docId} {
       allow read: if true;
-      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
-
-    // --- Settings Collection ---
     match /settings/{docId} {
       allow read: if true;
-      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // --- User & Auth Rules ---
+    match /users/{userId} {
+      allow create, read, update: if isOwner(userId);
+    }
+    
+    // --- Booking Rules ---
+    match /bookings/{bookingId} {
+      // Any authenticated user can create a booking for themselves.
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      // Users can manage their own bookings. Trusted users can also manage them.
+      allow read, update: if isOwner(resource.data.userId) || isTrusted();
+      // Only owners/trusted/admins can list their own bookings.
+      allow list: if isOwner(request.auth.uid) || isTrusted();
+       // Public can only list bookings that are confirmed or blocked to populate the calendar.
+      allow list: if resource.data.status == 'confirmed' || resource.data.status == 'blocked';
+    }
+
+    // --- Academy Registration Rules ---
+    match /academyRegistrations/{regId} {
+      // Any authenticated user can create a registration for themselves.
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      // Owners can read their own registration. Admins can read any.
+      allow read, update: if isOwner(resource.data.userId);
+      // Only admins can list ALL registrations for the dashboard.
+      allow list: if isAdmin();
+    }
+
+    // --- Find a Team Rules ---
+    match /findATeamRegistrations/{regId} {
+      // Any authenticated user can create a registration.
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      // Any authenticated user can read/list all registrations to find players.
+      allow read, list: if isAuthenticated();
+      // Only the owner can delete their own registration.
+      allow delete: if isOwner(resource.data.userId);
     }
   }
 }
