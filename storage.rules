@@ -1,29 +1,31 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // --- Public Read Access ---
-    // Allow anyone to read images from the 'public' folder and its subdirectories.
-    // This is necessary for the website to display logos, news images, gallery, etc.
+    // --- General Public Read Access ---
+    // Anyone can read (view) files in the public directory.
+    // This is essential for the welcome page, gallery, news, etc.
     match /public/{allPaths=**} {
       allow read: if true;
     }
 
-    // --- Admin Write Access ---
-    // Only authenticated users who are admins can upload, update, or delete files
-    // in the 'public' folder. This secures your site's content.
-    match /public/{allPaths=**} {
-      allow write: if request.auth != null && request.auth.token.isAdmin == true;
-    }
-    
-    // --- Academy Member Posts Write Access ---
-    // Allow any authenticated user to upload to the posts directory,
-    // as long as they are uploading into a folder that matches their own UID.
-    // This prevents one member from uploading images to another member's folder.
+    // --- Specific Write Rules ---
+    // Rules are not inherited, so we must be specific.
+    // Order matters: more specific paths should come first if they overlap.
+
+    // Allow academy members OR an admin to upload to their posts folder.
     match /public/posts/{memberId}/{allPaths=**} {
-        allow write: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.uid == memberId || request.auth.token.isAdmin == true);
+    }
+
+    // Allow ONLY admins to write to all other public folders.
+    // This covers /logo, /gallery, /news, /backgrounds, etc.
+    // We deny writes to /public/posts here unless the more specific rule above is met.
+    match /public/{folder}/{allPaths=**} {
+        // Deny non-admins from writing to any other folder that is NOT the posts folder they own.
+        // Admins can write anywhere.
+        allow write: if request.auth != null && request.auth.token.isAdmin == true;
     }
   }
 }
